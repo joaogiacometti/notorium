@@ -1,231 +1,82 @@
 # Notorium Agent Guide
 
-This file is for agents. Keep it short, direct, imperative, and focused on what prevents mistakes.
+Keep only project-specific decisions and recurring gotchas here. Do not add code
+inventories, generic style advice, or copies of rules already enforced by checks.
 
-## Project Facts
+## Commands
 
-- Use npm.
-- On NixOS, run npm, tests, and git hooks inside the `flake.nix` dev shell (`nix develop -c <cmd>`, or direnv via `.envrc`). It supplies Node 24, a Nix-built Biome (`BIOME_BINARY`), and Playwright browsers; the npm-downloaded binaries do not run on NixOS.
-- `SPEC.md` is the product behavior source of truth.
-- `README.md` owns quick setup and basic runtime commands.
-- `DESIGN.md` is the UI design-system source of truth (spacing, surfaces, typography, layers, motion).
-- `docs/architecture.md` owns high-level architecture, source layout, and boundary guidance.
-- `docs/` owns focused setup, architecture, operations, and historical planning notes.
-- Read `docs/architecture.md` before structural or cross-boundary code changes.
-- Update documentation only where the change makes existing guidance inaccurate or incomplete. Use the owning document above; do not duplicate explanations or add implementation notes to unrelated docs. If documented behavior and guidance remain accurate, no documentation change is needed.
+Use npm with Node.js 24.
 
-## Code Style
+| Task | Command |
+| --- | --- |
+| Develop | `npm run dev` |
+| One test file | `npm run test -- src/path/to/file.test.tsx` |
+| All unit tests | `npm run test` |
+| Lint / types | `npm run lint` / `npm run typecheck` |
+| Size / dead code | `npm run check:size` / `npm run check:deadcode` |
 
-- Functions: 4-20 lines. Split if longer.
-- Files: at most 500 source lines or 800 test lines (schema exempt). Split by responsibility. Enforced by `npm run check:size` (see Automated Guards).
-- One thing per function, one responsibility per module.
-- Names: specific and unique. Avoid `data`, `handler`, `Manager`, and other vague names.
-- Prefer names that return fewer than 5 grep hits in the codebase.
-- Types: explicit. No `any`, no broad `Dict` aliases, no untyped functions.
-- No code duplication. Extract shared logic into a function or module.
-- Use early returns over nested conditionals.
-- Keep indentation to 2 levels maximum.
-- Exception messages must include the offending value and expected shape.
-- No `console.log` in production code.
+For isolated E2E services and migrations, follow [Development](docs/setup/development.md).
 
-## Comments
+## Read When Relevant
 
-- Prefer clear names and code over comments that restate them.
-- Comment only non-obvious rationale, constraints, invariants, or workarounds. Exporting a function alone does not require a docstring; add examples only when usage is not obvious.
-- When changing code, update or remove comments that become inaccurate. Preserve useful intent and provenance during refactors, not stale or redundant wording.
-- Reference an issue or commit when it explains a workaround or when that workaround can be removed.
+- Before structural or cross-boundary changes: [Architecture](docs/architecture.md).
+- Before UI changes: [DESIGN.md](DESIGN.md); reuse its primitives and semantic tokens.
+- Before auth, scheduling, deletion, or proposal-lifecycle changes: [Behavior Contracts](docs/behavior-contracts.md).
+- Update only the doc that owns an affected decision. Detailed behavior belongs in
+  tests, schemas, constants, and production prompts; do not recreate a feature spec.
 
-## Tests
+## Server Boundaries
 
-- Every new function gets a test.
-- Bug fixes get a regression test.
-- Prefer TDD for bug fixes and behavior changes: write or update the failing test first, then implement the smallest fix.
-- For UI-only or mechanical refactors, tests may follow the change when a failing-first test would add no useful signal.
-- Mock external I/O, APIs, DB, and filesystem with named fake classes or helpers, not inline stubs.
-- Tests must be F.I.R.S.T: fast, independent, repeatable, self-validating, timely.
-- Good tests verify observable behavior, stable contracts, or deterministic transformations. Bad tests mirror implementation text, CSS class strings, prompt wording, or call order unless that exact detail is the public contract.
-- Keep Vitest tests next to source with `.test.ts` or `.test.tsx`.
-- `.test.tsx` runs in jsdom and is compiled with React Compiler, like the Next.js build; `.test.ts` runs in plain Node, uncompiled. Put tests of client component behavior in `.test.tsx` so compiler-only memoization bugs fail there.
-- Start a `.test.ts` that needs a DOM with `// @vitest-environment jsdom`. jsdom is the only DOM library; do not add another.
-- Add Playwright coverage only for critical user workflows: navigation, auth/permissions, writes, persistence, destructive actions, or cross-page flow integrity.
-- Do not add Playwright tests for presentation-only changes unless explicitly requested.
+- Client reads use `src/lib/read-api/*`; new JSON read routes use `runUserReadRoute`.
+  Server Components read feature queries directly. Reads must not create or repair rows.
+- Client writes use Server Actions. Exceptions are the existing image-upload route
+  and streaming assistant route; extend AI chat through `/api/assistant/chat` and
+  `src/lib/ai/stream-chat.ts`, not another endpoint.
+- Use approved-session auth helpers and scope user-owned operations by `userId`.
+  UI visibility is not authorization. Use shared Zod schemas and typed results;
+  construct client-safe failures with `actionError()`, never raw provider/DB errors.
+- Revalidate through `src/lib/server/revalidate-views.ts`. Subject, document-count,
+  and flashcard changes refresh the app shell; review grades/undo refresh on exit.
+- Client reads need an error path: query error state or a caught failure with retry/toast.
+- Write cookies through Server Actions, not `document.cookie`.
 
-## Dependencies
+## Tests and UI Gotchas
 
-- Inject dependencies through parameters or constructors where practical.
-- Wrap external services and volatile third-party APIs behind thin project-owned interfaces.
-- Direct imports are fine for stable framework and utility libraries: React, Next.js, shadcn/ui, Drizzle query helpers, Zod, date-fns, and local UI primitives.
+- Add regression tests for bugs; prefer failing-first for behavior changes. Assert
+  observable behavior, not CSS strings, prompt wording, or implementation call order.
+- Client behavior tests must use `.test.tsx`: those run in jsdom with React Compiler.
+  `.test.ts` runs uncompiled in Node; DOM-only helpers can opt into jsdom by docblock.
+  Use named fakes for external I/O. Do not add another DOM library.
+- Reserve Playwright coverage for critical workflows, not presentation-only changes.
+- React Compiler is enabled. Avoid manual memoization unless correctness requires it;
+  explain the exception. TanStack Table child cells must use `Subscribe` or receive
+  state as props, rather than reading state through stable `row`/`table` objects.
+- Shortcut changes must update `src/lib/shortcuts/registry.ts` and its tests.
 
-## AI Instructions
+## Database and Release Safety
 
-- Keep production AI prompts, tool descriptions, and schema descriptions general and independent of subjects. Never embed test data, fixture content, debugging conversations, quoted test requests, worked examples, or instructions tailored to a particular test result.
-- Fix behavior through general product rules and tool contracts. Keep concrete study scenarios in test files; never import test helpers or seed sample conversations or fallback study material into production model requests.
-- Build dynamic model context only from the current user's request, conversation, settings, subject choices, active material, and authorized tool results. User-supplied examples are content, not permission to add canned examples to instructions.
-- Use abstract format syntax when a contract needs it. Audit the actual model-visible instructions, messages, and serialized tool schemas when changing AI behavior; comments and test fixtures must never become model context.
+- Keep `src/db/schema.ts` together; it is intentionally exempt from the size guard.
+- Never hand-edit `drizzle/*.sql` or `drizzle/meta/*`. Schema changes need
+  `npm run db:generate` and `npm run db:migrate`; preserve production compatibility.
+- Before committing or pushing schema/migration changes, ask whether to generate
+  and include migrations and whether production rows need cleanup or backfill.
+  A push to `main` touching schema/migrations triggers production migration.
+- Keep secrets server-only and out of client results, exports, logs, and fixtures.
+  Stored secrets must be encrypted; exports exclude auth/session/account tables.
 
-## Structure
+## AI Changes
 
-- Feature folders live in `src/features/[feature-name]/`.
-- Components live in `src/components/[feature-name]/` or `src/components/shared/`.
-- shadcn primitives live in `src/components/ui/`; do not edit them manually.
-
-Standard feature shape:
-
-```text
-features/[feature-name]/
-  queries.ts
-  mutations.ts
-  validation.ts
-  mappers.ts
-  types.ts
-  utils.ts
-  constants.ts
-```
-
-Only add optional files when they are needed.
-
-## Next.js Boundaries
-
-- Use Server Components by default.
-- Add `"use client"` only when browser state, effects, or event handlers are required.
-- Client-callable server boundaries: Server Actions in `src/app/actions/` for writes, GET Route Handlers in `src/app/api/` for reads. Server Actions run one at a time per client and are POST-only, so never add a read Server Action. Image uploads use the sanctioned multipart write route `POST /api/attachments/image`. The streaming study assistant (`POST /api/assistant/chat`) is the one sanctioned AI chat route outside both; add future AI chat features or assistant tools through it and `src/lib/ai/stream-chat.ts`, not new endpoints.
-- Client Components write through Server Actions and read through the typed fetchers in `src/lib/read-api/*` (usually as a React Query `queryFn`). Never `fetch` an `/api` read route directly from a component.
-- Build read routes with `runUserReadRoute` from `src/lib/server/read-route.ts`: approved session, Zod-validated input, `userId`-scoped feature query, `private, no-store` JSON with `Date`s preserved. Keep them thin like Server Actions, and never write from them: call read-only feature functions (for example `readFsrsSettings`, not `ensureFsrsSettings`).
-- Server Components (`src/app/(app)/**`), feature query modules (`queries.ts`, `*-queries.ts`), and every `src/app/api/` route must not import write modules (`mutations`, `*-mutations`, `*-mutation`, `subject-write`). Lint-enforced; a new write endpoint needs an explicit exclusion in `biome.json`. Keep a feature's reads and writes in separate modules so the boundary stays importable.
-- Every client read handles failure: React Query `queryFn`s surface it through query state; imperative calls catch, keep or clear stale UI deliberately, and tell the user (toast or inline retry). Never leave a `fetch*` promise without a rejection path.
-- Server Components read from `src/features/*` directly; prefer passing server-loaded data as props over adding a client read.
-- Do not call Server Actions from Server Components.
-- Keep Server Actions thin: authenticate, validate, delegate, revalidate, return typed result.
-- Revalidate only through `src/lib/server/revalidate-views.ts`. Any write that changes subjects, document counts, or flashcards calls `revalidateAppShell()` so the sidebar stays in sync; review grades and undo instead refresh once the session settles (`use-app-shell-refresh-after-review.ts`). Lint-enforced.
-- `src/app/actions/*` must not import `@/db/index` directly unless the exception is documented. Lint-enforced; document a genuine exception with a `biome-ignore` comment and reason.
-- `src/components/*` must not import `@/features/*/mutations`. Writes go through Server Actions. Lint-enforced.
-- Keep read logic in `src/features/*/queries.ts`.
-- Keep write logic in `src/features/*/mutations.ts`.
-- Keep validation schemas in `src/features/*/validation.ts` or `src/lib/validations/*`.
-- Read and write cookies only through Next.js: `cookies()` from `next/headers` on the server, and a Server Action for client-initiated writes. Never touch `document.cookie` directly.
-- Every `page.tsx` needs a matching `loading.tsx` that mirrors the page layout.
-- When changing a page or detail header, check its matching `loading.tsx` in the same change. Loading screens should stay simple, but must not miss major layout regions or primary action slots that would cause obvious shift or broken expectations.
-
-## Results and Errors
-
-- Server Actions must return typed results, never throw to the client.
-- Read routes answer data with 200, or an `ActionErrorResult` body with 400 (invalid input), 401 (no approved session), 404 (missing record), or 500 (unexpected, logged as `read_route_failed`).
-- Use typed success payloads and the shared `ActionErrorResult` (`errorCode`, optional `errorParams` / `errorMessage`); construct failures with `actionError()` from `src/lib/server/server-action-errors.ts`.
-- Validate inputs with Zod before DB access.
-- Return validation error results on invalid input.
-- Do not expose internal errors, stack traces, SQL errors, provider errors, or secrets to clients.
-
-## Auth and Security
-
-- Server auth uses `auth.api.getSession()` from `src/lib/auth/auth.ts`.
-- Always check authentication and approved access status.
-- Always filter user-owned data by `userId`.
-- Admin mutations stay server-only.
-- Secrets stay server-only, encrypted at rest when stored, and are never returned after save.
-- Exports must exclude auth/session/account tables and secret fields.
-- Never expose secrets in errors, logs, fixtures, tests, or messages.
-
-## Database
-
-- Define tables in `src/db/schema.ts` with Drizzle `pgTable` and `relations()`.
-- Use `text` IDs.
-- Include `createdAt` and `updatedAt` on every table.
-- Use `onDelete: "cascade"` where appropriate.
-- Preserve backward compatibility unless the user explicitly approves a breaking change.
-- Keep migrations safe to run in production.
-- Never manually edit `drizzle/*.sql` or `drizzle/meta/*`.
-- For schema changes, tell the user to run `npm run db:generate` and `npm run db:migrate`.
-- Pushing to `main` migrates production automatically: `.github/workflows/migrate.yml` runs `npm run db:migrate` whenever `src/db/schema.ts` or `drizzle/**` changes.
-- Before committing or pushing a schema change, stop and ask the user how to handle the migration: whether to generate it and include it in the same commit, and whether existing rows need cleanup (deleted or backfilled) in production first. Never push a schema change without that decision, even when asked to "commit and push".
-
-## Validation
-
-- Define Zod schemas for forms and Server Actions.
-- Validate on both client and server.
-- Use `@hookform/resolvers/zod` with React Hook Form.
-- Export matching TypeScript types with `z.infer<>`.
-- Do not duplicate validation schemas.
-
-## React
-
-- Treat React Compiler as enabled.
-- Do not use `useCallback`, `useMemo`, or `memo` by default.
-- Use manual memoization only when required for correctness and state the reason in the change summary.
-- TanStack Table hands cells and headers stable `row`/`table` objects. Never read table state through their methods in a child component: wrap the read in `Subscribe`, or compute it in the `useTable` owner and pass it down as a prop.
-- Avoid unnecessary client components.
-- Avoid over-fetching. Select only required fields.
-- Prefer server-side data composition over client aggregation.
-
-## Components
-
-- Keep components focused and single-purpose.
-- Component file order: types, main component, helpers.
-- Props type name: `[ComponentName]Props`.
-- Use named exports except for Next.js pages and layouts.
-- For async actions, disable the button, show a spinner, and use a pending label.
-- Reuse `async-button-content.tsx` for async button content.
-- When adding, removing, or changing keyboard shortcuts, update both the behavior and the visible shortcut registry in `src/lib/shortcuts/registry.ts`, plus registry tests.
-- Remove unreachable code immediately.
-- Do not add speculative scaffolding.
-
-## Styling
-
-- `DESIGN.md` is the design-system source of truth: pick the matching role (page frame, spacing, surface tier, typography, dashed-border role, header metadata, z-index layer, transition) instead of inventing a one-off class string. Update it when a convention changes.
-- Stack with the named z-index layers only (`z-raised`, `z-chrome`, `z-immersive`, `z-overlay`); numeric/arbitrary `z-*` classes fail `src/app/z-index-layers.test.ts`. Every dialog, menu, and full-screen surface uses `z-overlay` and stacks by opening order. If something renders behind an overlay, fix the open order or portal; never raise its z-index or add `className`/`overlayClassName` props to change its layer. See "Z-index layers" in `DESIGN.md`.
-- Record metadata (subject, source) is muted header text sized to its content, not a chip or form-row control; detail headers show no created/updated timestamps. See "Header metadata" in `DESIGN.md`.
-- Use `cn()` from `src/lib/utils.ts` for conditional classes.
-- Never use hardcoded Tailwind color classes.
-- All UI colors must use CSS variables so user themes work.
-
-```tsx
-className =
-  "bg-(--intent-danger-fill) text-(--intent-danger-text) border-(--intent-warning-border)";
-```
-
-- For SVGs, use `stroke="currentColor"` and a theme variable text class.
-- Use semantic variables from `src/app/globals.css`: `--primary`, `--secondary`, `--accent`, `--destructive`, `--muted`, `--background`, `--foreground`, `--border`.
-- Use intent variables (`--intent-*`) for danger, warning, success, and info colors, and `--chart-*` for charts.
-
-## Formatting
-
-- Use Biome. Do not discuss formatting style beyond the formatter.
-- Keep files kebab-case.
-- Use `@/` alias imports.
-
-## Logging
-
-- Use structured JSON when logging for debugging or observability.
-- Use plain text only for user-facing CLI output.
-- Include named fields that make failures filterable and correlatable.
-- Do not log secrets, tokens, cookies, raw auth payloads, or private user content.
-
-## Commits
-
-- Commit only when the user explicitly asks for a commit.
-- Use Conventional Commits: `fix(scope): summary`, `feat(scope): summary`, `docs(scope): summary`, `test(scope): summary`, or `refactor(scope): summary`.
-- Pick the narrowest meaningful scope, usually the feature or subsystem changed.
-- Keep the subject imperative, descriptive, and under 72 characters when practical.
-- Add a body when the reason is not obvious. Explain what changed and why; do not restate the diff.
-- Stage only files that belong to the requested change. Do not include unrelated worktree changes.
-- A commit that touches `src/db/schema.ts` or `drizzle/**` needs the migration decision from the Database section before it is committed or pushed.
-- Before reporting success, confirm the commit hash and a clean `git status --short`.
+- Keep prompts and tool/schema descriptions general. Never put fixture material,
+  debugging conversations, or canned study examples into production model requests.
+- Dynamic context comes only from the current user's request, conversation, settings,
+  subjects, active material, and authorized results. Audit actual model-visible
+  messages and schemas; comments and test helpers must not become model context.
 
 ## Automated Guards
 
-These run locally and in CI (`.github/workflows/checks.yml`, enabled for `joaogiacometti/notorium`). Do not weaken a guard to make a build pass; fix the code.
+Do not weaken Biome boundaries, size limits, or Knip checks to pass a change. Remove
+orphaned code/dependencies instead of adding ignores; justify verified false positives.
+Run checks relevant to the change; report what ran and anything left unverified.
 
-- `npm run check:size` enforces 500-line source and 800-line test limits (`scripts/check-file-size.ts`). Pre-existing offenders are grandfathered in a `KNOWN_OVERSIZED` allow-list and may only shrink; never add entries. `src/db/schema.ts` is intentionally exempt via `SIZE_GUARD_EXEMPT`: keep the Drizzle schema as one file and let it grow — do not split it or try to "fix" its size.
-- `npm run check:deadcode` (Knip, config in `knip.json`) fails on unused files, unused dependencies, and undeclared/unresolved imports — the high-confidence signals. When you delete a feature, remove its now-orphaned files and deps in the same change instead of leaving them. Unused *exports* and *types* are reported as non-blocking warnings (they have real false positives: the `src/components/ui/**` shadcn API surface, the `fsrs` barrel re-exports, and type-only exports), so don't chase them blindly, but do clean up ones you know are genuinely dead. Fix findings by removing the dead code, not by widening the `ignore`/`ignoreDependencies` lists — only add an ignore for a verified false positive, with the reason in your change summary.
-
-## Definition of Done
-
-- Behavior matches `SPEC.md`.
-- Existing comments and documentation remain accurate; update only affected guidance.
-- Inputs are validated with Zod.
-- Auth and `userId` ownership are enforced.
-- Server Actions return typed results.
-- Revalidation is implemented where UI data changes.
-- Keyboard shortcut changes are reflected in the shortcuts help dialog.
-- Tests cover new functions and regressions.
-- New files and touched modules are reachable from active app code.
-- No unused code remains unless explicitly called out with a reason.
+Commit only when asked, using Conventional Commits. Stage only the requested work;
+report the commit hash and remaining worktree changes. Never discard unrelated edits.

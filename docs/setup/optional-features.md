@@ -1,10 +1,8 @@
 # Optional Features
 
-Notorium can run with only the required environment from [Environment Guide](./environment.md). The features below are optional, plugin-like capabilities that become available when their environment variables are configured.
+For local setup, follow the [README](../../README.md). [`.env.example`](../../.env.example) lists configuration variables; [`src/env.ts`](../../src/env.ts) validates the runtime requirements. The integrations below are optional.
 
-Audience: deployers and maintainers enabling integrations beyond the basic local workflow.
-
-Related docs: [Docs Index](../README.md), [Environment Guide](./environment.md), [README](../../README.md)
+For deployment, configure the database URL, auth secret, and rate-limit backend in your host's environment settings, and set `BETTER_AUTH_URL` to the public app URL. Compose helper variables configure local services, not deployment resources.
 
 ## AI
 
@@ -19,21 +17,20 @@ Set both variables:
 
 If either variable is missing, AI controls remain hidden.
 
-The study assistant is a shared collapsible sidebar across pages, review, and flashcard editing. Each message includes the active study content: the review/exam card (an unrevealed answer is marked hidden and only checks hints and attempts), the unsaved note, or the current flashcard editor draft. Document draft excerpts are capped at 12,000 characters with a partial-context indicator, and attachment URLs are omitted. Context uses already loaded content with no background AI calls. Asking to change an open document sends its current unsaved draft, prioritizing selected note blocks. Flashcard suggestions are approved per field inside the editor; note suggestions preview inside the document with one Accept/Discard decision. Accept changes uses the editor’s existing autosave and undo. Proposals cannot overwrite newer edits or target omitted content. The assistant output cap is 4,000 tokens. This uses the assistant message allowance and needs no additional configuration or database migration. Conversations remain in browser memory. The Hints first toggle (on by default) makes the assistant give graduated hints before full solutions, while an explicit request for the answer still gets it right away; it is a prompt mode with no extra AI calls, and the choice is remembered in a browser cookie. Asking about a review card before revealing it shows a note suggesting Hard or Again on reveal.
+Requests include conversation and active study text, which are sent to OpenRouter
+and the selected provider. See [Behavior Contracts](../behavior-contracts.md#assistant-trust-and-approval)
+for approval and context rules.
 
-AI flashcard creation uses the study assistant, including requests based on an open note. The assistant proposes up to five cards per reply for confirmation before saving. There are no separate document generation actions.
-
-Every AI call (the study assistant) runs with thinking turned off (`none`) by default: thinking tokens are billed as output tokens and count against each call's output cap, so they can cut an answer short. Set `OPENROUTER_REASONING_EFFORT` (`none`, `minimal`, `low`, `medium`, or `high`) to change it. You must set it to something other than `none` for a model whose reasoning cannot be turned off, or that model rejects every AI request.
-
-AI output follows the user's applicable explicit output-language instruction, otherwise the language of their latest request, including short follow-ups, even when source material is in another language. Only ambiguous or language-neutral requests inherit language from earlier user messages. This applies to assistant replies and new or rewritten flashcard prose; code identifiers, quotations, studied-language content, and unrelated text in targeted edits remain intact.
-
-The study assistant sends each chat's id to OpenRouter as `session_id`. This supplies a session identifier for provider routing and prompt-cache reuse; availability and savings depend on the selected model and provider. System instructions stay stable; only the current editor tool is exposed alongside creation and search, and switching editor kinds can reduce prompt-cache reuse.
+Reasoning defaults to `none`: thinking tokens are billed as output and consume the
+reply cap. Set `OPENROUTER_REASONING_EFFORT` to `minimal`, `low`, `medium`, or `high`
+for models that require reasoning or when you want it enabled. A model that cannot
+disable reasoning rejects requests with `none`.
 
 ## Attachments
 
-Attachment uploads and PDF documents use Vercel Blob. Image files are limited to 4 MiB and multipart bodies to 4 MiB plus 64 KiB. Each authenticated attempt consumes the 200-per-day upload allowance before the body is read, including invalid and oversized attempts.
-
-PDFs (up to 100 MB, 50 uploads per day) upload directly from the browser to the Blob store with a short-lived client token issued by the server; large files use multipart uploads.
+Image and PDF uploads use private Vercel Blob storage. PDFs upload directly from
+the browser with a scoped server-issued token. Upload limits are defined in
+[`limits.ts`](../../src/lib/config/limits.ts).
 
 Set:
 
@@ -56,29 +53,28 @@ Set both variables:
 
 If either variable is missing, email-dependent UI stays hidden or disabled.
 
-Email sending enables password reset. Password reset is limited to approved users and at most 3 reset emails per approved user per UTC day.
+Email sending enables password reset. The application's reset Server Action checks approval and a per-user daily cap. Direct Better Auth endpoints need separate verification before relying on those restrictions; see [Behavior Contracts](../behavior-contracts.md#access-and-account-lifecycle).
 
-## FSRS Optimization Workflow
+## Scheduled Jobs
 
-Users can manually optimize flashcard FSRS parameters from the Flashcards section of the account settings dialog.
-Automatic optimization is available only when `CRON_SECRET` is configured.
+Set `CRON_SECRET` in the app and configure a scheduler. The included workflows use
+these repository secrets:
 
-The automatic optimization endpoint is:
-
-```text
-GET /api/flashcards/fsrs/optimize
-Authorization: Bearer <CRON_SECRET>
-```
-
-The repository includes `.github/workflows/fsrs-optimization.yml` for a monthly GitHub Actions trigger. Configure these repository secrets in your fork or deployment repository:
-
-| Secret | Purpose |
+| Repository secret | Purpose |
 | --- | --- |
 | `NOTORIUM_APP_URL` | Deployed app base URL |
 | `CRON_SECRET` | Same value as the app runtime `CRON_SECRET` |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel Protection Bypass for Automation secret; required when Vercel security protects the endpoint |
 
-The workflow is disabled in `joaogiacometti/notorium`. In deployment repositories, it skips the request when `NOTORIUM_APP_URL` or `CRON_SECRET` is missing.
+| Job | Authenticated GET endpoint | Included workflow |
+| --- | --- | --- |
+| FSRS optimization | `/api/flashcards/fsrs/optimize` | [Monthly](../../.github/workflows/fsrs-optimization.yml) |
+| Orphan-file cleanup | `/api/cron/blob-gc` | [Weekly](../../.github/workflows/blob-gc.yml) |
+
+Both require `Authorization: Bearer <CRON_SECRET>`. The workflows are disabled in
+`joaogiacometti/notorium`; in deployment repositories they skip requests when the
+app URL or cron secret is missing. Users can also optimize FSRS manually in
+account settings without a scheduler.
 
 ## Blob Orphan Garbage Collection
 
@@ -92,15 +88,8 @@ deletion still purges all files owned by that user.
 
 Cleanup requires `BLOB_READ_WRITE_TOKEN`, `CRON_SECRET`, and a configured schedule
 (or a manual authenticated sweep). Without successful sweeps, unused files remain
-in storage and continue to incur storage costs. With the weekly workflow below,
+in storage and continue to incur storage costs. With the included weekly workflow,
 eligible unused images remain until the next successful weekly run.
-
-The sweep endpoint is:
-
-```text
-GET /api/cron/blob-gc
-Authorization: Bearer <CRON_SECRET>
-```
 
 Pass `?dryRun=1` to report orphan counts without deleting anything.
 
@@ -112,16 +101,6 @@ deletions can also trigger this brake now that the sweep owns all cleanup.
 Repeated runs will remain blocked until the orphan fraction drops or an
 operator reviews the candidates and explicitly adjusts the sweep options;
 the HTTP endpoint does not expose a safety-limit override.
-
-The repository includes `.github/workflows/blob-gc.yml` for a weekly GitHub Actions trigger. Configure these repository secrets in your fork or deployment repository:
-
-| Secret | Purpose |
-| --- | --- |
-| `NOTORIUM_APP_URL` | Deployed app base URL |
-| `CRON_SECRET` | Same value as the app runtime `CRON_SECRET` |
-| `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel Protection Bypass for Automation secret; required when Vercel security protects the endpoint |
-
-The workflow is disabled in `joaogiacometti/notorium`. In deployment repositories, it skips the request when `NOTORIUM_APP_URL` or `CRON_SECRET` is missing.
 
 ## Upstash Rate Limiting
 

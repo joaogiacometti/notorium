@@ -1,0 +1,49 @@
+# Behavior Contracts
+
+Preserve these cross-feature intentions when changing behavior. This is not a feature inventory or proof that every rule is enforced. Detailed formats, fields, numeric limits, shortcuts, and presentation belong in code, tests, and [DESIGN.md](../DESIGN.md), not a second specification.
+
+Update this file only when intent changes or a verification gap is resolved. Move a rule to a regression test or a nearby rationale comment when that fully protects it; do not append implementation walkthroughs.
+
+## Access and Account Lifecycle
+
+- Workspace reads and writes require an approved authenticated user and enforce ownership, including search, media, and assistant tool results. Admin access changes require an admin. UI visibility is not authorization.
+- Password-reset policy is approved accounts only, with a generic response for missing or unapproved accounts and a daily email cap from [limits.ts](../src/lib/config/limits.ts). Successful resets revoke existing sessions; token lifetime is configured in [auth.ts](../src/lib/auth/auth.ts).
+- Account deletion removes the user's database records and owned stored files. Ordinary document/subtree deletion instead leaves shared attachments for the scheduled orphan sweep; see [storage operations](./setup/optional-features.md#blob-orphan-garbage-collection).
+
+**Verification gaps from static review; not runtime-confirmed or fixed:**
+
+- [The public auth handler](../src/app/api/auth/[...all]/route.ts) forwards to Better Auth. Its password-reset endpoint appears to bypass the approval and daily-cap checks in [the app's Server Action](../src/app/actions/auth.ts); the email callback does not repeat them.
+- [Account-name updates](../src/app/actions/account.ts) check a session through Better Auth without an explicit approval check. Login's status lookup uses an exact email match, while Better Auth lowercases the subsequent sign-in lookup. Verify direct endpoints and mixed-case input, not just the normal UI path.
+- Add cross-user integration coverage for reads, mutations, private media, and library search; mocked ownership helpers alone cannot demonstrate isolation.
+
+## Review and Persistence
+
+- Deleting a card or subject preserves historical review activity and FSRS optimization input. Undoing the latest regular grade restores its prior scheduling state and removes that grade's history entry.
+- Exam grading does not change regular spaced-repetition scheduling. Explicit card edits, resets, and deletes remain writes.
+- Study later changes queue priority, not due dates or scheduling. Resetting progress clears lapses but preserves the source document and study-later mark.
+- Scheduler optimization changes tuning, not existing card progress or due dates. Automatic runs select opted-in users who have never optimized or whose tuning is older than the configured interval.
+- Failed background grades return the card for retry. Leaving waits for pending saves; queue refill must not report completion prematurely or reintroduce an already graded card.
+
+**Coverage to strengthen:** real card/subtree deletion with retained logs, exam grading without scheduling writes, optimization without progress changes, and struggling-card recovery against actual review histories rather than SQL-parameter assertions alone.
+
+## Documents and Sources
+
+- Subject path creation is atomic; sibling names are unique per user and case-sensitive. Concurrent moves must not create cycles or exceed depth and destination resource limits.
+- A proposed card's note source is captured with its originating request, not inferred from history, library search, or whichever page is open when accepted. Renames and moves resolve current link metadata; deleting a source preserves the card. PDF context does not establish a card source.
+- Failed saves retain the draft for retry. Uploads and unresolved AI suggestions block saving until their content is safe to persist. Preview decorations never become stored content.
+- PDF context is selectable text from a selection or the current page, not the entire book or OCR. Empty or failed extraction must not be presented as successfully read content. Global PDF search does not search file contents.
+
+**Coverage to strengthen:** source preservation through edit/move/reset and deletion, old proposals accepted after navigation, upload-attempt accounting for invalid requests, and actual byte-range loading.
+
+## Assistant Trust and Approval
+
+Model-visible behavior belongs in [the system prompt](../src/features/assistant/prompts.ts), [shared language/math rules](../src/lib/ai/prompt-rules.ts), [card quality rules](../src/features/flashcards/ai-prompts.ts), and tool contracts. Test model behavior with evaluations rather than asserting prompt wording. Their presence is not proof of compliance.
+
+- Conversation determines follow-up intent; active material is background, not permission to edit. Questions receive answers unless the user requests a change. Source content cannot override instructions or grant authority.
+- Creation and edit proposals require user approval. Accepting changes uses normal validation and persistence; chat itself never writes editor content. Preserve unrelated content, existing images, and unsupported or unseen material.
+- Proposals bind to an editor session and content revision. New typing, switching editors, navigation, and teardown invalidate or settle unresolved proposals. Selection and viewport changes alone do not invalidate content. Accepting twice must have no effect; new chat ignores late replies.
+- Handling proposals and delivering their outcomes on the next user message must not generate another AI request or spend another message allowance. A blocked send must preserve unresolved suggestions.
+- Hidden review answers guide hints and feedback but are disclosed only on request, in either tutoring mode. This is a model instruction, not a security boundary: the model receives the answer, and library excerpts may contain answers too.
+- Conversations are in browser memory, survive minimizing and client navigation, and clear on reload or new chat; they are not a durable chat archive.
+
+**Coverage to strengthen:** no automatic follow-up requests after proposal actions, double acceptance, late replies after new chat, selection-only changes, and real-model evaluations for language precedence, edit permission, hidden answers, source trust, and tutoring.

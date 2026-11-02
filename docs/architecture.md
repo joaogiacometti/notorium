@@ -1,133 +1,91 @@
 # Architecture
 
-Notorium keeps framework entrypoints thin and pushes product logic into feature modules.
+For contributors changing module boundaries or cross-feature flows. Keep this an
+overview of responsibilities and design rationale, not a catalog of helpers or UI
+behavior. Update it when those boundaries or decisions change.
 
-Audience: agents and contributors making structural, cross-boundary, or feature-module changes.
+## System Context
 
-Related docs: [Docs Index](./README.md), [Design System](../DESIGN.md), [Agent Guide](../AGENTS.md), [README](../README.md)
+Notorium is a Next.js application with server-rendered pages and interactive client
+editors. PostgreSQL stores user records and study material through Drizzle; Redis
+or Upstash supplies rate limiting. Optional integrations are OpenRouter for AI,
+Vercel Blob for private media, and Resend for email. Scheduled HTTP jobs perform
+FSRS optimization and orphan-file cleanup.
 
-## Source Layout
+Local development runs the app alongside Compose-managed PostgreSQL and Redis;
+deployment uses configured backing services. Setup belongs in the [README](../README.md)
+and [integration guide](./setup/optional-features.md).
+
+## Module Responsibilities
+
+| Location | Responsibility |
+| --- | --- |
+| `src/app/` | Routing, server-rendered composition, and thin HTTP/action boundaries |
+| `src/components/` | Feature UI and shared components; `ui/` contains shadcn primitives |
+| `src/features/` | Domain reads, writes, validation, and feature-local algorithms |
+| `src/db/` | Drizzle schema, relations, and database client |
+| `src/lib/` | Shared infrastructure and project-owned service adapters |
+| `src/env.ts` | Runtime configuration validation |
+
+## Main Data Flows
 
 ```text
-src/
-|-- app/                 Next.js App Router pages, layouts, API routes, and Server Actions
-|   |-- (app)/           Authenticated pages
-|   |-- (auth)/          Signed-out pages (login, signup, password reset) sharing one centered layout
-|   |-- actions/         Client-callable write boundary (Server Actions)
-|   `-- api/             Client-callable read boundary (GET route handlers), uploads, AI chat stream, cron
-|-- components/          Feature UI, shared UI, the left menu (components/navbar), auth forms, and shadcn primitives
-|-- features/            Feature queries, mutations, validation, mappers, and domain helpers
-|-- db/                  Drizzle schema and database client
-|-- lib/                 Auth, server contracts, dates, editor, AI, email, rate limits, storage
-`-- env.ts               Runtime environment validation
+Server-rendered read: page -> feature query -> Drizzle -> PostgreSQL
+Client read: component -> typed read-api fetcher -> GET route -> feature query
+Client write: component -> Server Action -> feature mutation -> database
+AI message: assistant workspace -> POST /api/assistant/chat -> assistant service
+            -> shared AI streaming layer -> OpenRouter
+AI proposal acceptance: editor/create controls -> normal client write flow
+Scheduled job: authenticated HTTP route -> feature operation
 ```
 
-## Data Flow
+Authentication and validation belong at server boundaries; feature operations scope
+user-owned records by the authenticated user. Intended access guarantees and known
+verification gaps live in [Behavior Contracts](./behavior-contracts.md).
 
-```text
-Server Component -> src/features/*/queries.ts -> Drizzle -> PostgreSQL
-Client Component (write) -> src/app/actions/* -> validation/auth -> src/features/*/mutations.ts -> Drizzle
-Client Component (read) -> src/lib/read-api/* -> GET src/app/api/* -> runUserReadRoute (auth/Zod) -> src/features/*/queries.ts
-Study assistant (useChat) -> POST src/app/api/assistant/chat -> auth/Zod -> src/features/assistant/service.ts -> src/lib/ai/stream-chat.ts
-Scheduled Workflow -> src/app/api/* -> auth/config checks -> src/features/* service functions
-```
+## Boundary Decisions
 
-## Ownership Boundaries
+- **Reads and writes stay separate.** Server Components read feature queries
+  directly; client reads use [typed fetchers](../src/lib/read-api/) and the shared
+  [read-route wrapper](../src/lib/server/read-route.ts). GETs do not create or repair
+  records. Server Actions serialize per client and use POST, so routing reads through
+  them would queue independent reads behind writes.
+- **Writes share one domain layer.** Actions authenticate, validate, delegate, and
+  return typed results. Revalidation goes through [one view adapter](../src/lib/server/revalidate-views.ts).
+  Review grades and undo defer shell refresh until exit: refreshing per grade adds
+  work to the serial queue and can redirect an active session once no cards are due.
+- **Large media bypasses action bodies.** Images use the bounded multipart upload
+  route; PDFs upload directly to private storage with a scoped short-lived token,
+  then a Server Action verifies the stored object before creating its record.
+  Private reads check ownership and support byte ranges for PDF loading.
+- **AI streaming has one entry point.** The assistant service owns prompts and tools;
+  [the AI layer](../src/lib/ai/) owns provider access and streaming. A streaming route
+  avoids holding the Server Action queue for an entire reply. Creation/edit tools
+  propose changes rather than writing; user approval returns through normal writes.
+- **Assistant state belongs to the app shell.** Editors and study surfaces register
+  context with one workspace; moving its presentation into a dialog does not create
+  another conversation. Draft session/revision checks prevent late proposals from
+  overwriting newer edits. Material is untrusted context, not system instructions.
 
-- `src/app/` owns framework routing, layouts, pages, API routes, and thin Server Actions.
-- Mutation Server Actions run through `src/lib/server/action-runner.ts` (`runValidatedAction` / `runValidatedUserAction`): Zod-validated input, typed `{ success: true, ... } | ActionErrorResult` results for expected failures, and `runCatchingActionFailure` (`src/lib/server/action-failure.ts`) turning unexpected throws into `common.generic`. Each call passes a `<file>.<actionName>` log scope (for example `notes.editNote`) as its first argument. Failures are logged as `server_action_failed` with only that scope, error class, and driver code (never the message, which can carry SQL params); Next.js `redirect`/`notFound` are rethrown. There are no read Server Actions: Next.js runs actions one at a time per client (a slow mutation would queue every read behind it) and as uncacheable POSTs, so client-initiated reads are GET route handlers instead.
-- Server Actions revalidate only through `src/lib/server/revalidate-views.ts`, which maps a write to the views that show its data. `revalidateAppShell` refreshes the `(app)` layout (sidebar subject tree, document counts, due-card badges) and with it every page; use it for any subject, document create/move/delete, or flashcard write. Review grades and undo are the exception: they run on every keypress through the serial Server Action queue, so they skip revalidation and `use-app-shell-refresh-after-review.ts` calls `router.refresh()` when the session page unmounts after any review write (the session exit waits for in-flight saves first), so the sidebar badges and the server-rendered hub counts agree. A mid-session refresh would redirect the session away once nothing is due. The study-later mark (`setFlashcardStudyLater`) skips revalidation for the same reason; no server-rendered view shows it, and the manage table refetches its page instead. `revalidateDocumentPage` covers document content writes the sidebar does not show. Actions never call `revalidatePath`/`revalidateTag` directly; lint-enforced by a `noRestrictedImports` override in `biome.json`.
-- Client reads go through GET route handlers under `src/app/api/` (`account/settings`, `flashcards/{manage-page,contents,review-state}`, `notes/[noteId]`, `search`, `subjects/options`, `subjects/[subjectId]/documents`). Each is a thin `runUserReadRoute` call (`src/lib/server/read-route.ts`): approved session (401), Zod-validated input from path params or `readSearchParams` (400), a `userId`-scoped `src/features/*/queries.ts` read, optional `notFoundErrorCode` for `null` results (404), and unexpected throws logged as `read_route_failed` via the shared `logServerFailure` (500, `common.generic`). Responses are `private, no-store` and encoded with `src/lib/read-api/read-payload.ts`, which tags `Date` values so they survive JSON the way RSC serialization kept them for Server Actions. The private-media streaming route `GET /api/attachments/blob` is separate from this JSON contract: it checks session and pathname ownership, then streams image and PDF bytes with storage headers and empty error responses. It forwards a single validated `Range` header (`src/lib/media-storage/byte-range.ts`) and answers `206` with `content-range`, so the PDF reader fetches only the byte ranges of the pages being viewed. JSON read routes never write: FSRS scheduler reads use `readFsrsSettings` in `src/features/flashcards/fsrs/settings-queries.ts` (defaults in memory when no row exists or persisted values are invalid), while mutations use `ensureFsrsSettings` in `settings-mutations.ts`, whose first-use insert is `ON CONFLICT DO NOTHING` plus a re-read so parallel first requests cannot fail on the unique `userId`. Components never `fetch` these URLs directly: typed fetchers in `src/lib/read-api/*` (`fetchReadApi` throws `ReadApiError`, `fetchReadApiResult` returns the `ActionErrorResult`, `fetchReadApiOrNull` maps 404 to `null`) own the URLs and redirect a 401 to `/login`.
-- `src/components/` owns reusable and feature UI; shadcn primitives stay in `src/components/ui/`.
-- `src/features/` owns product read/write logic, validation, mapping, constants, and feature-local types.
-- Dense algorithms may live in feature subfolders, such as `src/features/flashcards/fsrs/`.
-- Flashcard front uniqueness is enforced by the database constraint on `(userId, frontNormalized)`. Create/edit mutations map uniqueness violations to `flashcards.duplicateFront`; dialogs display that save-time failure without live duplicate reads or preliminary lookup queries.
-- The manage `struggling` filter (leech detection from `lapse_count` and the newest review ratings) is a SQL condition in `src/features/flashcards/struggling-filter.ts`, applied by the manage-page query like the `studyLater` filter.
-- Study later is a nullable `flashcard.study_later_at` mark. The due queue sorts by `studyLaterLastOrder` (`src/features/flashcard-review/due-filter.ts`) before `dueAt`, and the review client keeps the same order with `orderStudyLaterLast` in `state.ts`, so refills, re-queued learning cards, and refetches after undo/edit/delete never put marked cards ahead of unmarked ones. The write lives in `src/features/flashcards/study-later-mutations.ts`; the review session toggles it optimistically through `use-review-study-later.ts`.
-- Flashcard review shortcut handling lives in `src/features/flashcard-review/shortcuts.ts`; the review UI calls that one hook instead of registering key listeners locally.
-- Flashcard review and exam sessions are routes, `src/app/(app)/flashcards/{review,exam}/page.tsx`, rendered in-flow. `AppLayoutClient` hides the sidebar on them (`isFlashcardSessionPath`). Pages load server data (due batch, or all exam cards shuffled on the server), redirect to the hub when empty, and hand it to `FlashcardReviewSession` / `FlashcardExamSession`. The hub (`/flashcards`) only links to them. The session shell owns the scrollable card area.
-- Flashcard review logs keep historical flashcard and subject identifiers without a flashcard foreign key, so card/subject deletion does not rewrite the activity heatmap or remove FSRS optimization input. New review logs snapshot the prior scheduling state so the latest regular review can be undone transactionally; undo removes that log from activity and optimization history. The Home activity heatmap counts every review log for the user straight from `flashcard_review_log`, without joining flashcards.
-- Bulk flashcard mutations live in `src/features/flashcards/bulk-mutations.ts` to keep `mutations.ts` focused.
-- Flashcard copy (Markdown for AI chats and sharing) is client-side. `src/lib/clipboard/rich-text-markdown.ts` converts stored Tiptap HTML to Markdown with Turndown and the `@joplin/turndown-plugin-gfm` tables/strikethrough/task-list rules, after parsing it into an inert `DOMParser` document (no script runs, no image loads) and reshaping Tiptap's math, task-item, and list-paragraph markup, `flashcard-content.ts` formats cards, and `clipboard-writer.ts` starts the clipboard write inside the click with a promise-backed `ClipboardItem`, because Safari rejects writes that begin after an `await`. Cards not already in client state load through `fetchFlashcardContents`, which splits ids into requests of `LIMITS.flashcardContentsReadMax` (100) against `GET /api/flashcards/contents` to stay under URL length limits. `copyFlashcardsWithToast` (`src/components/flashcards/shared/`) is the one entry point the manage, detail, and review menus call; the manage view reaches it through `useFlashcardCopy`, which counts in-flight copies so the toolbar stays pending until all of them finish.
-- Subject hierarchy reads remain in `src/features/subjects/queries.ts` (the sidebar tree builder lives in `tree-queries.ts`). `getAllSubjectsWithPathsForUser` computes only `id`/`path` in its recursive CTE and takes the rows from Drizzle, so options keep the camelCase `SubjectEntity` shape and real `Date`s; atomic `::` path creation lives in `src/features/subjects/path-mutations.ts`, with the shared single-row insert in `subject-write.ts`. Subject moves validate and update within a per-user advisory-locked `READ COMMITTED` transaction to prevent concurrent moves from creating cycles.
-- Media uploads (note and flashcard editor images) funnel through `src/features/attachments/mutations.ts`, then run `src/lib/media-storage/optimize-image.ts` before handing bytes to the storage provider (`src/lib/media-storage/provider.ts` → `vercel-blob-provider.ts`). The server upload path is therefore: validate → optimize → store. Image uploads transfer raw multipart bytes through the `POST /api/attachments/image` route handler into `uploadAttachmentImageForUser`, not a Server Action: Server Actions cap request bodies at 1 MB (below Vercel's 4.5 MB function-body ceiling, so it cannot just be raised), and multipart avoids base64's ~33% inflation. The shared client helper is `src/lib/attachments/upload-attachment-image.ts`. This route handler is the one sanctioned client-callable write endpoint outside Server Actions. PDF uploads (up to 100 MB) cannot pass through any function body, so they go straight from the browser to storage: the `preparePdfUpload` Server Action checks the subject's PDF limit and the daily quota, then issues a short-lived client token bound to a server-chosen pathname under the user's `pdfs` prefix, with the PDF content type and size cap baked in. `src/lib/attachments/upload-pdf-document.ts` uploads with that token, then calls `createPdf`, which re-checks pathname ownership and the stored file's real size and type (`headBlob`) before inserting the `pdf_document` row. No new client-callable endpoint is involved. `optimizeImageForStorage` re-encodes raster images to WebP with an EXIF-orientation fix and a max-dimension cap (sharp, `serverExternalPackages`), and falls back to the original bytes when sharp cannot decode them or WebP would not be smaller, so it never enlarges or corrupts an upload.
-- AI calls share one layer in `src/lib/ai/`: `config.ts` (instance OpenRouter settings, including one reasoning effort that defaults to `none`), `provider.ts` (model factory that applies that effort as `reasoning.effort` to every call), `stream-chat.ts` (UI message stream `Response` for `useChat`; mid-stream errors are logged as `ai_chat_failed` and reach the client only as the SDK's generic error; an optional `sessionId` becomes OpenRouter's `session_id` so a chat's turns stay on one provider's prompt cache), `user-ai-access.ts` (`acquireUserAiSettings` resolves settings and then spends one unit of a per-user daily limit), `prompt-rules.ts` (shared prompt fragments such as `MATH_RULE`), and `plain-text-rich-text.ts` (isomorphic conversion of AI plain text with lists, code fences, and LaTeX into Tiptap HTML). Feature AI code (`src/features/flashcards/ai-prompts.ts`, `src/features/assistant/`) owns only prompts, schemas, and result shaping. Chat and assistant-written flashcard prose follow the user's applicable explicit language instruction, otherwise the latest request's language, including language-bearing short follow-ups; only ambiguous or language-neutral requests inherit earlier user language. Source and assistant text do not select it.
-- The study assistant lives in `src/features/assistant/` (request schema, system prompt, `streamAssistantReplyForUser`) and `src/components/assistant/` (`StudyAssistant` launcher mounted by the app shell when `aiEnabled`, a lazily loaded presentation-only `AssistantPanel` backed exclusively by the shell-owned `AssistantWorkspaceProvider` on `@ai-sdk/react` `useChat`, and `assistant-chat-transport.ts`, which trims history to `LIMITS.assistantMaxMessages`, sends the `useChat` id as `chatId` for cache routing, and resolves route errors to messages). The system prompt is independent of subjects and active material. `request-context.ts` sends labeled, JSON-quoted tutoring settings, subject choices, and current material after prior history and before the latest user message. Tool descriptions own purpose, targets, and review semantics; schema descriptions own formats, identifiers, and operation semantics. Review context sends an unrevealed answer as `hiddenBack` (never `back`) so hints and attempt checks are correct, following the solution-in-prompt safeguard of Bastani et al. (PNAS 2025); the prompt forbids stating it unasked or echoing raw context. The workspace records the front of a card asked about before reveal (`assistedRecallFront`) so the review card can suggest a lower grade without another AI call. The tutoring mode (`tutoring`: `hints` by default, or `answers`, from the panel's Hints first toggle, saved in the `notorium:assistant-tutoring` cookie by `setTutoringModePreference` and read by the app layout like the sidebar state) is per-request context; general tutoring behavior stays in the system prompt. It streams through `POST /api/assistant/chat`, the one sanctioned streaming AI endpoint outside Server Actions: actions run one at a time per client (a reply in flight would queue every write behind it) and cannot stream. The route writes nothing; it authenticates, validates the whole non-persistent chat with Zod (user/assistant text, step markers, answered creation/edit proposals and library searches, and optional size-limited draft or study context; pending or failed tool calls are dropped), and delegates, answering `ActionErrorResult` bodies with 400/401/429/503/500. Chats live only in client memory. Assistant tools live in `src/features/assistant/tools.ts` and reach `streamText` through `streamChatResponse`'s `tools` option, typed into `AssistantUIMessage` (`src/features/assistant/types.ts`). `proposeFlashcards` has no `execute` and carries all of a reply's cards (1–5) in one call, since many models make only one tool call per reply: the call ends the reply, `AssistantFlashcardProposal` renders it with a subject preselected from the user's subject paths (the service reads them into request context), and the user's Create goes through the `createFlashcard` Server Action; per-card outcomes are tracked by `use-flashcard-proposal-outcomes.ts` and stored with `addToolOutput`; before each send, cards still open are recorded as `skipped` (restorable in the UI), so the model always gets a result for every proposal. Prefer this propose-then-confirm shape for future write tools. `buildAssistantTools` takes the read-only `searchLibrary` function from the service (`searchLibraryForUser` in `src/features/search/library-queries.ts`, bound to the session user), the one tool with `execute`: replies run up to two model steps (`maxModelSteps`) with the same `activeTools` on both; the search contract allows one search per reply. All four definitions remain in `tools` for history conversion. `selectAssistantActiveTools` exposes creation and search plus only the current draft editor (flashcard or note), with no intent classifier or keyword router. The system prefix stays cacheable across turns; changing editor kind changes the exposed tool schemas and can reduce prompt-cache reuse. Changes to material, subjects, or tutoring settings do not change instructions or tool schemas. Its contract lives in `library-search-contract.ts`: a few model-chosen terms in, at most 4 hits per kind with 120-character excerpts out, and `toModelOutput` gives the model a compact quoted list without ids while `AssistantLibraryResults` builds links from the ids. Search failures are logged and reach the model as a fixed message. Chat history keeps `step-start` markers, since `convertToModelMessages` splits a reply into steps at them and a search result would otherwise follow the answer it fed. A tool that writes from the route instead must call the same `src/features/*/mutations.ts` functions the Server Actions use, revalidate through `revalidate-views.ts`, and get an explicit `biome.json` exclusion.
-- The subject tree sidebar loads a subject's documents lazily through `src/components/subjects/tree/load-subject-documents.ts`. Each subject's state is `"loading"`, the list, or `"error"` (rendered as a "Couldn't load documents. Retry" row; collapsing and re-expanding also retries). Reads run in parallel now, so a per-subject request id keeps a stale response from overwriting a newer one.
-- The assistant is one global collapsible sidebar: `AssistantAppFrame` reserves desktop space, and `AssistantSurfaceHost` portals its presentation into flashcard dialogs so focus/scroll locks include chat; review and exam sessions are plain pages, so the frame's reserved space covers them. There is no floating launcher: `AssistantLauncherButton` sits in `PageTopBar`, the session header, the create dialog header, and the zen-mode header, and the workspace keeps those launchers as a stack so minimizing returns focus to the most recently mounted one. Hosts stack and restore the previous host on close; all overlays retain the same named layer. The shell owns conversation, composer, and open state, so moving the presentation never resets the chat. Flashcard editor dialogs use a viewport-sized focus boundary around the centered form and global sidebar; mobile opens chat over the editor.
-- Flashcards have one editing surface, `FlashcardCardEditor` (`src/components/flashcards/shared/`): Front and Back stacked like the review card (`FlashcardFace`) under one sticky formatting toolbar that follows the focused face. `TiptapEditor` renders bare and hands its controls to that toolbar through `onToolbarTargetChange`. The detail page autosaves it, the create dialog submits it, and review/exam sessions swap the current card for it in place (`ReviewCardEditor`, explicit Save/Cancel) so the assistant stays usable; there is no edit dialog, and manage-table Edit opens the detail page.
-- Flashcard draft editing registers the active form through `use-active-flashcard-editor.ts`; per-send snapshots carry an ephemeral session id and revision, not a database write target. `proposeFlashcardEdits` has no execute function: completed proposals are routed to their original revision and reviewed per field inside the editor. Accepted replacements go through React Hook Form; existing Server Actions (or detail auto-save) save them. Draft context follows prior history as background in the latest user turn, before the actual user message, never in system instructions. The user message remains last so draft context does not replace the question; prompt and tool instructions reserve edit proposals for explicit requests to change the card. Image locations are replaced with placeholders and math nodes with `$...$`/`$$...$$` text before sending (`draftHtmlForAssistant`), so the model reads math in the format it is told to write; replacements restore only original images, sanitize, move LaTeX written as math-element text into `data-latex` (dropping math with none), convert plain-text output and dollar-delimited math in HTML text nodes (excluding code and existing math), and normalize through the shared read-only editor schema. Review decorations never enter form values or persisted HTML. Late/mismatched replies become stale outcomes; unresolved fields become skipped before follow-ups or editor teardown. There is no single-back AI path; card changes go through the study assistant.
-- Document AI editing uses `proposeNoteEdits` without `execute`. `document-edit-contract.ts` owns bounded note draft, operation, and outcome schemas. The workspace captures a full local baseline and sends a bounded visible draft with ephemeral block ids. Client preparation validates edits, rejects unseen or overlapping targets, and preserves unrelated content. Server guards in `edit-guards.ts` and `note-edit-rules.ts` reject no-op edits, copied blocks, invented image placeholders, and stale draft identities; invalid calls return the reason to the model for correction. Note ranges are located by `note-edit-ranges.ts`, shared by server guard and client preparation. Rejected calls remain hidden while a reply is in flight; only an unanswered failure after the reply ends shows a notice. The live adapter registers the Tiptap editor. Applying a note uses one history transaction so title and content undo together. Proposals render inside the note through `NoteDocumentReview`, `DocumentTitleReview`, and `DocumentEditReviewControls`; accepting uses normal autosave. Revision and session checks run on arrival and Apply, and teardown settles skipped outcomes. Flashcard drafts retain priority. Context is capped at 12,000 characters and assistant output at 4,000 tokens.
-- Notes are subject-scoped and appear under `src/app/(app)/subjects/[id]/documents/notes/[noteId]/`. Navigation comes from the global subject tree sidebar. Subject labels and breadcrumbs are unlinked; `/subjects/:id` redirects home, and deleting a note returns home. `src/features/documents/` adapts note queries to `DocumentListItem` for the sidebar and dashboard. The editor spans the full workspace width. The tree sidebar offers Add note directly in each subject menu. The per-note kebab (Edit/Delete/Copy) is shared through `src/components/documents/document-row-menu.tsx` and `use-document-row-dialogs.tsx`. AI flashcard creation uses the assistant’s live note context and `proposeFlashcards`.
-- Note detail uses `src/lib/editor/use-document-autosave.ts` to debounce snapshots, serialize writes, coalesce edits, flush on teardown, and retain failed drafts for retry. Image uploads block saves until they settle. `DocumentAutosaveFeedback` displays pending and retry states. This in-memory queue does not provide offline storage or cross-tab conflict resolution.
+Import restrictions in [biome.json](../biome.json) enforce the read/write boundaries.
+Detailed contributor rules belong in [AGENTS.md](../AGENTS.md), not here.
 
-- The authenticated shell (`src/components/shared/app-layout-client.tsx`) renders the collapsible left menu (`src/components/navbar/`) beside the page content; there is no top navbar. Pages render a sticky breadcrumb top bar via `src/components/shared/page-top-bar.tsx` (`PageTopBar` and the matching `PageTopBarSkeleton` for `loading.tsx`), which is the location indicator and replaces per-page back links. Its `breadcrumb` is `{ parent?, current }`, two named slots rather than a keyed list, because crumbs carry no unique identity (an unlinked subject and its note can share a name). Card/detail pages compose a sticky breadcrumb plus centered body through the shared `DetailPageLayout` (`src/components/shared/detail-page-layout.tsx`), which wraps `PageTopBar` over an `AppPageContainer` (default `max-w-5xl`, tuned per page via `maxWidth`: admin and flashcard detail `3xl`); document workspaces (note) stay full-width (`max-w-7xl`) and keep their own layout for zen mode. The root route (`src/app/(app)/page.tsx`) is the Home dashboard rendered inside the authenticated shell; it self-gates with `requireSession()` (signed-out users go to `/login`) and composes overview cards from existing feature queries (flashcards due, review activity, recent documents across subjects).
-- `src/db/` owns the Drizzle schema, relations, and database client. Text search is accent- and case-insensitive through `immutable_unaccent()`, an IMMUTABLE SQL wrapper over the `unaccent` extension created by the custom migration `drizzle/0070_unaccent_search.sql` (Drizzle cannot generate extensions or functions; it needs no superuser, so it runs on Neon). The GIN trigram indexes in `src/db/schema.ts` (`unaccentTrigramIndex`) cover `immutable_unaccent(column)`, so queries must build matches with `src/features/search/match-sql.ts` (`foldedContains`, `buildTermSearch`), which wraps columns the same way; any other wrapping skips the indexes. Highlighting and node-label matching fold text the same way on the client with `src/lib/search/fold.ts`.
-- `src/lib/` owns cross-cutting project helpers and wrappers for external services.
-- `src/env.ts` owns runtime environment validation.
+## Cross-Cutting Constraints
 
-Attachment deletion has one policy: edits, record/subtree deletion, and discarded drafts leave files in storage; `src/features/attachments/blob-gc.ts` reclaims unreferenced blobs through the scheduled sweep. `blob-references.ts` collects references across notes, both flashcard faces, and `pdf_document.blobPathname`, so removing one reference preserves shared files. The existing upload-age grace period and deletion-fraction circuit breaker still apply. Account deletion is the exception: `purgeUserBlobs` deletes all files under that user’s owned prefixes. Scheduling requirements live in [optional features](./setup/optional-features.md#blob-orphan-garbage-collection).
+- **Deletion has different lifetimes.** Historical review logs survive card/subject
+  deletion. Shared media is reclaimed by a reference-aware sweep rather than deleted
+  with one document; account deletion purges owned files. See [Behavior Contracts](./behavior-contracts.md).
+- **Hierarchy moves need concurrency protection.** Subject moves validate and update
+  under a per-user transaction lock so overlapping moves cannot create cycles;
+  [subject mutations](../src/features/subjects/mutations.ts) own that coordination.
+- **Editor and renderer must share formats.** Their extension sets and math helpers
+  live in [editor infrastructure](../src/lib/editor/) and [math infrastructure](../src/lib/math/).
+  Diverging schemas can silently discard stored nodes. Autosave is an in-memory
+  write queue, not offline persistence or cross-tab conflict resolution.
+- **Search must match its indexes.** [Shared SQL builders](../src/features/search/match-sql.ts)
+  use the same accent-folding expression as the database indexes; different wrapping
+  can prevent index use. Schema and migrations own the exact database definitions.
 
-Image upload admission lives in `POST /api/attachments/image`: authenticate and consume the daily attempt quota before reading bytes, then `src/lib/attachments/read-upload-form.ts` bounds the complete request stream before multipart parsing (including missing or dishonest Content-Length). The route checks file size before creating its byte array; the feature mutation retains byte-size and MIME validation before optimization/storage.
-
-Cross-cutting services live behind project-owned helpers in `src/lib/`, including Better Auth, AI providers, email, media storage, and rate limiting.
-
-The rich-text editor and read-only renderer (`src/components/shared/tiptap-editor.tsx` and `tiptap-renderer.tsx`) share their Tiptap extension sets through `src/lib/editor/build*Extensions()` helpers (tables, math). The editor exposes those commands through `tiptap-formatting-toolbar.tsx` and reuses the existing link dialog and private attachment upload path. Both surfaces must register the same extensions: Tiptap drops unknown nodes when parsing stored HTML, so math or tables present only in the editor would vanish in the renderer. Math nodes (KaTeX) serialize their LaTeX into a `data-latex` attribute, which `src/lib/editor/rich-text.ts` surfaces as text so equations stay searchable and within length limits. Shared math logic lives in `src/lib/math/`: `katex.ts` (safe `MATH_KATEX_OPTIONS` and `renderLatexToHtml`), `dollar-math.ts` (`$...$`/`$$...$$` parsing with the currency rule, delimiting, and over-escape normalization), and `math-nodes.ts` (math node HTML, selector, and DOM reads). AI text conversion, clipboard export, review decorations, and the math edit dialog all use it; do not add new dollar regexes or KaTeX calls elsewhere. React surfaces render KaTeX markup only through `src/components/shared/katex-html.tsx`, the single sanctioned `dangerouslySetInnerHTML` for math.
-
-Assistant tool input schemas stay flat: no union, literal, or nullable fields inside a tool `inputSchema`. Gemini function calling accepts only an OpenAPI subset without `oneOf`/`anyOf`/`const`, so `document-edit-contract.test.ts` asserts that the note edit tool schema remains union-free.
-
-## Enforced Boundaries
-
-Three boundaries above are machine-checked, not just convention (see the Next.js Boundaries section in [AGENTS.md](../AGENTS.md)):
-
-- Server Actions (`src/app/actions/*`) cannot import `@/db/index`; they go through `src/features/*`. Enforced by a `noRestrictedImports` override in `biome.json`.
-- Components (`src/components/*`) cannot import `@/features/*/mutations`; writes flow through Server Actions. Enforced by the same rule. Server Components reading from `queries.ts` live under `src/app/*`, so they are unaffected. Client reads flow through `src/lib/read-api/*` to the GET route handlers.
-- Read-only code cannot import write modules: Server Components under `src/app/(app)/**`, `src/features/**/queries.ts` and `*-queries.ts`, and every route under `src/app/api/` are barred from `@/features/**/mutations`, `*-mutations`, `*-mutation`, and `subject-write`. Enforced by a third `noRestrictedImports` override, so rendering a page or answering a GET can never create or repair rows. The override covers new routes by default; only the sanctioned writers are excluded (`attachments/image` upload, `auth`, and the scheduled `cron` and `flashcards/fsrs` jobs).
-
-A separate guard, `npm run check:size`, enforces 500-line source and 800-line test limits; `src/db/schema.ts` is exempt.
-
-### Study surface context
-
-Production prompts and tool/schema descriptions contain general behavior and
-format contracts only. Keep test data, debugging transcripts, and canned study
-examples out of every model request. Dynamic context comes from the current
-user's conversation, settings, subjects, active material, and authorized tool
-results; never seed sample or fallback study content. Keep concrete test
-scenarios in test files, with no production imports from test helpers.
-
-The assistant system prompt owns language, trust, and shared flashcard quality
-rules once per request. Tool descriptions own eligibility and review semantics;
-schemas own field representations, identifiers, and cross-field constraints.
-New cards and full rewrites follow the full quality rules; targeted edits apply
-them only within the requested change.
-
-Flashcard creation and revision instructions resolve short follow-ups against
-conversation history before consulting the active study surface. A skipped
-proposal remains available in history for corrections; its outcome records
-that it was not saved. Proposal tools accept plain text (including inline or
-fenced code), while draft edit tools accept editor HTML. The shared
-`src/lib/ai/plain-text-rich-text.ts` converter protects code before parsing math,
-escapes its contents, and tolerates accidental inline `<code>` wrappers without
-interpreting arbitrary HTML. Proposal preview, Edit prefill, and Create use that
-same conversion; collapsed outcomes derive readable text from it.
-
-`useStudyContext` registers live review/exam and note snapshots with the shell workspace. Editor drafts take precedence; mounted study surfaces stack and restore on teardown. The request accepts the existing flashcard draft, a validated `StudyContext` union, or a document draft, with at most one supplied. The latest user turn follows the layout long-context guides recommend: labeled `<request_context>` blocks (untrusted background, never system instructions, which would give note or card text instruction authority), then the user's words tagged `<user_request>`, then a short reminder of request-language authority and conversation-first reference resolution. Background values are JSON-quoted with angle brackets Unicode-escaped so source text cannot close the context container or impersonate a user-request tag; decoding preserves the original material. Earlier turns are sent unchanged, so they stay a cacheable prefix. System instructions stay stable and active tools follow the current editor. A flashcard proposal that repeats the card under review is rejected by its guard (`flashcard-proposal-rules.ts`). Review snapshots omit unrevealed backs. Document snapshots use current client edits, cap readable content at 12,000 characters, and mark partial excerpts. Notes replace explicit images and renderer-recognized image paragraphs with placeholders before converting to Markdown. Document zen mode mounts the existing assistant surface host inside its immersive boundary and reserves desktop sidebar space. No new reads, writes, endpoints, or AI requests are introduced.
-
-### Flashcard source documents
-
-Flashcards keep a nullable `sourceNoteId` foreign key with
-`ON DELETE SET NULL` and an index so note deletion preserves cards without a table scan. Creation accepts
-one validated `{ kind, id }` source and checks ownership before insertion.
-`src/features/flashcards/source-queries.ts` resolves current document titles and
-subject locations in batches for detail, manage-edit, review, and exam reads, selecting only
-link metadata and filtering documents by `userId`. Existing card writes leave
-source references unchanged.
-
-Document study snapshots carry `documentId`. User message metadata captures its
-source when sending (and refreshes it when retrying); proposals use their own
-preceding user message's source, never the currently open page or model-supplied
-ids. Proposal Edit prefills the same source in the create form. The source stays
-outside editor content and model tool input. `FlashcardSourceReference` is the
-single link UI, rendered as header metadata under the subject in detail and in
-review/exam (after reveal, and while editing inline); session links open a separate
-tab so drafts and the session stay mounted.
+Product intent and unresolved risks: [Behavior Contracts](./behavior-contracts.md).
+Visual conventions: [DESIGN.md](../DESIGN.md). Checks and test setup:
+[Development](./setup/development.md).

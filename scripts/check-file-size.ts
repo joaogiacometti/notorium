@@ -1,16 +1,4 @@
-/**
- * File-size guard. Enforces the "files under 500 lines" rule from AGENTS.md so
- * large modules can't creep in unnoticed as the codebase grows.
- *
- * Run with `npm run check:size`. Exits non-zero (failing CI) when a source file
- * exceeds its limit. New oversized files are blocked outright; the handful of
- * pre-existing offenders are grandfathered via KNOWN_OVERSIZED and may only
- * shrink, never grow.
- *
- * @example
- *   npm run check:size
- *   // -> "src/components/foo.tsx: 540 lines (limit 500)" then exit 1
- */
+/** Source/test size guard for CI and `npm run check:size`. */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
@@ -19,24 +7,8 @@ const DEFAULT_LIMIT = 500;
 // Test files describe many scenarios and are allowed to run longer.
 const TEST_LIMIT = 800;
 
-/**
- * Files intentionally exempt from the size guard by an explicit project
- * decision. These are NOT tech debt and must NOT be split — leave them as a
- * single file and do not "fix" them. The guard skips them entirely so they can
- * grow freely without churn.
- *
- * - src/db/schema.ts: the canonical single-file Drizzle schema. Keeping every
- *   table and relation in one file is deliberate; do not split it.
- */
+// Keep the canonical Drizzle schema together; this is a deliberate exemption.
 const SIZE_GUARD_EXEMPT = new Set<string>(["src/db/schema.ts"]);
-
-/**
- * Tech-debt allow-list of files that already exceeded the limit when the guard
- * was introduced. Do NOT add entries: split the file and remove its line here
- * instead. Each file may only shrink — the guard fails if it grows past the
- * recorded count, ratcheting the codebase smaller over time.
- */
-const KNOWN_OVERSIZED: Record<string, number> = {};
 
 type Violation = { file: string; lines: number; limit: number };
 
@@ -57,8 +29,6 @@ function listSourceFiles(dir: string): string[] {
   return files;
 }
 
-// Count newlines so the result matches `wc -l`, which the allow-list caps were
-// recorded with.
 function countLines(path: string): number {
   const content = readFileSync(path, "utf8");
   const newlines = content.split("\n").length - 1;
@@ -66,8 +36,6 @@ function countLines(path: string): number {
 }
 
 function limitFor(file: string): number {
-  const cap = KNOWN_OVERSIZED[file];
-  if (cap !== undefined) return cap;
   return isTestFile(file) ? TEST_LIMIT : DEFAULT_LIMIT;
 }
 
@@ -89,11 +57,9 @@ function report(violations: Violation[]): void {
   }
   console.error("File-size guard failed:\n");
   for (const { file, lines, limit } of violations) {
-    const grandfathered = file in KNOWN_OVERSIZED;
-    const hint = grandfathered
-      ? `exceeds its allow-listed cap of ${limit} — it must shrink, not grow`
-      : `exceeds the ${limit}-line limit — split it by responsibility`;
-    console.error(`  ${file}: ${lines} lines (${hint})`);
+    console.error(
+      `  ${file}: ${lines} lines (exceeds the ${limit}-line limit — split it by responsibility)`,
+    );
   }
   console.error(
     "\nSplit the file into focused modules. Do not raise limits to pass.",
