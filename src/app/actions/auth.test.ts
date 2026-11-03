@@ -11,6 +11,7 @@ const {
   signUpEmailMock,
   signOutMock,
   getServerEnvMock,
+  checkAuthRateLimitFake,
 } = vi.hoisted(() => ({
   getApprovedUserByEmailMock: vi.fn(),
   getUserAccessStatusByEmailMock: vi.fn(),
@@ -21,6 +22,7 @@ const {
   signUpEmailMock: vi.fn(),
   signOutMock: vi.fn(),
   getServerEnvMock: vi.fn(),
+  checkAuthRateLimitFake: vi.fn(),
 }));
 
 vi.mock("@/env", () => ({
@@ -49,7 +51,7 @@ vi.mock("@/lib/auth/auth", () => ({
 }));
 
 vi.mock("@/lib/auth/rate-limit", () => ({
-  checkAuthRateLimit: vi.fn(),
+  checkAuthRateLimit: checkAuthRateLimitFake,
 }));
 
 vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
@@ -125,25 +127,30 @@ describe("password reset actions", () => {
       });
     });
 
-    it("blocks after the daily reset email limit", async () => {
-      consumeUserDailyRateLimitMock.mockResolvedValueOnce({
-        limited: true,
-        errorCode: "auth.rateLimited",
-        remaining: 0,
-        resetAt: "2026-04-30T00:00:00.000Z",
-      });
-      const { requestPasswordResetAction } = await import("@/app/actions/auth");
+    it.each(["active@example.com", "  Active@Example.COM  "])(
+      "blocks reset for %s after the daily email limit",
+      async (email) => {
+        consumeUserDailyRateLimitMock.mockResolvedValueOnce({
+          limited: true,
+          errorCode: "auth.rateLimited",
+          remaining: 0,
+          resetAt: "2026-04-30T00:00:00.000Z",
+        });
+        const { requestPasswordResetAction } = await import(
+          "@/app/actions/auth"
+        );
 
-      const result = await requestPasswordResetAction({
-        email: "active@example.com",
-      });
+        const result = await requestPasswordResetAction({
+          email,
+        });
 
-      expect(result).toMatchObject({
-        success: false,
-        errorCode: "auth.rateLimited",
-      });
-      expect(requestPasswordResetMock).not.toHaveBeenCalled();
-    });
+        expect(result).toMatchObject({
+          success: false,
+          errorCode: "auth.rateLimited",
+        });
+        expect(requestPasswordResetMock).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe("resetPasswordAction", () => {
@@ -195,6 +202,81 @@ describe("password reset actions", () => {
           newPassword: "securepass",
         },
       });
+    });
+  });
+});
+
+describe("auth email normalization", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    checkAuthRateLimitFake.mockResolvedValue({ limited: false });
+    consumeUserDailyRateLimitMock.mockResolvedValue({ limited: false });
+    getServerEnvMock.mockReturnValue({
+      BETTER_AUTH_URL: "https://notorium.example.com",
+    });
+  });
+
+  it.each(["pending", "blocked"])(
+    "rejects mixed-case login for a %s account before creating a session",
+    async (status) => {
+      getUserAccessStatusByEmailMock.mockImplementation(async (email) =>
+        email === "user@example.com" ? status : null,
+      );
+      const { loginAction } = await import("@/app/actions/auth");
+
+      const result = await loginAction({
+        email: "  User@Example.COM  ",
+        password: "securepass",
+      });
+
+      expect(result).toMatchObject({
+        success: false,
+        errorCode:
+          status === "pending" ? "auth.accessPending" : "auth.accessBlocked",
+      });
+      expect(signInEmailMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("allows approved login using the same email for approval and authentication", async () => {
+    getUserAccessStatusByEmailMock.mockImplementation(async (email) =>
+      email === "user@example.com" ? "approved" : null,
+    );
+    const { loginAction } = await import("@/app/actions/auth");
+
+    const result = await loginAction({
+      email: "  User@Example.COM  ",
+      password: "securepass",
+    });
+
+    expect(result).toEqual({ success: true, data: { redirectTo: "/" } });
+    expect(getUserAccessStatusByEmailMock).toHaveBeenCalledWith(
+      "user@example.com",
+    );
+    expect(signInEmailMock).toHaveBeenCalledWith({
+      body: { email: "user@example.com", password: "securepass" },
+    });
+  });
+
+  it("sends an approved reset for mixed-case email and consumes quota once", async () => {
+    getApprovedUserByEmailMock.mockImplementation(async (email) =>
+      email === "user@example.com"
+        ? { id: "user-1", email: "user@example.com" }
+        : null,
+    );
+    const { requestPasswordResetAction } = await import("@/app/actions/auth");
+
+    const result = await requestPasswordResetAction({
+      email: "  User@Example.COM  ",
+    });
+
+    expect(result).toEqual({ success: true });
+    expect(consumeUserDailyRateLimitMock).toHaveBeenCalledTimes(1);
+    expect(requestPasswordResetMock).toHaveBeenCalledExactlyOnceWith({
+      body: {
+        email: "user@example.com",
+        redirectTo: "https://notorium.example.com/reset-password",
+      },
     });
   });
 });

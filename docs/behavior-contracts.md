@@ -12,7 +12,7 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 
 **Verification gaps from static review; not runtime-confirmed or fixed:**
 
-- [Account-name updates](../src/app/actions/account.ts) check a session through Better Auth without an explicit approval check. Login's status lookup uses an exact email match, while Better Auth lowercases the subsequent sign-in lookup. Verify direct endpoints and mixed-case input, not just the normal UI path.
+- [Account-name updates](../src/app/actions/account.ts) check a session through Better Auth without an explicit approval check.
 - Add cross-user integration coverage for reads, mutations, private media, and library search; mocked ownership helpers alone cannot demonstrate isolation.
 
 ## Review and Persistence

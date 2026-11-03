@@ -6,6 +6,42 @@ import {
   signupSchema,
 } from "@/lib/validations/auth";
 
+describe.each([
+  ["login", loginSchema],
+  ["signup", signupSchema],
+  ["password reset request", requestPasswordResetSchema],
+])("%s email normalization", (_name, schema) => {
+  const form = {
+    name: "Alice",
+    password: "securepass",
+    confirmPassword: "securepass",
+  };
+
+  it("trims and lowercases email without removing dots or plus tags", () => {
+    const result = schema.parse({
+      ...form,
+      email: "  Alice.Smith+Study@Example.COM  ",
+    });
+
+    expect(result.email).toBe("alice.smith+study@example.com");
+  });
+
+  it("still rejects malformed email after trimming", () => {
+    expect(
+      schema.safeParse({ ...form, email: "  Not An Email  " }).success,
+    ).toBe(false);
+  });
+
+  it("still rejects email over the length limit", () => {
+    expect(
+      schema.safeParse({
+        ...form,
+        email: `${"A".repeat(245)}@Example.COM`,
+      }).success,
+    ).toBe(false);
+  });
+});
+
 describe("loginSchema", () => {
   it("accepts valid credentials", () => {
     const result = loginSchema.safeParse({

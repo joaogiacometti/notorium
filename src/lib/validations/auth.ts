@@ -2,17 +2,19 @@ import { z } from "zod";
 import { LIMITS } from "@/lib/config/limits";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
+// Match Better Auth's email casing before app approval and quota checks.
+const authEmailSchema = z
+  .string()
+  .trim()
+  .max(LIMITS.authEmailMax, validationMessage("Validation.auth.emailMaxLength"))
+  .pipe(
+    z
+      .email({ error: validationMessage("Validation.auth.emailInvalid") })
+      .toLowerCase(),
+  );
+
 export const loginSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .max(
-      LIMITS.authEmailMax,
-      validationMessage("Validation.auth.emailMaxLength"),
-    )
-    .pipe(
-      z.email({ error: validationMessage("Validation.auth.emailInvalid") }),
-    ),
+  email: authEmailSchema,
   password: z
     .string()
     .min(
@@ -40,16 +42,7 @@ export const signupSchema = z
         LIMITS.authNameMax,
         validationMessage("Validation.auth.nameMaxLength"),
       ),
-    email: z
-      .string()
-      .trim()
-      .max(
-        LIMITS.authEmailMax,
-        validationMessage("Validation.auth.emailMaxLength"),
-      )
-      .pipe(
-        z.email({ error: validationMessage("Validation.auth.emailInvalid") }),
-      ),
+    email: authEmailSchema,
     password: z
       .string()
       .min(
@@ -72,16 +65,7 @@ export const signupSchema = z
 export type SignupForm = z.infer<typeof signupSchema>;
 
 export const requestPasswordResetSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .max(
-      LIMITS.authEmailMax,
-      validationMessage("Validation.auth.emailMaxLength"),
-    )
-    .pipe(
-      z.email({ error: validationMessage("Validation.auth.emailInvalid") }),
-    ),
+  email: authEmailSchema,
 });
 
 export type RequestPasswordResetForm = z.infer<
