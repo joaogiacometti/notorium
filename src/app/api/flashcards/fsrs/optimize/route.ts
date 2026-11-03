@@ -6,14 +6,6 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request): Promise<NextResponse> {
   const env = getServerEnv();
-
-  if (!env.CRON_SECRET) {
-    return NextResponse.json(
-      { error: "Cron endpoint is not configured." },
-      { status: 503 },
-    );
-  }
-
   const authHeader = request.headers.get("authorization");
   const expectedToken = `Bearer ${env.CRON_SECRET}`;
 

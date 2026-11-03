@@ -57,9 +57,6 @@ export async function preparePdfUploadForUser(
   }
 
   const provider = await getMediaStorageProvider();
-  if (!provider) {
-    return actionError("attachments.notConfigured");
-  }
 
   const quotaError = await consumePdfUploadQuota(userId);
   if (quotaError) {
@@ -147,9 +144,6 @@ async function readStoredPdf(
   pathname: string,
 ): Promise<StoredBlobHead | ActionErrorResult> {
   const provider = await getMediaStorageProvider();
-  if (!provider) {
-    return actionError("attachments.notConfigured");
-  }
 
   const stored = await provider.headBlob(pathname);
   if (!stored) {

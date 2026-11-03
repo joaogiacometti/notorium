@@ -28,7 +28,6 @@ interface FlashcardsManagerProps {
   initialSearch?: string;
   initialFilter?: FlashcardManageFilter;
   initialPageSize: number;
-  aiEnabled: boolean;
 }
 
 export function FlashcardsManager({
@@ -37,7 +36,6 @@ export function FlashcardsManager({
   initialSearch,
   initialFilter,
   initialPageSize,
-  aiEnabled,
 }: Readonly<FlashcardsManagerProps>) {
   const warningTone = getStatusToneClasses("warning");
   const router = useRouter();
@@ -170,7 +168,6 @@ export function FlashcardsManager({
         onOpenChange={(open) => setDialog(open ? { kind: "create" } : null)}
         onCreated={refreshManagePage}
         subjectId={selectedSubjectId}
-        aiEnabled={aiEnabled}
       />
       <BulkDeleteFlashcardsDialog
         ids={selectedFlashcardIds}

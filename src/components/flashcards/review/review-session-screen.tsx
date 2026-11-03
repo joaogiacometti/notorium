@@ -55,7 +55,6 @@ interface ReviewSessionScreenProps {
   isExamMode?: boolean;
   /** The current card is open in the inline editor instead of being reviewed. */
   editing: boolean;
-  aiEnabled: boolean;
   onStopEditing: () => void;
   onFlashcardUpdated: (flashcard: FlashcardEntity) => void | Promise<void>;
 }
@@ -103,7 +102,6 @@ function ActiveSessionScreen(props: Readonly<SessionScreenProps>) {
         key={currentCard.id}
         card={currentCard}
         subjectLabel={subjectLabel}
-        aiEnabled={props.aiEnabled}
         onSaved={props.onFlashcardUpdated}
         onClose={props.onStopEditing}
         renderSession={(content, footer) => (

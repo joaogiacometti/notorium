@@ -650,7 +650,6 @@ describe("FlashcardReviewSession", () => {
           initialState={initialState}
           subjects={[]}
           subjectId={subjectId}
-          aiEnabled={false}
         />,
       );
     });

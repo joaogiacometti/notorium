@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { FlashcardDetail } from "@/components/flashcards/flashcard-detail";
 import { getFlashcardDetailByIdForUser } from "@/features/flashcards/queries";
-import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
 import { resolveFlashcardDetailBackLink } from "@/lib/navigation/detail-page-back-link";
 
@@ -15,7 +14,6 @@ export default async function FlashcardDetailPage({
   searchParams,
 }: Readonly<FlashcardDetailPageProps>) {
   const session = await requireSession();
-  const aiEnabled = isAiEnabled();
   const { flashcardId } = await params;
   const returnContext = await searchParams;
 
@@ -39,7 +37,6 @@ export default async function FlashcardDetailPage({
         }}
         returnHref={backLink.href}
         flashcard={flashcard}
-        aiEnabled={aiEnabled}
       />
     </main>
   );

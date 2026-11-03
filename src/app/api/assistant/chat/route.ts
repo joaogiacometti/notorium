@@ -4,11 +4,6 @@ import { getOptionalSession } from "@/lib/auth/auth";
 import { logServerFailure } from "@/lib/server/action-failure";
 import { actionError } from "@/lib/server/server-action-errors";
 
-const FAILURE_STATUS = {
-  "assistant.notConfigured": 503,
-  "limits.aiAssistantPerDay": 429,
-} as const;
-
 // The study assistant streams through this route handler rather than a Server
 // Action: Server Actions run one at a time per client (a reply in flight would
 // queue every other write behind it) and cannot stream a response body. It is
@@ -41,7 +36,7 @@ export async function POST(request: Request): Promise<Response> {
 
     if (!result.success) {
       return Response.json(actionError(result.errorCode), {
-        status: FAILURE_STATUS[result.errorCode],
+        status: 429,
       });
     }
 

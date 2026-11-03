@@ -24,7 +24,6 @@ interface AppLayoutClientProps {
   email: string;
   isAdmin: boolean;
   userId: string;
-  aiEnabled: boolean;
   initialSidebarCollapsed: boolean;
   children: React.ReactNode;
 }
@@ -91,7 +90,6 @@ export function AppLayoutClient({
   email,
   isAdmin,
   userId,
-  aiEnabled,
   initialSidebarCollapsed,
   children,
 }: Readonly<AppLayoutClientProps>) {
@@ -124,7 +122,6 @@ export function AppLayoutClient({
   const sidebar = tree ? (
     <AppSidebar
       tree={tree}
-      aiEnabled={aiEnabled}
       accountName={accountName}
       email={email}
       isAdmin={isAdmin}
@@ -166,17 +163,16 @@ export function AppLayoutClient({
       {userId && (
         <GlobalSearch
           userId={userId}
-          aiEnabled={aiEnabled}
           open={searchOpen}
           onOpenChange={setSearchOpen}
         />
       )}
       {showSidebar ? <MobileSidebarSheet>{sidebar}</MobileSidebarSheet> : null}
       {mainRow}
-      {userId && aiEnabled ? <StudyAssistant /> : null}
+      {userId ? <StudyAssistant /> : null}
     </div>
   );
-  return userId && aiEnabled ? (
+  return userId ? (
     <AssistantWorkspaceProvider>
       <AssistantAppFrame>{content}</AssistantAppFrame>
     </AssistantWorkspaceProvider>

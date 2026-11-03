@@ -110,19 +110,14 @@ export function selectOrphanBlobs(
  * Deletes blobs no live database row references. This is the single cleanup
  * path for edited/deleted records and discarded drafts: individual records
  * cannot safely delete images that other records may still reference.
- * Returns null when no media storage is configured.
  *
  * @example
  * const report = await sweepOrphanBlobs({ dryRun: true });
  */
 export async function sweepOrphanBlobs(
   options: BlobSweepOptions = {},
-): Promise<BlobSweepReport | null> {
+): Promise<BlobSweepReport> {
   const provider = await getMediaStorageProvider();
-
-  if (!provider) {
-    return null;
-  }
 
   const minAgeMs = options.minAgeMs ?? DEFAULT_MIN_ORPHAN_AGE_MS;
   const dryRun = options.dryRun ?? false;
@@ -189,10 +184,6 @@ async function listUserBlobPathnames(
  */
 export async function purgeUserBlobs(userId: string): Promise<void> {
   const provider = await getMediaStorageProvider();
-
-  if (!provider) {
-    return;
-  }
 
   try {
     const pathnames = await listUserBlobPathnames(provider, userId);

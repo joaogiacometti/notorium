@@ -29,14 +29,6 @@ function buildPath(input: UploadImageInput): string {
 export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
   const env = getServerEnv();
 
-  function getBlobToken(): string {
-    if (!env.BLOB_READ_WRITE_TOKEN) {
-      throw new Error("blob token is not configured");
-    }
-
-    return env.BLOB_READ_WRITE_TOKEN;
-  }
-
   async function uploadImage(
     input: UploadImageInput,
   ): Promise<UploadImageResult> {
@@ -44,7 +36,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
       access: "private",
       addRandomSuffix: false,
       contentType: input.mimeType,
-      token: getBlobToken(),
+      token: env.BLOB_READ_WRITE_TOKEN,
     });
 
     return {
@@ -58,7 +50,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
   ): Promise<ReadBlobResult | null> {
     const result = await get(input.pathname, {
       access: "private",
-      token: getBlobToken(),
+      token: env.BLOB_READ_WRITE_TOKEN,
       headers: input.range ? { range: input.range } : undefined,
     });
 
@@ -81,7 +73,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
 
   async function headBlob(pathname: string): Promise<StoredBlobHead | null> {
     try {
-      const result = await head(pathname, { token: getBlobToken() });
+      const result = await head(pathname, { token: env.BLOB_READ_WRITE_TOKEN });
       return { size: result.size, contentType: result.contentType };
     } catch (error) {
       if (error instanceof BlobNotFoundError) {
@@ -95,7 +87,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
     input: CreateClientUploadTokenInput,
   ): Promise<string> {
     return generateClientTokenFromReadWriteToken({
-      token: getBlobToken(),
+      token: env.BLOB_READ_WRITE_TOKEN,
       pathname: input.pathname,
       maximumSizeInBytes: input.maximumSizeInBytes,
       allowedContentTypes: input.allowedContentTypes,
@@ -110,7 +102,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
     }
 
     await del(input.pathnames, {
-      token: getBlobToken(),
+      token: env.BLOB_READ_WRITE_TOKEN,
     });
   }
 
@@ -120,7 +112,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
 
     do {
       const result = await list({
-        token: getBlobToken(),
+        token: env.BLOB_READ_WRITE_TOKEN,
         prefix: input.prefix,
         cursor,
       });
@@ -140,7 +132,7 @@ export function createVercelBlobMediaStorageProvider(): MediaStorageProvider {
 
     do {
       const result = await list({
-        token: getBlobToken(),
+        token: env.BLOB_READ_WRITE_TOKEN,
         prefix: input.prefix,
         cursor,
       });

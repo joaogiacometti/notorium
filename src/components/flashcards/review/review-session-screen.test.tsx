@@ -302,7 +302,6 @@ describe("ReviewSessionScreen", () => {
           isPending={false}
           canUndoReview={false}
           editing={false}
-          aiEnabled={false}
           {...baseHandlers}
           {...overrides}
         />,

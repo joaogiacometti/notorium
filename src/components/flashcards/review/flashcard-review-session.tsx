@@ -19,7 +19,6 @@ interface FlashcardReviewSessionProps {
   initialState: FlashcardReviewState;
   subjects: Array<SubjectEntity | SubjectOption>;
   subjectId?: string;
-  aiEnabled: boolean;
 }
 
 /**
@@ -27,13 +26,12 @@ interface FlashcardReviewSessionProps {
  * hub it returns to reflects every grade.
  *
  * @example
- * <FlashcardReviewSession initialState={state} subjects={subjects} aiEnabled={false} />
+ * <FlashcardReviewSession initialState={state} subjects={subjects} />
  */
 export function FlashcardReviewSession({
   initialState,
   subjects,
   subjectId,
-  aiEnabled,
 }: Readonly<FlashcardReviewSessionProps>) {
   const router = useRouter();
   const shortcutsSuspended = useShortcutsDialogOpen();
@@ -100,7 +98,6 @@ export function FlashcardReviewSession({
         onExit={() => setExitRequested(true)}
         onEditFlashcard={() => setEditing(true)}
         editing={editing}
-        aiEnabled={aiEnabled}
         onStopEditing={() => setEditing(false)}
         onFlashcardUpdated={controller.handleFlashcardUpdated}
         onResetFlashcard={() => setResetOpen(true)}

@@ -11,12 +11,11 @@ interface UserAiDailyLimit {
 
 type UserAiAccess =
   | { granted: true; settings: ResolvedAiSettings }
-  | { granted: false; reason: "notConfigured" | "limited" };
+  | { granted: false };
 
 /**
- * Gate one AI call for a user: resolve the instance AI settings, then consume
- * one unit of the user's daily limit. Settings resolve first so an unconfigured
- * instance never spends quota. Rate-limit backend failures throw.
+ * Gate one AI call for a user by consuming one unit of their daily limit.
+ * Rate-limit backend failures throw.
  *
  * @example
  * const access = await acquireUserAiSettings("user-1", {
@@ -24,17 +23,12 @@ type UserAiAccess =
  *   limit: LIMITS.aiAssistantRateLimitPerDay,
  *   errorCode: "limits.aiAssistantPerDay",
  * });
- * if (!access.granted) return access.reason;
+ * if (!access.granted) return limited();
  */
 export async function acquireUserAiSettings(
   userId: string,
   dailyLimit: UserAiDailyLimit,
 ): Promise<UserAiAccess> {
-  const settings = resolveAiSettings();
-  if (!settings) {
-    return { granted: false, reason: "notConfigured" };
-  }
-
   const limitResult = await consumeUserDailyRateLimit({
     prefix: dailyLimit.prefix,
     userId,
@@ -43,8 +37,8 @@ export async function acquireUserAiSettings(
   });
 
   if (limitResult.limited) {
-    return { granted: false, reason: "limited" };
+    return { granted: false };
   }
 
-  return { granted: true, settings };
+  return { granted: true, settings: resolveAiSettings() };
 }

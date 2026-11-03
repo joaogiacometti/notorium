@@ -54,7 +54,6 @@ function Harness({
       onCreateSubject={onCreateSubject}
       onSubmit={async () => {}}
       isSubmitting={false}
-      aiEnabled
       duplicateFrontMessage={
         isDuplicate ? "A flashcard with this front already exists." : null
       }

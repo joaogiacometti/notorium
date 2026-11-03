@@ -28,7 +28,6 @@ interface FlashcardsPageClientProps {
   subjects: SubjectOption[];
   initialManagePageData: FlashcardManagePage;
   reviewSummary: FlashcardReviewSummary;
-  aiEnabled: boolean;
 }
 
 /**
@@ -45,7 +44,6 @@ export function FlashcardsPageClient({
   subjects,
   initialManagePageData,
   reviewSummary,
-  aiEnabled,
 }: Readonly<FlashcardsPageClientProps>) {
   const scopeKey = `${currentView}:${scopedSubjectId ?? "all"}`;
   const [isSubjectChanging, setIsSubjectChanging] = useState(false);
@@ -123,7 +121,6 @@ export function FlashcardsPageClient({
           initialSearch={initialSearch}
           initialFilter={initialFilter}
           initialPageSize={initialPageSize}
-          aiEnabled={aiEnabled}
         />
       )}
     </div>

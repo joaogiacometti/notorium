@@ -132,12 +132,7 @@ describe("GlobalSearch", () => {
           <ShortcutsDialogOpenProvider
             shortcutsDialogOpen={shortcutsDialogOpen}
           >
-            <GlobalSearch
-              userId="user-1"
-              aiEnabled={false}
-              open
-              onOpenChange={onOpenChange}
-            />
+            <GlobalSearch userId="user-1" open onOpenChange={onOpenChange} />
           </ShortcutsDialogOpenProvider>
         </QueryClientProvider>,
       );

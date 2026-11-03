@@ -43,6 +43,12 @@ function setRequiredServerEnv() {
   process.env.BETTER_AUTH_SECRET = "12345678901234567890123456789012";
   process.env.REDIS_URL = "redis://localhost:6379";
   process.env.RATE_LIMIT_BACKEND = "redis";
+  process.env.OPENROUTER_API_KEY = "openrouter-key";
+  process.env.OPENROUTER_MODEL = "openrouter/model";
+  process.env.BLOB_READ_WRITE_TOKEN = "blob-token";
+  process.env.RESEND_API_KEY = "resend-key";
+  process.env.RESEND_FROM_EMAIL = "Notorium <notifications@example.com>";
+  process.env.CRON_SECRET = "12345678901234567890123456789012";
 }
 
 function clearServerEnv() {
@@ -71,45 +77,28 @@ describe("server env", () => {
     expect(() => getServerEnv()).toThrowError("Invalid environment variables:");
   });
 
-  it("allows missing blob token", async () => {
+  it("accepts a complete configuration", async () => {
     setRequiredServerEnv();
 
     const { getServerEnv } = await import("@/env");
-    const env = getServerEnv();
 
-    expect(env.BLOB_READ_WRITE_TOKEN).toBeUndefined();
+    expect(getServerEnv().OPENROUTER_REASONING_EFFORT).toBeUndefined();
   });
 
-  it("parses blob token when set", async () => {
+  it.each([
+    "OPENROUTER_API_KEY",
+    "OPENROUTER_MODEL",
+    "BLOB_READ_WRITE_TOKEN",
+    "RESEND_API_KEY",
+    "RESEND_FROM_EMAIL",
+    "CRON_SECRET",
+  ] as const)("requires %s", async (key) => {
     setRequiredServerEnv();
-    process.env.BLOB_READ_WRITE_TOKEN = "token-value";
+    delete process.env[key];
 
     const { getServerEnv } = await import("@/env");
-    const env = getServerEnv();
 
-    expect(env.BLOB_READ_WRITE_TOKEN).toBe("token-value");
-  });
-
-  it("allows missing cron and email env vars", async () => {
-    setRequiredServerEnv();
-
-    const { getServerEnv } = await import("@/env");
-    const env = getServerEnv();
-
-    expect(env.CRON_SECRET).toBeUndefined();
-    expect(env.RESEND_API_KEY).toBeUndefined();
-    expect(env.RESEND_FROM_EMAIL).toBeUndefined();
-  });
-
-  it("allows missing OpenRouter env vars", async () => {
-    setRequiredServerEnv();
-
-    const { getServerEnv } = await import("@/env");
-    const env = getServerEnv();
-
-    expect(env.OPENROUTER_API_KEY).toBeUndefined();
-    expect(env.OPENROUTER_MODEL).toBeUndefined();
-    expect(env.OPENROUTER_REASONING_EFFORT).toBeUndefined();
+    expect(() => getServerEnv()).toThrowError(key);
   });
 
   it("parses the assistant reasoning effort when set", async () => {

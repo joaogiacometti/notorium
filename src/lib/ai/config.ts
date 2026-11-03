@@ -20,20 +20,9 @@ export interface ResolvedAiSettings {
   reasoningEffort: AiReasoningEffort;
 }
 
-/**
- * Instance AI settings from the environment, or `null` when AI is not
- * configured.
- *
- * @example
- * const settings = resolveAiSettings();
- * if (!settings) return { success: false, errorCode: "assistant.notConfigured" };
- */
-export function resolveAiSettings(): ResolvedAiSettings | null {
+/** Instance AI settings from the environment. */
+export function resolveAiSettings(): ResolvedAiSettings {
   const env = getServerEnv();
-
-  if (!env.OPENROUTER_API_KEY || !env.OPENROUTER_MODEL) {
-    return null;
-  }
 
   return {
     model: env.OPENROUTER_MODEL,
@@ -41,8 +30,4 @@ export function resolveAiSettings(): ResolvedAiSettings | null {
     reasoningEffort:
       env.OPENROUTER_REASONING_EFFORT ?? DEFAULT_REASONING_EFFORT,
   };
-}
-
-export function isAiEnabled() {
-  return resolveAiSettings() !== null;
 }

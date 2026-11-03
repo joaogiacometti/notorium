@@ -17,7 +17,6 @@ import type { DocumentKind } from "@/features/documents/types";
 interface SubjectTreeDialogsProps {
   /** Shared document kebab dialog host rendered alongside the tree dialogs. */
   documentDialogs: ReactNode;
-  aiEnabled: boolean;
   createOpen: boolean;
   onCreateOpenChange: (open: boolean) => void;
   createParentId?: string;
@@ -44,7 +43,6 @@ interface SubjectTreeDialogsProps {
  */
 export function SubjectTreeDialogs({
   documentDialogs,
-  aiEnabled,
   createOpen,
   onCreateOpenChange,
   createParentId,
@@ -126,7 +124,6 @@ export function SubjectTreeDialogs({
             onCreateFlashcardSubjectIdChange(null);
           }
         }}
-        aiEnabled={aiEnabled}
       />
     </>
   );

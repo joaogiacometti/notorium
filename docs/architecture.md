@@ -9,13 +9,15 @@ behavior. Update it when those boundaries or decisions change.
 Notorium is a knowledge editor built as a Next.js application with server-rendered
 pages and interactive client editors. PostgreSQL stores user records and material
 through Drizzle; Redis
-or Upstash supplies rate limiting. Optional integrations are OpenRouter for AI,
-Vercel Blob for private media, and Resend for email. Scheduled HTTP jobs perform
-FSRS optimization and orphan-file cleanup.
+or Upstash supplies rate limiting. Required integrations are OpenRouter for AI,
+Vercel Blob for private media, and Resend for email. AI requests send conversation
+and active material text to OpenRouter and the selected provider. Scheduled HTTP
+jobs, triggered by [GitHub workflows](../.github/workflows), perform FSRS
+optimization and orphan-file cleanup.
 
 Local development runs the app alongside Compose-managed PostgreSQL and Redis;
-deployment uses configured backing services. Setup belongs in the [README](../README.md)
-and [integration guide](./setup/optional-features.md).
+deployment uses configured backing services. Setup belongs in the [README](../README.md);
+[`.env.example`](../.env.example) lists the configuration.
 
 ## Module Responsibilities
 

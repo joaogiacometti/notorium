@@ -10,7 +10,6 @@ import {
 import { getAuth } from "@/lib/auth/auth";
 import { checkAuthRateLimit } from "@/lib/auth/rate-limit";
 import { LIMITS } from "@/lib/config/limits";
-import { isEmailDeliveryEnabled } from "@/lib/email/config";
 import { consumeUserDailyRateLimit } from "@/lib/rate-limit/user-rate-limit";
 import { runValidatedAction } from "@/lib/server/action-runner";
 import type {
@@ -142,10 +141,6 @@ export const requestPasswordResetAction = async (
     data,
     "auth.invalidInput",
     async (parsedData) => {
-      if (!isEmailDeliveryEnabled()) {
-        return actionError("auth.passwordResetUnavailable");
-      }
-
       const approvedUser = await getApprovedUserByEmail(parsedData.email);
       if (!approvedUser) {
         return passwordResetSuccess;

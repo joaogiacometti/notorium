@@ -79,13 +79,6 @@ describe("sweepOrphanBlobs", () => {
     });
   });
 
-  it("returns null when storage is not configured", async () => {
-    getMediaStorageProviderMock.mockResolvedValueOnce(null);
-    const { sweepOrphanBlobs } = await import("@/features/attachments/blob-gc");
-
-    expect(await sweepOrphanBlobs()).toBeNull();
-  });
-
   it("deletes orphaned blobs and reports counts", async () => {
     listImageEntriesMock.mockResolvedValue([
       entry("notorium/notes/u/keep.png", 10 * DAY),
@@ -187,14 +180,5 @@ describe("purgeUserBlobs", () => {
     const { purgeUserBlobs } = await import("@/features/attachments/blob-gc");
 
     await expect(purgeUserBlobs("u")).resolves.toBeUndefined();
-  });
-
-  it("does nothing when storage is not configured", async () => {
-    getMediaStorageProviderMock.mockResolvedValueOnce(null);
-
-    const { purgeUserBlobs } = await import("@/features/attachments/blob-gc");
-    await purgeUserBlobs("u");
-
-    expect(listImagePathnamesMock).not.toHaveBeenCalled();
   });
 });

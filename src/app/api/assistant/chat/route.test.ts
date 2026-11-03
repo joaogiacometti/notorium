@@ -101,17 +101,6 @@ describe("POST /api/assistant/chat", () => {
     });
   });
 
-  it("answers 503 when AI is not configured", async () => {
-    streamAssistantReplyForUserMock.mockResolvedValueOnce({
-      success: false,
-      errorCode: "assistant.notConfigured",
-    });
-
-    const response = await postChat(validBody);
-
-    expect(response.status).toBe(503);
-  });
-
   it("hides unexpected failures behind a generic 500", async () => {
     streamAssistantReplyForUserMock.mockRejectedValueOnce(
       new Error("provider secret detail"),

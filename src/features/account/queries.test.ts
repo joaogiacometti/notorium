@@ -1,18 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getFsrsOptimizationSettingsMock, areWorkflowsEnabledMock } = vi.hoisted(
-  () => ({
-    getFsrsOptimizationSettingsMock: vi.fn(),
-    areWorkflowsEnabledMock: vi.fn(),
-  }),
-);
+const { getFsrsOptimizationSettingsMock } = vi.hoisted(() => ({
+  getFsrsOptimizationSettingsMock: vi.fn(),
+}));
 
 vi.mock("@/features/flashcards/fsrs/settings-queries", () => ({
   getFsrsOptimizationSettings: getFsrsOptimizationSettingsMock,
-}));
-
-vi.mock("@/lib/workflows/config", () => ({
-  areWorkflowsEnabled: areWorkflowsEnabledMock,
 }));
 
 const sessionUser = {
@@ -27,8 +20,7 @@ describe("getAccountSettingsForUser", () => {
     vi.clearAllMocks();
   });
 
-  it("bundles session, config flags, and FSRS settings for the settings dialog", async () => {
-    areWorkflowsEnabledMock.mockReturnValue(false);
+  it("bundles session and FSRS settings for the settings dialog", async () => {
     getFsrsOptimizationSettingsMock.mockResolvedValue({
       automaticOptimizationEnabled: false,
       lastOptimizedAt: null,
@@ -45,7 +37,6 @@ describe("getAccountSettingsForUser", () => {
       name: "Ada",
       email: "ada@example.com",
       createdAt: "2024-01-02T00:00:00.000Z",
-      workflowsEnabled: false,
       fsrsOptimization: {
         automaticOptimizationEnabled: false,
         lastOptimizedAt: null,

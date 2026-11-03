@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 import { getOptionalSession } from "@/lib/auth/auth";
-import { isEmailDeliveryEnabled } from "@/lib/email/config";
 
 interface ResetPasswordPageProps {
   searchParams: Promise<{ token?: string; error?: string }>;
@@ -16,10 +15,6 @@ export default async function Page({
 
   if (session) {
     redirect("/");
-  }
-
-  if (!isEmailDeliveryEnabled()) {
-    redirect("/login");
   }
 
   const resetToken = token?.trim();

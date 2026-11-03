@@ -145,7 +145,6 @@ describe("FlashcardExamSession", () => {
           initialCards={[makeCard("card-1"), makeCard("card-2")]}
           subjects={[]}
           subjectId={subjectId}
-          aiEnabled={false}
         />,
       );
     });

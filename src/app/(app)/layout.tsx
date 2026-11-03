@@ -3,7 +3,6 @@ import { AccountSettingsProvider } from "@/components/account/account-settings-p
 import { AppLayoutClient } from "@/components/shared/app-layout-client";
 import { ShortcutsProvider } from "@/components/shortcuts/shortcuts-provider";
 import { getSubjectTreeForUser } from "@/features/subjects/tree-queries";
-import { isAiEnabled } from "@/lib/ai/config";
 import { getOptionalSessionAccess } from "@/lib/auth/auth";
 
 export default async function AuthenticatedAppLayout({
@@ -28,7 +27,6 @@ export default async function AuthenticatedAppLayout({
           email={session?.user.email ?? ""}
           isAdmin={authState?.account.isAdmin ?? false}
           userId={session?.user.id ?? ""}
-          aiEnabled={isAiEnabled()}
           initialSidebarCollapsed={initialSidebarCollapsed}
         >
           {children}

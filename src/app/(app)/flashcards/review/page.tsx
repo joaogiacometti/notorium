@@ -3,7 +3,6 @@ import { FlashcardReviewSession } from "@/components/flashcards/review/flashcard
 import { getFlashcardReviewStateForUser } from "@/features/flashcard-review/queries";
 import { resolveScopedSubjectId } from "@/features/flashcards/scope";
 import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
-import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
 import { getFlashcardsHref } from "@/lib/navigation/detail-page-back-link";
 
@@ -34,7 +33,6 @@ export default async function FlashcardReviewPage({
       initialState={initialState}
       subjects={subjects}
       subjectId={scopedSubjectId}
-      aiEnabled={isAiEnabled()}
     />
   );
 }

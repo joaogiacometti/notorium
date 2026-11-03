@@ -215,8 +215,6 @@ function PendingFlashcardProposal({
           onOpenChange={setEditorOpen}
           subjectId={subject.id ?? undefined}
           initialCard={richCard}
-          // The assistant is only mounted when AI is configured.
-          aiEnabled
           onCreated={() => {
             setEditorOpen(false);
             onResolve("created");

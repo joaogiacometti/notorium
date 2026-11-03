@@ -75,32 +75,15 @@ export interface MediaStorageProvider {
 }
 
 /**
- * Reports whether runtime media storage is configured for upload features.
- *
- * @example
- * const attachmentsEnabled = isMediaStorageConfigured();
- */
-export function isMediaStorageConfigured(): boolean {
-  const env = getServerEnv();
-  return Boolean(
-    env.NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR || env.BLOB_READ_WRITE_TOKEN,
-  );
-}
-
-/**
- * Returns a media storage provider if configured, otherwise null.
+ * Returns the fixture provider in Playwright runs, otherwise Vercel Blob.
  *
  * @example
  * const provider = await getMediaStorageProvider();
  */
-export async function getMediaStorageProvider(): Promise<MediaStorageProvider | null> {
+export async function getMediaStorageProvider(): Promise<MediaStorageProvider> {
   const fixtureDir = getServerEnv().NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR;
   if (fixtureDir) {
     return createFixtureMediaStorageProvider(fixtureDir);
   }
-  if (!isMediaStorageConfigured()) {
-    return null;
-  }
-
   return createVercelBlobMediaStorageProvider();
 }

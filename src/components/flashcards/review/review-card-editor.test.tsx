@@ -74,7 +74,6 @@ describe("ReviewCardEditor", () => {
         <ReviewCardEditor
           card={makeCard()}
           subjectLabel="Biology"
-          aiEnabled={false}
           onSaved={onSaved}
           onClose={onClose}
           renderSession={renderSession}

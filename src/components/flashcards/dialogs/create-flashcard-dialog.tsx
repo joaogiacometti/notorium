@@ -16,7 +16,6 @@ interface CreateFlashcardDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: (flashcard: FlashcardEntity) => void;
-  aiEnabled: boolean;
   /** Prefills front and back each time the dialog opens. */
   initialCard?: CreateFlashcardInitialCard;
 }
@@ -27,7 +26,6 @@ export function CreateFlashcardDialog({
   open,
   onOpenChange,
   onCreated,
-  aiEnabled,
   initialCard,
 }: Readonly<CreateFlashcardDialogProps>) {
   const { subjects, form, dialog, handleCreateSubject } =
@@ -54,7 +52,6 @@ export function CreateFlashcardDialog({
             onSubmit={dialog.handleSubmit}
             isSubmitting={dialog.isSubmitting}
             isSaved={dialog.isSaved}
-            aiEnabled={aiEnabled}
             duplicateFrontMessage={
               dialog.isDuplicateFront ? dialog.duplicateFrontMessage : null
             }

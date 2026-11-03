@@ -44,13 +44,6 @@ describe("GET /api/cron/blob-gc", () => {
     expect(sweepOrphanBlobsMock).not.toHaveBeenCalled();
   });
 
-  it("requires cron configuration before sweeping", async () => {
-    getServerEnvMock.mockReturnValue({});
-    const { GET } = await import("@/app/api/cron/blob-gc/route");
-    expect((await GET(new SweepRequestFake())).status).toBe(503);
-    expect(sweepOrphanBlobsMock).not.toHaveBeenCalled();
-  });
-
   it("returns the sweep report to an authorized caller", async () => {
     const { GET } = await import("@/app/api/cron/blob-gc/route");
     const response = await GET(new SweepRequestFake());
@@ -70,12 +63,6 @@ describe("GET /api/cron/blob-gc", () => {
     expect(response.status).toBe(200);
     expect(sweepOrphanBlobsMock).toHaveBeenCalledWith({ dryRun: true });
     await expect(response.json()).resolves.toMatchObject({ deleted: 0 });
-  });
-
-  it("reports unavailable storage", async () => {
-    sweepOrphanBlobsMock.mockResolvedValue(null);
-    const { GET } = await import("@/app/api/cron/blob-gc/route");
-    expect((await GET(new SweepRequestFake())).status).toBe(503);
   });
 
   it("returns a failure status when the safety brake blocks cleanup", async () => {

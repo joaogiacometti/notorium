@@ -123,23 +123,6 @@ describe("FlashcardOptimizationCard", () => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
   });
 
-  it("hides automatic optimization controls when workflows are disabled", async () => {
-    await act(async () => {
-      root.render(
-        <FlashcardOptimizationCard
-          settings={settings}
-          workflowsEnabled={false}
-        />,
-      );
-    });
-
-    expect(container.textContent).toContain("Last optimized:");
-    expect(container.textContent).toContain("Never optimized");
-    expect(container.textContent).not.toContain("Optimized with");
-    expect(container.textContent).not.toContain("Review history");
-    expect(container.textContent).not.toContain("Automatic optimization");
-  });
-
   it("runs manual optimization from the button", async () => {
     optimizeFlashcardSchedulerMock.mockResolvedValueOnce({
       success: true,
@@ -148,9 +131,7 @@ describe("FlashcardOptimizationCard", () => {
     });
 
     await act(async () => {
-      root.render(
-        <FlashcardOptimizationCard settings={settings} workflowsEnabled />,
-      );
+      root.render(<FlashcardOptimizationCard settings={settings} />);
     });
 
     const button = Array.from(container.querySelectorAll("button")).find(
@@ -174,9 +155,7 @@ describe("FlashcardOptimizationCard", () => {
     });
 
     await act(async () => {
-      root.render(
-        <FlashcardOptimizationCard settings={settings} workflowsEnabled />,
-      );
+      root.render(<FlashcardOptimizationCard settings={settings} />);
     });
 
     const resetButton = Array.from(container.querySelectorAll("button")).find(
@@ -207,9 +186,7 @@ describe("FlashcardOptimizationCard", () => {
 
   it("enables the automatic optimization save action after the switch changes", async () => {
     await act(async () => {
-      root.render(
-        <FlashcardOptimizationCard settings={settings} workflowsEnabled />,
-      );
+      root.render(<FlashcardOptimizationCard settings={settings} />);
     });
 
     const saveButton = Array.from(container.querySelectorAll("button")).find(
@@ -233,9 +210,7 @@ describe("FlashcardOptimizationCard", () => {
     });
 
     await act(async () => {
-      root.render(
-        <FlashcardOptimizationCard settings={settings} workflowsEnabled />,
-      );
+      root.render(<FlashcardOptimizationCard settings={settings} />);
     });
 
     const toggle = container.querySelector("#automatic-optimization-toggle");

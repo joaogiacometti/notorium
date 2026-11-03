@@ -1,4 +1,6 @@
 import type { NextConfig } from "next";
+import { PHASE_PRODUCTION_BUILD } from "next/constants";
+import { getServerEnv } from "./src/env";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
@@ -31,4 +33,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default function config(phase: string): NextConfig {
+  // Env validation is otherwise lazy, so a deploy missing a required variable
+  // would succeed and then fail every request. Failing the build keeps the
+  // previous deployment serving.
+  if (phase === PHASE_PRODUCTION_BUILD) {
+    getServerEnv();
+  }
+
+  return nextConfig;
+}

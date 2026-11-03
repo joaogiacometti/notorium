@@ -26,7 +26,6 @@ type ReviewCard = FlashcardReviewState["cards"][number];
 interface ReviewCardEditorProps {
   card: ReviewCard;
   subjectLabel: string;
-  aiEnabled: boolean;
   onSaved: (flashcard: FlashcardEntity) => void | Promise<void>;
   onClose: () => void;
   /** Lays the card out in the session: content area plus footer actions. */
@@ -39,12 +38,11 @@ const formId = "form-review-edit-flashcard";
  * Edits the session's current card in place, with the same card editor as the
  * detail page. Staying in the page (not a dialog) keeps the assistant usable.
  *
- * @example <ReviewCardEditor card={card} subjectLabel="Biology" aiEnabled onSaved={apply} onClose={stop} renderSession={layout} />
+ * @example <ReviewCardEditor card={card} subjectLabel="Biology" onSaved={apply} onClose={stop} renderSession={layout} />
  */
 export function ReviewCardEditor({
   card,
   subjectLabel,
-  aiEnabled,
   onSaved,
   onClose,
   renderSession,
@@ -71,7 +69,7 @@ export function ReviewCardEditor({
   const isUploading = pendingUploads > 0;
   const review = useActiveFlashcardEditor({
     form,
-    enabled: aiEnabled,
+    enabled: true,
     blocked: session.isSubmitting || isUploading,
   });
   const saveBlocked = session.isSubmitting || isUploading || review.blocked;

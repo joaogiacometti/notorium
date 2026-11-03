@@ -72,7 +72,6 @@ describe("AppSidebar", () => {
       root.render(
         <AppSidebar
           tree={[]}
-          aiEnabled={false}
           accountName="João"
           email="joao@example.com"
           isAdmin={false}
@@ -98,7 +97,6 @@ describe("AppSidebar", () => {
       root.render(
         <AppSidebar
           tree={[]}
-          aiEnabled={false}
           accountName="João"
           email="joao@example.com"
           isAdmin={false}

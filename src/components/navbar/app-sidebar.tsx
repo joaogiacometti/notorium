@@ -8,7 +8,6 @@ import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 
 interface AppSidebarProps {
   tree: SubjectTreeNode[];
-  aiEnabled: boolean;
   accountName: string;
   email: string;
   isAdmin: boolean;
@@ -23,7 +22,6 @@ interface AppSidebarProps {
  */
 export function AppSidebar({
   tree,
-  aiEnabled,
   accountName,
   email,
   isAdmin,
@@ -46,7 +44,7 @@ export function AppSidebar({
       <AppSidebarNav onOpenSearch={onOpenSearch} />
 
       <div className="mt-3 min-h-0 flex-1">
-        <SubjectTreeSidebar tree={tree} aiEnabled={aiEnabled} />
+        <SubjectTreeSidebar tree={tree} />
       </div>
     </div>
   );

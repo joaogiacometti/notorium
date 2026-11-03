@@ -6,6 +6,12 @@ function stubRequiredEnv() {
     "postgresql://postgres:postgres@localhost:5432/notorium",
   );
   vi.stubEnv("BETTER_AUTH_SECRET", "12345678901234567890123456789012");
+  vi.stubEnv("OPENROUTER_API_KEY", "openrouter-key");
+  vi.stubEnv("OPENROUTER_MODEL", "openrouter/model");
+  vi.stubEnv("BLOB_READ_WRITE_TOKEN", "blob-token");
+  vi.stubEnv("RESEND_API_KEY", "resend-key");
+  vi.stubEnv("RESEND_FROM_EMAIL", "Notorium <notifications@example.com>");
+  vi.stubEnv("CRON_SECRET", "12345678901234567890123456789012");
 }
 
 function stubUpstashEnv() {

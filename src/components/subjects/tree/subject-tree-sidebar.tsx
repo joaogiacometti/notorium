@@ -39,12 +39,10 @@ import {
 
 interface SubjectTreeSidebarProps {
   tree: SubjectTreeNode[];
-  aiEnabled: boolean;
 }
 
 export function SubjectTreeSidebar({
   tree,
-  aiEnabled,
 }: Readonly<SubjectTreeSidebarProps>) {
   const router = useRouter();
   const pathname = usePathname();
@@ -395,7 +393,6 @@ export function SubjectTreeSidebar({
 
       <SubjectTreeDialogs
         documentDialogs={documentDialogs}
-        aiEnabled={aiEnabled}
         createOpen={createOpen}
         onCreateOpenChange={setCreateOpen}
         createParentId={createParentId}

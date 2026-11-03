@@ -204,10 +204,7 @@ function AllSettings({ settings }: Readonly<{ settings: AccountSettings }>) {
         createdAt={settings.createdAt}
       />
       <AppearanceCard />
-      <FlashcardOptimizationCard
-        settings={settings.fsrsOptimization}
-        workflowsEnabled={settings.workflowsEnabled}
-      />
+      <FlashcardOptimizationCard settings={settings.fsrsOptimization} />
       <DangerZoneCard />
     </>
   );
@@ -240,12 +237,7 @@ function LoadedSection({
   settings,
 }: Readonly<{ activeSection: SettingsSectionId; settings: AccountSettings }>) {
   if (activeSection === "flashcards") {
-    return (
-      <FlashcardOptimizationCard
-        settings={settings.fsrsOptimization}
-        workflowsEnabled={settings.workflowsEnabled}
-      />
-    );
+    return <FlashcardOptimizationCard settings={settings.fsrsOptimization} />;
   }
 
   return (

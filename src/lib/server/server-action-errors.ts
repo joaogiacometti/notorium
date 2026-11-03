@@ -51,8 +51,6 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "auth.invalidInput": "Invalid input.",
   "auth.loginFailed": "Login failed.",
   "auth.signupFailed": "Sign up failed.",
-  "auth.passwordResetUnavailable":
-    "Password reset is not configured for this instance.",
   "auth.passwordResetRequestFailed":
     "Could not send password reset email. Please try again later.",
   "auth.passwordResetFailed":
@@ -67,11 +65,7 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "attachments.invalidData": "Invalid attachment data.",
   "attachments.uploadFailed": "Failed to upload attachment.",
   "attachments.mimeTypeNotAllowed": "File type is not allowed.",
-  "attachments.notConfigured":
-    "No media storage is configured. Contact your administrator.",
   "assistant.invalidData": "Invalid assistant message.",
-  "assistant.notConfigured":
-    "The assistant is not configured for this instance.",
   "assistant.unavailable": "The assistant is temporarily unavailable.",
   "flashcards.invalidData": "Invalid flashcard data.",
   "flashcards.notFound": "Flashcard not found.",

@@ -8,7 +8,7 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 
 - Workspace reads and writes require an approved authenticated user and enforce ownership, including search, media, and assistant tool results. Admin access changes require an admin. UI visibility is not authorization.
 - Password-reset policy is approved accounts only, with a generic response for missing or unapproved accounts and a daily email cap from [limits.ts](../src/lib/config/limits.ts). Successful resets revoke existing sessions.
-- Account deletion removes the user's database records and owned stored files. Ordinary document/subtree deletion instead leaves shared attachments for the scheduled orphan sweep; see [storage operations](./setup/optional-features.md#blob-orphan-garbage-collection).
+- Account deletion removes the user's database records and owned stored files. Ordinary document/subtree deletion instead leaves shared attachments for the scheduled orphan sweep; see [the sweep](../src/features/attachments/blob-gc.ts).
 
 **Verification gaps from static review; not runtime-confirmed or fixed:**
 

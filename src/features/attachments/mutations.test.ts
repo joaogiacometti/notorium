@@ -92,26 +92,6 @@ describe("uploadAttachmentImageForUser", () => {
     expect(getMediaStorageProviderMock).not.toHaveBeenCalled();
   });
 
-  it("returns notConfigured when no storage provider is configured", async () => {
-    getMediaStorageProviderMock.mockResolvedValueOnce(null);
-
-    const { uploadAttachmentImageForUser } = await import(
-      "@/features/attachments/mutations"
-    );
-
-    const result = await uploadAttachmentImageForUser(
-      "user-1",
-      createValidPayload(),
-    );
-
-    expect(result).toEqual({
-      success: false,
-      errorCode: "attachments.notConfigured",
-      errorParams: undefined,
-      errorMessage: undefined,
-    });
-  });
-
   it("uploads and returns authenticated read URL when provider is configured", async () => {
     const { uploadAttachmentImageForUser } = await import(
       "@/features/attachments/mutations"

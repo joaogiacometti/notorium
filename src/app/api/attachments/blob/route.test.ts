@@ -90,17 +90,6 @@ describe("GET /api/attachments/blob", () => {
     expect(getMediaStorageProviderMock).not.toHaveBeenCalled();
   });
 
-  it("returns 503 when media storage provider is not configured", async () => {
-    getMediaStorageProviderMock.mockResolvedValueOnce(null);
-
-    const { GET } = await import("@/app/api/attachments/blob/route");
-    const response = await GET(
-      getRouteRequest("notorium/notes/user-1/file.png"),
-    );
-
-    expect(response.status).toBe(503);
-  });
-
   it("returns 404 when blob cannot be found", async () => {
     readBlobMock.mockResolvedValueOnce(null);
 

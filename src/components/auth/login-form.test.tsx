@@ -92,17 +92,9 @@ describe("LoginForm", () => {
     ).toBeUndefined();
   });
 
-  it("hides the password reset link by default", async () => {
+  it("shows the password reset link", async () => {
     await act(async () => {
       root.render(<LoginForm />);
-    });
-
-    expect(queryByText(container, "Forgot password?")).toBeUndefined();
-  });
-
-  it("shows the password reset link when enabled", async () => {
-    await act(async () => {
-      root.render(<LoginForm showForgotPasswordLink />);
     });
 
     const link = queryLinkByText(container, "Forgot password?");

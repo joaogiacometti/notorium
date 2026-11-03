@@ -55,7 +55,7 @@ type StreamAssistantReplyForUserResult =
   | { success: true; response: Response }
   | {
       success: false;
-      errorCode: "assistant.notConfigured" | "limits.aiAssistantPerDay";
+      errorCode: "limits.aiAssistantPerDay";
     };
 
 /**
@@ -89,10 +89,7 @@ export async function streamAssistantReplyForUser({
   if (!access.granted) {
     return {
       success: false,
-      errorCode:
-        access.reason === "limited"
-          ? "limits.aiAssistantPerDay"
-          : "assistant.notConfigured",
+      errorCode: "limits.aiAssistantPerDay",
     };
   }
 

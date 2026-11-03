@@ -9,14 +9,6 @@ export const dynamic = "force-dynamic";
 // orphans without deleting them.
 export async function GET(request: Request): Promise<NextResponse> {
   const env = getServerEnv();
-
-  if (!env.CRON_SECRET) {
-    return NextResponse.json(
-      { error: "Cron endpoint is not configured." },
-      { status: 503 },
-    );
-  }
-
   const authHeader = request.headers.get("authorization");
 
   if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
@@ -27,13 +19,6 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   try {
     const report = await sweepOrphanBlobs({ dryRun });
-
-    if (!report) {
-      return NextResponse.json(
-        { error: "Media storage is not configured." },
-        { status: 503 },
-      );
-    }
 
     // The safety circuit breaker fired: orphans exceeded the safe share of the
     // store, so nothing was deleted. Return a failure status so the scheduled

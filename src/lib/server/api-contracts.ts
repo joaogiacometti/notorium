@@ -123,7 +123,6 @@ export interface AccountSettings {
   name: string;
   email: string;
   createdAt: string;
-  workflowsEnabled: boolean;
   fsrsOptimization: FlashcardOptimizationSettings;
 }
 

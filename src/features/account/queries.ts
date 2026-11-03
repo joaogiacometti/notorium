@@ -1,6 +1,5 @@
 import { getFsrsOptimizationSettings } from "@/features/flashcards/fsrs/settings-queries";
 import type { AccountSettings } from "@/lib/server/api-contracts";
-import { areWorkflowsEnabled } from "@/lib/workflows/config";
 
 interface AccountSettingsUser {
   id: string;
@@ -25,7 +24,6 @@ export async function getAccountSettingsForUser(
     name: user.name,
     email: user.email,
     createdAt: new Date(user.createdAt).toISOString(),
-    workflowsEnabled: areWorkflowsEnabled(),
     fsrsOptimization,
   };
 }

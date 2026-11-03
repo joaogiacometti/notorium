@@ -28,11 +28,4 @@ describe("resolveAiSettings", () => {
 
     expect(resolveAiSettings()?.reasoningEffort).toBe("low");
   });
-
-  it("returns null when the model is missing", async () => {
-    serverEnv.current.OPENROUTER_MODEL = undefined;
-    const { resolveAiSettings } = await import("@/lib/ai/config");
-
-    expect(resolveAiSettings()).toBeNull();
-  });
 });

@@ -43,17 +43,4 @@ describe("user AI access", () => {
       { prefix: "ratelimit:test", userId: "user-1", limit: 1 },
     ]);
   });
-
-  it("denies an unconfigured instance without spending quota", async () => {
-    resolveAiSettingsMock.mockReturnValue(null);
-    const { acquireUserAiSettings } = await import("@/lib/ai/user-ai-access");
-
-    const access = await acquireUserAiSettings("user-1", {
-      ...dailyLimit,
-      errorCode: "limits.testPerDay",
-    });
-
-    expect(access).toEqual({ granted: false, reason: "notConfigured" });
-    expect(limiter.current?.calls).toEqual([]);
-  });
 });

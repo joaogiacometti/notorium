@@ -59,10 +59,6 @@ export async function uploadAttachmentImageForUser(
 
   const provider = await getMediaStorageProvider();
 
-  if (!provider) {
-    return actionError("attachments.notConfigured");
-  }
-
   const optimized = await optimizeImageForStorage({
     bytes: data.bytes,
     mimeType: data.mimeType,

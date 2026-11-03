@@ -29,9 +29,6 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   const provider = await getMediaStorageProvider();
-  if (!provider) {
-    return new Response(null, { status: 503 });
-  }
 
   const range = parseByteRangeHeader(request.headers.get("range")) ?? undefined;
   try {

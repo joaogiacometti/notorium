@@ -31,21 +31,6 @@ describe("GET /api/flashcards/fsrs/optimize", () => {
     });
   });
 
-  it("returns 503 when the cron secret is not configured", async () => {
-    getServerEnvMock.mockReturnValueOnce({
-      CRON_SECRET: undefined,
-    });
-
-    const { GET } = await import("@/app/api/flashcards/fsrs/optimize/route");
-    const response = await GET(getRouteRequest());
-
-    expect(response.status).toBe(503);
-    await expect(response.json()).resolves.toEqual({
-      error: "Cron endpoint is not configured.",
-    });
-    expect(optimizeAutomaticFsrsParametersMock).not.toHaveBeenCalled();
-  });
-
   it("returns 401 when the authorization header is invalid", async () => {
     const { GET } = await import("@/app/api/flashcards/fsrs/optimize/route");
     const response = await GET(getRouteRequest("Bearer wrong-secret"));

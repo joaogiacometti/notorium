@@ -29,7 +29,6 @@ import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface FlashcardOptimizationCardProps {
   settings: FlashcardOptimizationSettings;
-  workflowsEnabled: boolean;
 }
 
 function getLastOptimizedLabel(lastOptimizedAt: string | null): string {
@@ -38,7 +37,6 @@ function getLastOptimizedLabel(lastOptimizedAt: string | null): string {
 
 export function FlashcardOptimizationCard({
   settings,
-  workflowsEnabled,
 }: Readonly<FlashcardOptimizationCardProps>) {
   const router = useRouter();
   const [resetOpen, setResetOpen] = useState(false);
@@ -133,45 +131,43 @@ export function FlashcardOptimizationCard({
           }
         />
 
-        {workflowsEnabled ? (
-          <SettingsRow
-            label="Automatic optimization"
-            description="Run FSRS optimization every 30 days when the scheduled workflow runs."
-            keywords="flashcard scheduler auto fsrs"
-            action={
-              <form
-                id="form-fsrs-optimization"
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="flex items-center gap-3"
-              >
-                <Controller
-                  name="automaticOptimizationEnabled"
-                  control={form.control}
-                  render={({ field }) => (
-                    <Switch
-                      id="automatic-optimization-toggle"
-                      aria-label="Automatic optimization"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  )}
-                />
-                <Button
-                  type="submit"
-                  form="form-fsrs-optimization"
-                  disabled={isSaving || !preferencesChanged}
-                  size="sm"
-                >
-                  <AsyncButtonContent
-                    pending={isSaving}
-                    idleLabel="Save"
-                    pendingLabel="Saving..."
+        <SettingsRow
+          label="Automatic optimization"
+          description="Run FSRS optimization every 30 days when the scheduled workflow runs."
+          keywords="flashcard scheduler auto fsrs"
+          action={
+            <form
+              id="form-fsrs-optimization"
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="flex items-center gap-3"
+            >
+              <Controller
+                name="automaticOptimizationEnabled"
+                control={form.control}
+                render={({ field }) => (
+                  <Switch
+                    id="automatic-optimization-toggle"
+                    aria-label="Automatic optimization"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
                   />
-                </Button>
-              </form>
-            }
-          />
-        ) : null}
+                )}
+              />
+              <Button
+                type="submit"
+                form="form-fsrs-optimization"
+                disabled={isSaving || !preferencesChanged}
+                size="sm"
+              >
+                <AsyncButtonContent
+                  pending={isSaving}
+                  idleLabel="Save"
+                  pendingLabel="Saving..."
+                />
+              </Button>
+            </form>
+          }
+        />
       </SettingsSection>
 
       <ActionConfirmationDialog

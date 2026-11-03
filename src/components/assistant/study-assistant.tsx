@@ -30,7 +30,7 @@ const AssistantPanel = dynamic(
  * nothing is persisted, so a reload starts fresh.
  *
  * @example
- * {aiEnabled && <StudyAssistant />}
+ * <StudyAssistant />
  */
 export function StudyAssistant() {
   const workspace = useAssistantWorkspace();

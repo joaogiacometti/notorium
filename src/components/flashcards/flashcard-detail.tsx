@@ -48,14 +48,12 @@ interface FlashcardDetailProps {
   /** Where to navigate after the flashcard is deleted. */
   returnHref: string;
   flashcard: FlashcardDetailEntity;
-  aiEnabled: boolean;
 }
 
 export function FlashcardDetail({
   breadcrumb,
   returnHref,
   flashcard,
-  aiEnabled,
 }: Readonly<FlashcardDetailProps>) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -82,7 +80,7 @@ export function FlashcardDetail({
   const review: ReturnType<typeof useActiveFlashcardEditor> =
     useActiveFlashcardEditor({
       form,
-      enabled: aiEnabled,
+      enabled: true,
       resetVersion: flashcard.id,
       blocked: (): boolean => autosave.isSaving || isImageUploading,
     });

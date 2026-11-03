@@ -20,7 +20,6 @@ interface FlashcardExamSessionProps {
   initialCards: FlashcardReviewEntity[];
   subjects: Array<SubjectEntity | SubjectOption>;
   subjectId?: string;
-  aiEnabled: boolean;
 }
 
 /**
@@ -29,13 +28,12 @@ interface FlashcardExamSessionProps {
  * a fresh exam.
  *
  * @example
- * <FlashcardExamSession initialCards={cards} subjects={subjects} aiEnabled={false} />
+ * <FlashcardExamSession initialCards={cards} subjects={subjects} />
  */
 export function FlashcardExamSession({
   initialCards,
   subjects,
   subjectId,
-  aiEnabled,
 }: Readonly<FlashcardExamSessionProps>) {
   const router = useRouter();
   const shortcutsSuspended = useShortcutsDialogOpen();
@@ -105,7 +103,6 @@ export function FlashcardExamSession({
         onExit={exam.handleExit}
         onEditFlashcard={() => setEditing(true)}
         editing={editing}
-        aiEnabled={aiEnabled}
         onStopEditing={() => setEditing(false)}
         onFlashcardUpdated={exam.updateExamCard}
         onResetFlashcard={() => setResetOpen(true)}

@@ -47,14 +47,6 @@ export async function sendEmail({
     );
   }
 
-  if (!env.RESEND_API_KEY) {
-    return { success: false, error: "Email provider not configured." };
-  }
-
-  if (!env.RESEND_FROM_EMAIL) {
-    return { success: false, error: "RESEND_FROM_EMAIL is not configured." };
-  }
-
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {

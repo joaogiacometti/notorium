@@ -75,7 +75,7 @@ describe("paste-image loading flows", () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <CreateFlashcardDialog open onOpenChange={() => {}} aiEnabled />
+          <CreateFlashcardDialog open onOpenChange={() => {}} />
         </QueryClientProvider>,
       );
     });
@@ -91,7 +91,7 @@ describe("paste-image loading flows", () => {
     await act(async () => {
       root.render(
         <QueryClientProvider client={new QueryClient()}>
-          <CreateFlashcardDialog open onOpenChange={() => {}} aiEnabled />
+          <CreateFlashcardDialog open onOpenChange={() => {}} />
         </QueryClientProvider>,
       );
     });

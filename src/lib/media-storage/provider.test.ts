@@ -23,24 +23,16 @@ describe("media storage provider", () => {
     getServerEnvMock.mockReset();
   });
 
-  it("reports storage unavailable when blob token is missing", async () => {
-    getServerEnvMock.mockReturnValue({ BLOB_READ_WRITE_TOKEN: undefined });
-
-    const { isMediaStorageConfigured } = await import(
-      "@/lib/media-storage/provider"
-    );
-
-    expect(isMediaStorageConfigured()).toBe(false);
-  });
-
-  it("reports storage available when blob token is configured", async () => {
+  it("uses Vercel Blob when no fixture dir is set", async () => {
     getServerEnvMock.mockReturnValue({ BLOB_READ_WRITE_TOKEN: "blob-token" });
 
-    const { isMediaStorageConfigured } = await import(
+    const { getMediaStorageProvider } = await import(
       "@/lib/media-storage/provider"
     );
 
-    expect(isMediaStorageConfigured()).toBe(true);
+    await expect(getMediaStorageProvider()).resolves.toEqual({
+      kind: "vercel",
+    });
   });
 
   it("uses the disk fixture instead of Vercel Blob when a fixture dir is set", async () => {
@@ -49,11 +41,10 @@ describe("media storage provider", () => {
       NOTORIUM_MEDIA_STORAGE_FIXTURE_DIR: "test-results/media",
     });
 
-    const { getMediaStorageProvider, isMediaStorageConfigured } = await import(
+    const { getMediaStorageProvider } = await import(
       "@/lib/media-storage/provider"
     );
 
-    expect(isMediaStorageConfigured()).toBe(true);
     await expect(getMediaStorageProvider()).resolves.toEqual({
       kind: "fixture",
       rootDir: "test-results/media",

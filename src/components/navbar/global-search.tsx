@@ -33,7 +33,6 @@ import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 
 interface GlobalSearchProps {
   userId: string;
-  aiEnabled: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -44,7 +43,6 @@ interface GlobalSearchProps {
  */
 export function GlobalSearch({
   userId,
-  aiEnabled,
   open,
   onOpenChange,
 }: Readonly<GlobalSearchProps>) {
@@ -167,7 +165,6 @@ export function GlobalSearch({
         activeDialog={activeDialog}
         subjectId={createSubjectId}
         subjects={subjects}
-        aiEnabled={aiEnabled}
         onClose={() => {
           setActiveDialog(null);
           setCreateSubjectId(null);

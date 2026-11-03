@@ -106,23 +106,6 @@ describe("streamAssistantReplyForUser", () => {
     expect(limiter.current?.calls[0]?.prefix).toBe("ratelimit:ai:assistant");
   });
 
-  it("returns notConfigured when AI is not set up", async () => {
-    resolveAiSettingsMock.mockReturnValue(null);
-    const { streamAssistantReplyForUser } = await import(
-      "@/features/assistant/service"
-    );
-
-    const result = await streamAssistantReplyForUser({
-      userId: "user-1",
-      messages,
-    });
-
-    expect(result).toEqual({
-      success: false,
-      errorCode: "assistant.notConfigured",
-    });
-  });
-
   it("returns the daily limit error without calling the model", async () => {
     vi.spyOn(
       limiter.current as FakeDailyRateLimiter,

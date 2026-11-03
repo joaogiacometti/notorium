@@ -2,7 +2,7 @@
 
 Notorium is a self-hosted knowledge editor. Write notes, read PDFs, and keep what matters in memory with spaced repetition.
 
-Your material is organized into subjects, and each account has its own. If you configure AI, you can ask about your material and review its suggested edits and cards before applying them.
+Your material is organized into subjects, and each account has its own. You can ask the assistant about your material and review its suggested edits and cards before applying them.
 
 The first person to sign up becomes the admin and can approve later users from **Account → Admin Panel**.
 
@@ -21,7 +21,7 @@ Generate an auth secret:
 openssl rand -hex 32
 ```
 
-Paste the result into `BETTER_AUTH_SECRET` in `.env`. Leave the other values at their defaults for local development, then start the services and app:
+Paste the result into `BETTER_AUTH_SECRET` in `.env`. The placeholders let the app start. Replace them with real credentials for the features you want to use: AI, uploads, and email. Then start the services and app:
 
 ```bash
 docker compose -f compose.dev.yml up -d
@@ -35,7 +35,6 @@ Docker runs PostgreSQL and Redis; the app runs through npm. Stop the services wi
 
 ## Documentation
 
-- [Configure AI, uploads, email, and scheduled jobs](./docs/setup/optional-features.md)
 - [Run tests and database migrations](./docs/setup/development.md)
 - [Understand the architecture](./docs/architecture.md)
 - [UI design conventions](./DESIGN.md)

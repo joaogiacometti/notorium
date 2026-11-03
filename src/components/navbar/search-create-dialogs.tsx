@@ -17,7 +17,6 @@ interface SearchCreateDialogsProps {
   activeDialog: ActiveCreateDialog | null;
   subjectId: string | null;
   subjects: SubjectOption[];
-  aiEnabled: boolean;
   onClose: () => void;
   onNavigate: (href: string) => void;
 }
@@ -30,7 +29,6 @@ export function SearchCreateDialogs({
   activeDialog,
   subjectId,
   subjects,
-  aiEnabled,
   onClose,
   onNavigate,
 }: Readonly<SearchCreateDialogsProps>) {
@@ -51,7 +49,6 @@ export function SearchCreateDialogs({
         open={activeDialog === "flashcard"}
         onOpenChange={handleOpenChange}
         subjectId={subjectId ?? undefined}
-        aiEnabled={aiEnabled}
       />
       <CreateNoteTitleDialog
         subjectId={subjectId ?? undefined}

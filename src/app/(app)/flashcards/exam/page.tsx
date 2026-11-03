@@ -4,7 +4,6 @@ import { shuffleExamCards } from "@/features/flashcard-review/exam";
 import { getAllFlashcardsForExam } from "@/features/flashcard-review/queries";
 import { resolveScopedSubjectId } from "@/features/flashcards/scope";
 import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
-import { isAiEnabled } from "@/lib/ai/config";
 import { requireSession } from "@/lib/auth/auth";
 import { getFlashcardsHref } from "@/lib/navigation/detail-page-back-link";
 
@@ -36,7 +35,6 @@ export default async function FlashcardExamPage({
       initialCards={shuffleExamCards(cards)}
       subjects={subjects}
       subjectId={scopedSubjectId}
-      aiEnabled={isAiEnabled()}
     />
   );
 }

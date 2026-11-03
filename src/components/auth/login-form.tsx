@@ -27,12 +27,10 @@ import {
 
 export function LoginForm({
   showPendingApprovalNotice = false,
-  showForgotPasswordLink = false,
   className,
   ...props
 }: React.ComponentProps<"div"> & {
   showPendingApprovalNotice?: boolean;
-  showForgotPasswordLink?: boolean;
 }) {
   const form = useForm({
     resolver: zodResolver(loginSchema),
@@ -119,14 +117,12 @@ export function LoginForm({
                 invalid={fieldState.invalid}
                 error={fieldState.error}
                 trailingSlot={
-                  showForgotPasswordLink ? (
-                    <Link
-                      href="/forgot-password"
-                      className="rounded-sm text-sm text-foreground/90 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                      Forgot password?
-                    </Link>
-                  ) : undefined
+                  <Link
+                    href="/forgot-password"
+                    className="rounded-sm text-sm text-foreground/90 underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    Forgot password?
+                  </Link>
                 }
               />
             )}

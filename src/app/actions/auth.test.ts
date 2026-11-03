@@ -4,7 +4,6 @@ import { LIMITS } from "@/lib/config/limits";
 const {
   getApprovedUserByEmailMock,
   getUserAccessStatusByEmailMock,
-  isEmailDeliveryEnabledMock,
   consumeUserDailyRateLimitMock,
   requestPasswordResetMock,
   resetPasswordMock,
@@ -15,7 +14,6 @@ const {
 } = vi.hoisted(() => ({
   getApprovedUserByEmailMock: vi.fn(),
   getUserAccessStatusByEmailMock: vi.fn(),
-  isEmailDeliveryEnabledMock: vi.fn(),
   consumeUserDailyRateLimitMock: vi.fn(),
   requestPasswordResetMock: vi.fn(),
   resetPasswordMock: vi.fn(),
@@ -54,10 +52,6 @@ vi.mock("@/lib/auth/rate-limit", () => ({
   checkAuthRateLimit: vi.fn(),
 }));
 
-vi.mock("@/lib/email/config", () => ({
-  isEmailDeliveryEnabled: isEmailDeliveryEnabledMock,
-}));
-
 vi.mock("@/lib/rate-limit/user-rate-limit", () => ({
   consumeUserDailyRateLimit: consumeUserDailyRateLimitMock,
 }));
@@ -68,7 +62,6 @@ describe("password reset actions", () => {
     getServerEnvMock.mockReturnValue({
       BETTER_AUTH_URL: "https://notorium.example.com",
     });
-    isEmailDeliveryEnabledMock.mockReturnValue(true);
     getApprovedUserByEmailMock.mockResolvedValue({
       id: "user-1",
       email: "active@example.com",
@@ -95,23 +88,6 @@ describe("password reset actions", () => {
         errorCode: "auth.invalidInput",
       });
       expect(requestPasswordResetMock).not.toHaveBeenCalled();
-    });
-
-    it("returns unavailable when email delivery is disabled", async () => {
-      isEmailDeliveryEnabledMock.mockReturnValue(false);
-      const { requestPasswordResetAction } = await import("@/app/actions/auth");
-
-      const result = await requestPasswordResetAction({
-        email: "active@example.com",
-      });
-
-      expect(result).toEqual({
-        success: false,
-        errorCode: "auth.passwordResetUnavailable",
-        errorParams: undefined,
-        errorMessage: undefined,
-      });
-      expect(getApprovedUserByEmailMock).not.toHaveBeenCalled();
     });
 
     it("returns generic success for missing, pending, or blocked users", async () => {

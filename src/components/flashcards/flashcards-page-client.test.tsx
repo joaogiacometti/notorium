@@ -50,7 +50,6 @@ const defaultProps: ComponentProps<typeof FlashcardsPageClient> = {
   subjects: mockSubjects,
   initialManagePageData: mockManagePageData,
   reviewSummary: mockReviewSummary,
-  aiEnabled: false,
 };
 
 describe("FlashcardsPageClient", () => {

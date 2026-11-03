@@ -33,7 +33,6 @@ interface CreateFlashcardFormProps<TValues extends FlashcardFormValues> {
   onSubmit: (values: TValues) => Promise<void>;
   isSubmitting: boolean;
   isSaved?: boolean;
-  aiEnabled: boolean;
   duplicateFrontMessage: string | null;
   keepOptions: CreateFlashcardKeepOptions;
 }
@@ -54,7 +53,6 @@ export function CreateFlashcardForm<TValues extends FlashcardFormValues>({
   onSubmit,
   isSubmitting,
   isSaved,
-  aiEnabled,
   duplicateFrontMessage,
   keepOptions,
 }: Readonly<CreateFlashcardFormProps<TValues>>) {
@@ -62,7 +60,7 @@ export function CreateFlashcardForm<TValues extends FlashcardFormValues>({
   const isImageUploading = pendingImageUploads > 0;
   const review = useActiveFlashcardEditor({
     form,
-    enabled: open && aiEnabled,
+    enabled: open,
     resetVersion: editorResetVersion,
     subjects,
     blocked: isSubmitting || isImageUploading,
