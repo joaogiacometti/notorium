@@ -10,10 +10,6 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 - Password-reset policy is approved accounts only, with a generic response for missing or unapproved accounts and a daily email cap from [limits.ts](../src/lib/config/limits.ts). Successful resets revoke existing sessions.
 - Account deletion removes the user's database records and owned stored files. Ordinary document/subtree deletion instead leaves shared attachments for the scheduled orphan sweep; see [the sweep](../src/features/attachments/blob-gc.ts).
 
-**Verification gaps from static review; not runtime-confirmed or fixed:**
-
-- Add cross-user integration coverage for reads, mutations, private media, and library search; mocked ownership helpers alone cannot demonstrate isolation.
-
 ## Review and Persistence
 
 - Deleting a card or subject preserves historical review activity and FSRS optimization input. Undoing the latest regular grade restores its prior scheduling state and removes that grade's history entry.
@@ -25,7 +21,7 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 
 ## Documents and Sources
 
-- Subject path creation is atomic. Concurrent moves must not create cycles or exceed depth and destination resource limits.
+- Subject path creation is atomic. Concurrent subject moves must not create cycles or exceed depth limits.
 - A proposed card's note source is captured with its originating request, not inferred from history, library search, or whichever page is open when accepted. Renames and moves resolve current link metadata; deleting a source preserves the card. PDF context does not establish a card source.
 - Failed saves retain the draft for retry. Uploads and unresolved AI suggestions block saving until their content is safe to persist. Preview decorations never become stored content.
 - PDF context is selectable text from a selection or the current page, not the entire book or OCR. Empty or failed extraction must not be presented as successfully read content.
