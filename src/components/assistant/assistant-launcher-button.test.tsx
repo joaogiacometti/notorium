@@ -10,7 +10,7 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
-const LAUNCHER_LABEL = "Open study assistant";
+const LAUNCHER_LABEL = "Open assistant";
 
 describe("assistant launcher button", () => {
   let container: HTMLDivElement;
@@ -100,7 +100,7 @@ describe("assistant launcher button", () => {
   it("returns focus to the header launcher after minimizing", async () => {
     await render(<AssistantLauncherButton />);
     await act(async () => launchers()[0]?.click());
-    const minimizeSelector = '[aria-label="Minimize study assistant"]';
+    const minimizeSelector = '[aria-label="Minimize assistant"]';
     await vi.waitFor(
       () => {
         expect(document.querySelector(minimizeSelector)).not.toBeNull();

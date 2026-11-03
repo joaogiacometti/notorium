@@ -72,7 +72,7 @@ function StudyAssistantSurface({
 
   const assistant = (
     <aside
-      aria-label="Study assistant controls"
+      aria-label="Assistant controls"
       data-study-assistant
       className="pointer-events-auto print:hidden"
       onKeyDown={(event) => {
@@ -86,7 +86,7 @@ function StudyAssistantSurface({
       {opened || open ? (
         <aside
           id="study-assistant-panel"
-          aria-label="Study assistant sidebar"
+          aria-label="Assistant sidebar"
           className={cn(
             "fixed inset-y-0 right-0 w-full flex-col border-l bg-card shadow-lg lg:w-96",
             open ? "flex" : "hidden",

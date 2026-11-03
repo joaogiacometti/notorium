@@ -25,7 +25,7 @@ export function AssistantPanelFrame({
 }: Readonly<AssistantPanelFrameProps>) {
   return (
     <section
-      aria-label="Study assistant"
+      aria-label="Assistant"
       aria-busy={busy}
       className={cn(
         "flex min-h-0 flex-col overflow-hidden bg-card",
@@ -35,7 +35,7 @@ export function AssistantPanelFrame({
       )}
     >
       <header className="flex h-14 shrink-0 items-center gap-1 border-b pr-3 pl-4">
-        <h2 className="flex-1 text-sm font-semibold">Study assistant</h2>
+        <h2 className="flex-1 text-sm font-semibold">Assistant</h2>
         {actions}
       </header>
       {children}

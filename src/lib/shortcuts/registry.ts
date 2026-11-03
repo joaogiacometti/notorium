@@ -33,7 +33,7 @@ export interface ShortcutCategorySection {
 /** Display order and headings for the shortcuts help dialog. */
 export const shortcutCategorySections: ShortcutCategorySection[] = [
   { category: ShortcutCategory.Global, label: "Global" },
-  { category: ShortcutCategory.StudyAssistant, label: "Study assistant" },
+  { category: ShortcutCategory.StudyAssistant, label: "Assistant" },
   { category: ShortcutCategory.NotesEditor, label: "Notes editor" },
   { category: ShortcutCategory.FlashcardReview, label: "Flashcard review" },
 ];
@@ -99,7 +99,7 @@ export const shortcutRegistry: Shortcut[] = [
     id: "global-toggle-assistant",
     kind: "keys",
     keys: ["cmd+j", "ctrl+j"],
-    description: "Toggle study assistant",
+    description: "Toggle assistant",
     category: ShortcutCategory.Global,
   },
   {

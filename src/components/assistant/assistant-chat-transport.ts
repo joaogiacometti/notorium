@@ -72,7 +72,7 @@ function keepRecentChat(messages: AssistantUIMessage[]): AssistantUIMessage[] {
  *
  * @example
  * readAssistantErrorMessage(new Error('{"success":false,"errorCode":"limits.aiAssistantPerDay"}'));
- * // "Daily limit reached for the study assistant."
+ * // "Daily limit reached for the assistant."
  */
 export function readAssistantErrorMessage(error: Error): string {
   return resolveActionErrorMessage(

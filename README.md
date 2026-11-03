@@ -1,10 +1,10 @@
 # Notorium
 
-Notorium is a self-hosted app for studying with notes, PDFs, and flashcards.
+Notorium is a self-hosted knowledge editor. Write notes, read PDFs, and keep what matters in memory with spaced repetition.
 
 Keep your material organized by subject, take notes, read PDFs, and review flashcards with FSRS spaced repetition. Exam mode lets you practice without changing your review schedule. Search finds notes, PDF titles, and cards across your library.
 
-If you configure AI, you can ask questions about what you're studying or ask it to draft cards and suggest edits. You review the suggestions before applying them.
+If you configure AI, you can ask questions about your material or ask it to draft cards and suggest edits. You review the suggestions before applying them.
 
 Each account has its own material. The first person to sign up becomes the admin and can approve later users from **Account → Admin Panel**.
 

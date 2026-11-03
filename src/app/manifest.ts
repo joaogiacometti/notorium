@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Notorium",
     short_name: "Notorium",
     description:
-      "Private study workspace for notes, flashcards, and AI assistance",
+      "A private knowledge editor for notes, PDFs, flashcards, and AI assistance",
     start_url: "/",
     scope: "/",
     display: "standalone",

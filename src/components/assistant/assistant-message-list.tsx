@@ -66,8 +66,7 @@ export function AssistantMessageList({
   if (messages.length === 0) {
     return (
       <p className="flex flex-1 items-center px-6 text-center text-sm text-muted-foreground">
-        Ask about a concept you're studying, request a worked example, or ask to
-        be quizzed.
+        Ask about your material, request a worked example, or ask to be quizzed.
       </p>
     );
   }

@@ -68,7 +68,7 @@ function AssistantConversationPanel({
             variant="ghost"
             size="icon-sm"
             onClick={onMinimize}
-            aria-label="Minimize study assistant"
+            aria-label="Minimize assistant"
             aria-controls="study-assistant-panel"
           >
             <PanelRightClose className="size-4" />

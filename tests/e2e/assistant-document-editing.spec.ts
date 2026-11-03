@@ -11,7 +11,7 @@ import { DocumentChatFixture } from "./support/document-chat-fixture";
 
 async function requestDocumentChanges(page: Page): Promise<void> {
   const composer = page.getByRole("textbox", {
-    name: "Message the study assistant",
+    name: "Message the assistant",
   });
   await composer.fill("Improve this document");
   await composer.press("Enter");
@@ -38,7 +38,7 @@ test("reviews note changes, applies through autosave, and preserves them after r
     await expect(page.locator("#form-edit-note-content")).toContainText(
       "Original explanation.",
     );
-    await page.getByRole("button", { name: "Open study assistant" }).click();
+    await page.getByRole("button", { name: "Open assistant" }).click();
     await requestDocumentChanges(page);
     expect((await getNoteById(e2eUser.userId, note.id))?.content).toContain(
       "Original explanation.",

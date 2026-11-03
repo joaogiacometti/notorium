@@ -6,8 +6,9 @@ behavior. Update it when those boundaries or decisions change.
 
 ## System Context
 
-Notorium is a Next.js application with server-rendered pages and interactive client
-editors. PostgreSQL stores user records and study material through Drizzle; Redis
+Notorium is a knowledge editor built as a Next.js application with server-rendered
+pages and interactive client editors. PostgreSQL stores user records and material
+through Drizzle; Redis
 or Upstash supplies rate limiting. Optional integrations are OpenRouter for AI,
 Vercel Blob for private media, and Resend for email. Scheduled HTTP jobs perform
 FSRS optimization and orphan-file cleanup.

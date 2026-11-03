@@ -236,9 +236,7 @@ describe("study assistant", () => {
   }
 
   async function sendMessage(text: string) {
-    const textarea = getByLabel<HTMLTextAreaElement>(
-      "Message the study assistant",
-    );
+    const textarea = getByLabel<HTMLTextAreaElement>("Message the assistant");
     await act(async () => {
       setTextareaValue(textarea, text);
     });
@@ -362,7 +360,7 @@ describe("study assistant", () => {
     expect(container.textContent).toContain("Guided lesson started · Topic");
     await act(async () =>
       setTextareaValue(
-        getByLabel<HTMLTextAreaElement>("Message the study assistant"),
+        getByLabel<HTMLTextAreaElement>("Message the assistant"),
         "Unfinished thought",
       ),
     );
@@ -381,9 +379,9 @@ describe("study assistant", () => {
     expect(container.textContent).toContain(
       "Understanding has not been assessed.",
     );
-    expect(
-      getByLabel<HTMLTextAreaElement>("Message the study assistant").value,
-    ).toBe("Unfinished thought");
+    expect(getByLabel<HTMLTextAreaElement>("Message the assistant").value).toBe(
+      "Unfinished thought",
+    );
 
     await sendMessage("Just tell me what it is");
     expect(transport.requests[2]?.messages[1]?.parts).toContainEqual(
@@ -587,9 +585,7 @@ describe("study assistant", () => {
     expect(
       container.querySelector('[aria-label="Stop answer"]'),
     ).not.toBeNull();
-    const textarea = getByLabel<HTMLTextAreaElement>(
-      "Message the study assistant",
-    );
+    const textarea = getByLabel<HTMLTextAreaElement>("Message the assistant");
     await act(async () => {
       setTextareaValue(textarea, "/new");
     });
@@ -619,7 +615,7 @@ describe("study assistant", () => {
     await sendMessage("What is ATP?");
     const alert = container.querySelector('[role="alert"]');
     expect(alert?.textContent).toContain(
-      "Daily limit reached for the study assistant.",
+      "Daily limit reached for the assistant.",
     );
 
     await act(async () => {
@@ -643,7 +639,7 @@ describe("study assistant", () => {
       );
     });
     act(() => {
-      getByLabel<HTMLButtonElement>("Open study assistant").click();
+      getByLabel<HTMLButtonElement>("Open assistant").click();
     });
     await vi.waitFor(() => {
       expect(container.querySelector('[aria-label="New chat"]')).not.toBeNull();
@@ -654,11 +650,11 @@ describe("study assistant", () => {
     await openStudyAssistant();
 
     await act(async () => {
-      getByLabel<HTMLButtonElement>("Minimize study assistant").click();
+      getByLabel<HTMLButtonElement>("Minimize assistant").click();
     });
 
     const panel = container.querySelector("#study-assistant-panel");
-    const launcher = getByLabel<HTMLButtonElement>("Open study assistant");
+    const launcher = getByLabel<HTMLButtonElement>("Open assistant");
     expect(panel?.classList.contains("hidden")).toBe(true);
     expect(document.activeElement).toBe(launcher);
   });
@@ -671,10 +667,10 @@ describe("study assistant", () => {
     await sendMessage("What is ATP?");
 
     await act(async () => {
-      getByLabel<HTMLButtonElement>("Minimize study assistant").click();
+      getByLabel<HTMLButtonElement>("Minimize assistant").click();
     });
     await act(async () => {
-      getByLabel<HTMLButtonElement>("Open study assistant").click();
+      getByLabel<HTMLButtonElement>("Open assistant").click();
     });
 
     const panel = container.querySelector("#study-assistant-panel");
@@ -695,18 +691,18 @@ describe("study assistant", () => {
     });
 
     act(() => {
-      getByLabel<HTMLButtonElement>("Open study assistant").click();
+      getByLabel<HTMLButtonElement>("Open assistant").click();
     });
     // The frame shows at once, before the lazily loaded chat arrives.
     expect(
-      container.querySelector('section[aria-label="Study assistant"]'),
+      container.querySelector('section[aria-label="Assistant"]'),
     ).not.toBeNull();
     await vi.waitFor(() => {
       expect(container.querySelector('[aria-label="New chat"]')).not.toBeNull();
     });
 
     await act(async () => {
-      getByLabel<HTMLButtonElement>("Minimize study assistant").click();
+      getByLabel<HTMLButtonElement>("Minimize assistant").click();
     });
 
     const panel = container.querySelector("#study-assistant-panel");

@@ -57,7 +57,7 @@ export function SignupForm({
   return (
     <AuthFormShell
       heading="Create your Notorium account"
-      subheading="Notes and flashcards with spaced review and an AI study assistant."
+      subheading="A knowledge editor: write notes, read PDFs, and remember what matters with spaced repetition."
       footer={
         <>
           Already have an account? <Link href="/login">Sign in</Link>

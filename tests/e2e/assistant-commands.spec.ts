@@ -7,9 +7,9 @@ test("starts a fresh chat from the composer command menu without sending a comma
   const assistant = new AssistantChatFixture();
   await assistant.install(page);
   await page.goto("/flashcards?view=manage");
-  await page.getByRole("button", { name: "Open study assistant" }).click();
+  await page.getByRole("button", { name: "Open assistant" }).click();
   const composer = page.getByRole("textbox", {
-    name: "Message the study assistant",
+    name: "Message the assistant",
   });
   await composer.fill("Explain retrieval practice");
   await composer.press("Enter");

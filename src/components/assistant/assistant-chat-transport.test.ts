@@ -159,7 +159,7 @@ describe("readAssistantErrorMessage", () => {
     );
 
     expect(readAssistantErrorMessage(error)).toBe(
-      "Daily limit reached for the study assistant.",
+      "Daily limit reached for the assistant.",
     );
   });
 

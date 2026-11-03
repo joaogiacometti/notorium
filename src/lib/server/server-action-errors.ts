@@ -69,10 +69,10 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "attachments.mimeTypeNotAllowed": "File type is not allowed.",
   "attachments.notConfigured":
     "No media storage is configured. Contact your administrator.",
-  "assistant.invalidData": "Invalid study assistant message.",
+  "assistant.invalidData": "Invalid assistant message.",
   "assistant.notConfigured":
-    "The study assistant is not configured for this instance.",
-  "assistant.unavailable": "The study assistant is temporarily unavailable.",
+    "The assistant is not configured for this instance.",
+  "assistant.unavailable": "The assistant is temporarily unavailable.",
   "flashcards.invalidData": "Invalid flashcard data.",
   "flashcards.notFound": "Flashcard not found.",
   "flashcards.duplicateFront": "A flashcard with this front already exists.",
@@ -108,7 +108,7 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     `File size limit exceeded: maximum ${params?.max} bytes.`,
   "limits.flashcardLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} flashcards per subject.`,
-  "limits.aiAssistantPerDay": "Daily limit reached for the study assistant.",
+  "limits.aiAssistantPerDay": "Daily limit reached for the assistant.",
   "limits.pdfLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} PDFs per subject.`,
   "limits.pdfSizeLimit": (params) =>

@@ -1,7 +1,7 @@
 {
   "name": "notorium",
   "version": "0.1.0",
-  "description": "A learning app for making and reviewing notes and flashcards with AI help",
+  "description": "A knowledge editor for writing notes, reading PDFs, and remembering what matters with spaced repetition",
   "license": "MIT",
   "scripts": {
     "dev": "next dev",

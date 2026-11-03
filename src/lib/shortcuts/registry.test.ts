@@ -184,7 +184,7 @@ describe("shortcutRegistry", () => {
     expect(shortcut).toMatchObject({
       kind: "keys",
       keys: ["cmd+j", "ctrl+j"],
-      description: "Toggle study assistant",
+      description: "Toggle assistant",
     });
   });
 });

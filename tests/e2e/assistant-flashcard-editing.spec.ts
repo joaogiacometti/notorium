@@ -7,7 +7,7 @@ import { createFlashcardForSubject } from "./support/flashcards";
 
 async function askAssistant(page: Page, text: string): Promise<void> {
   const message = page.getByRole("textbox", {
-    name: "Message the study assistant",
+    name: "Message the assistant",
   });
   await message.fill(text);
   await message.press("Enter");
@@ -28,7 +28,7 @@ test("improves an unsaved card and keeps one conversation across review and edit
   await assistant.install(page);
   try {
     await page.goto(`/flashcards?view=manage&subjectId=${subject.id}`);
-    await page.getByRole("button", { name: "Open study assistant" }).click();
+    await page.getByRole("button", { name: "Open assistant" }).click();
     await askAssistant(page, "Explain retrieval practice");
     await expect(
       page.getByText("I can help you study.", { exact: true }),
@@ -102,7 +102,7 @@ test("improves an unsaved card and keeps one conversation across review and edit
       .poll(() => assistant.requests.at(-1)?.context)
       .toMatchObject({ kind: "review", back: "A concise improved answer." });
     await page
-      .getByRole("textbox", { name: "Message the study assistant" })
+      .getByRole("textbox", { name: "Message the assistant" })
       .fill("e 1");
     await expect(
       page.getByRole("progressbar", { name: "Review progress" }),
@@ -128,26 +128,22 @@ test("reviews mobile suggestions in the inputs and auto-saves accepted detail ed
   await new AssistantChatFixture().install(page);
   try {
     await page.goto(`/flashcards/${card.id}`);
-    await page.getByRole("button", { name: "Open study assistant" }).click();
+    await page.getByRole("button", { name: "Open assistant" }).click();
     await askAssistant(page, "Improve this answer");
     await expect(
       page.getByText("Review suggested changes in the editor."),
     ).toBeVisible();
-    await page
-      .getByRole("button", { name: "Minimize study assistant" })
-      .click();
+    await page.getByRole("button", { name: "Minimize assistant" }).click();
     await page.getByRole("button", { name: "Discard back" }).click();
     await expect(page.locator("#form-edit-flashcard-back")).toContainText(
       "A long original answer.",
     );
-    await page.getByRole("button", { name: "Open study assistant" }).click();
+    await page.getByRole("button", { name: "Open assistant" }).click();
     await askAssistant(page, "Try a shorter answer");
     await expect(
       page.getByText("Review suggested changes in the editor."),
     ).toBeVisible();
-    await page
-      .getByRole("button", { name: "Minimize study assistant" })
-      .click();
+    await page.getByRole("button", { name: "Minimize assistant" }).click();
     const save = page.waitForResponse(
       (response) =>
         response.request().method() === "POST" &&

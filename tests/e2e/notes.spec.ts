@@ -244,9 +244,9 @@ test("creates a flashcard from the open note through the assistant after confirm
     await page
       .locator("#form-edit-note-content")
       .fill(`${content} Retrieval improves with practice.`);
-    await page.getByRole("button", { name: "Open study assistant" }).click();
+    await page.getByRole("button", { name: "Open assistant" }).click();
     const composer = page.getByRole("textbox", {
-      name: "Message the study assistant",
+      name: "Message the assistant",
     });
     await composer.fill("Create a flashcard from this note");
     await composer.press("Enter");

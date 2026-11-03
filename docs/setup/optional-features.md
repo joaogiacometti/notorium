@@ -17,7 +17,7 @@ Set both variables:
 
 If either variable is missing, AI controls remain hidden.
 
-Requests include conversation and active study text, which are sent to OpenRouter
+Requests include conversation and active material text, which are sent to OpenRouter
 and the selected provider. See [Behavior Contracts](../behavior-contracts.md#assistant-trust-and-approval)
 for approval and context rules.
 

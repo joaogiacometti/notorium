@@ -261,7 +261,7 @@ export function AssistantWorkspaceProvider({
       }
       if (studyContext && !studyContextSchema.safeParse(studyContext).success) {
         setNotice(
-          "This study content could not be included. Check its title and size, then try again.",
+          "This content could not be included. Check its title and size, then try again.",
         );
         return false;
       }

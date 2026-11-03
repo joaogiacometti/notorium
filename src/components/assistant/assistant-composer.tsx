@@ -138,7 +138,7 @@ export function AssistantComposer({
           aria-haspopup="listbox"
           maxLength={LIMITS.assistantMessageMaxChars}
           placeholder="Ask a question, or /learn a topic…"
-          aria-label="Message the study assistant"
+          aria-label="Message the assistant"
           rows={1}
           className="field-sizing-content max-h-32 min-h-8 resize-none border-0 bg-transparent px-2 py-1.5 shadow-none focus-visible:ring-0 dark:bg-transparent"
         />

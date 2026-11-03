@@ -61,7 +61,7 @@ export function LoginForm({
   return (
     <AuthFormShell
       heading="Sign in to Notorium"
-      subheading="Pick up where your study plan left off."
+      subheading="Pick up where you left off."
       footer={
         <>
           Need an account? <Link href="/signup">Create one</Link>

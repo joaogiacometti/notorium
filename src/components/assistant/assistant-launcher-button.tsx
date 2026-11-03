@@ -50,7 +50,7 @@ function HeaderLauncher({
         open && "bg-muted text-foreground",
         className,
       )}
-      aria-label="Open study assistant"
+      aria-label="Open assistant"
       aria-expanded={open}
       aria-controls="study-assistant-panel"
       aria-keyshortcuts="Control+J Meta+J"
