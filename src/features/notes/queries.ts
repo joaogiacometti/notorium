@@ -1,8 +1,13 @@
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, inArray, ne, type SQL, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { note, subject } from "@/db/schema";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
-import type { NoteEntity } from "@/lib/server/api-contracts";
+import { extractNoteLinkIds, getNoteLinkMarker } from "@/lib/editor/note-links";
+import type {
+  NoteConnections,
+  NoteEntity,
+  NoteLinkTarget,
+} from "@/lib/server/api-contracts";
 
 export async function getNotesBySubjectForUser(
   userId: string,
@@ -69,6 +74,61 @@ export async function getNoteByIdForUser(
     .limit(1);
 
   return results[0]?.note ?? null;
+}
+
+/**
+ * Links in and out of an owned note, or `null` when it doesn't exist. Backlinks
+ * are read from stored HTML, so they can't drift from note content. A linked id
+ * the user can't read is reported as missing, whether deleted or never theirs.
+ *
+ * @example
+ * const connections = await getNoteConnectionsForUser(userId, noteId);
+ */
+export async function getNoteConnectionsForUser(
+  userId: string,
+  noteId: string,
+): Promise<NoteConnections | null> {
+  const current = await getNoteByIdForUser(userId, noteId);
+  if (!current) return null;
+
+  const linkedIds = extractNoteLinkIds(current.content ?? "");
+  const [backlinks, outgoing] = await Promise.all([
+    selectNoteLinkTargets(
+      userId,
+      and(
+        ne(note.id, noteId),
+        sql`strpos(${note.content}, ${getNoteLinkMarker(noteId)}) > 0`,
+      ),
+    ),
+    linkedIds.length > 0
+      ? selectNoteLinkTargets(userId, inArray(note.id, linkedIds))
+      : [],
+  ]);
+  const foundIds = new Set(outgoing.map((target) => target.id));
+
+  return {
+    backlinks,
+    outgoing,
+    missingIds: linkedIds.filter((id) => !foundIds.has(id)),
+  };
+}
+
+function selectNoteLinkTargets(
+  userId: string,
+  condition: SQL | undefined,
+): Promise<NoteLinkTarget[]> {
+  return getDb()
+    .select({ id: note.id, title: note.title, subjectId: note.subjectId })
+    .from(note)
+    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .where(
+      and(
+        eq(note.userId, userId),
+        ...getOwnedActiveSubjectFilters(userId),
+        condition,
+      ),
+    )
+    .orderBy(desc(note.updatedAt));
 }
 
 export async function countNotesBySubjectForUser(

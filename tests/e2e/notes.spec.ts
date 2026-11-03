@@ -3,6 +3,8 @@ import {
   countFlashcardsBySubjectForUser,
   getFlashcardsManagePageForUser,
 } from "@/features/flashcards/queries";
+import { getNoteConnectionsForUser } from "@/features/notes/queries";
+import { getNoteDetailHref } from "@/lib/navigation/detail-page-back-link";
 import { AssistantChatFixture } from "./support/assistant-chat-fixture";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
@@ -10,7 +12,9 @@ import {
   clearUserSubjectsByNames,
   createNote,
   createSubject,
+  ensureApprovedE2EWorkerUser,
   getNoteById,
+  updateNoteContent,
 } from "./support/db";
 import {
   clickSubjectDocumentsMenuItem,
@@ -307,5 +311,110 @@ test("creates a flashcard from the open note through the assistant after confirm
     await expect(sourceLink).toHaveCount(0);
   } finally {
     await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  }
+});
+
+test("links notes with [[, follows the link, and tracks backlinks and renames", async ({
+  page,
+  e2eUser,
+}) => {
+  const subjectName = getUniqueSubjectName("note-links");
+  const sourceTitle = getUniqueNoteTitle("link-source");
+  const targetTitle = getUniqueNoteTitle("link-target");
+  const renamedTitle = getUniqueNoteTitle("link-renamed");
+  const otherUser = await ensureApprovedE2EWorkerUser(900);
+  const otherSubjectName = getUniqueSubjectName("note-links-other");
+
+  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserSubjectsByNames(otherUser.userId, [otherSubjectName]);
+
+  try {
+    const subject = await createSubject(e2eUser.userId, subjectName);
+    const source = await createNote(
+      e2eUser.userId,
+      subject.id,
+      sourceTitle,
+      "",
+    );
+    const target = await createNote(
+      e2eUser.userId,
+      subject.id,
+      targetTitle,
+      "",
+    );
+
+    await page.goto(getNoteDetailHref(subject.id, source.id));
+    await page.locator("#form-edit-note-content").click();
+    await page.keyboard.type(`[[${targetTitle}`);
+    await page.getByRole("option", { name: targetTitle }).click();
+
+    const chip = page
+      .locator("#form-edit-note-content")
+      .getByRole("link", { name: targetTitle });
+    await expect(chip).toBeVisible();
+    await expect
+      .poll(async () => (await getNoteById(e2eUser.userId, source.id))?.content)
+      .toContain(`data-note-id="${target.id}"`);
+
+    await chip.click();
+    await expect(page).toHaveURL(
+      new RegExp(`${escapeRegex(getNoteDetailHref(subject.id, target.id))}$`),
+    );
+    const linkedFrom = page.getByRole("region", { name: "Linked from" });
+    await expect(
+      linkedFrom.getByRole("link", { name: sourceTitle }),
+    ).toBeVisible();
+
+    await page.locator("#form-edit-note-title").fill(renamedTitle);
+    await expect
+      .poll(async () => (await getNoteById(e2eUser.userId, target.id))?.title)
+      .toBe(renamedTitle);
+
+    await page.goto(getNoteDetailHref(subject.id, source.id));
+    await expect(
+      page
+        .locator("#form-edit-note-content")
+        .getByRole("link", { name: renamedTitle }),
+    ).toBeVisible();
+
+    // Stored HTML is the source: other accounts, self-links, and text that only
+    // mentions the attribute must not count as backlinks.
+    const linkTo = (noteId: string) =>
+      `<p><a data-note-id="${noteId}" data-note-link="" href="/notes/${noteId}">x</a></p>`;
+    const otherSubject = await createSubject(
+      otherUser.userId,
+      otherSubjectName,
+    );
+    const foreign = await createNote(
+      otherUser.userId,
+      otherSubject.id,
+      "foreign",
+      linkTo(target.id),
+    );
+    await createNote(
+      e2eUser.userId,
+      subject.id,
+      "plain mention",
+      "<p>data-note-id</p>",
+    );
+    await updateNoteContent(e2eUser.userId, target.id, linkTo(target.id));
+    const targetView = await getNoteConnectionsForUser(
+      e2eUser.userId,
+      target.id,
+    );
+    expect(targetView?.backlinks.map((note) => note.id)).toEqual([source.id]);
+
+    const foreignView = await getNoteConnectionsForUser(
+      otherUser.userId,
+      foreign.id,
+    );
+    expect(foreignView?.outgoing).toEqual([]);
+    expect(foreignView?.missingIds).toEqual([target.id]);
+    expect(
+      await getNoteConnectionsForUser(otherUser.userId, target.id),
+    ).toBeNull();
+  } finally {
+    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserSubjectsByNames(otherUser.userId, [otherSubjectName]);
   }
 });

@@ -24,6 +24,14 @@ export interface SubjectTreeNode extends SubjectEntity {
   path: string;
 }
 export type NoteEntity = InferSelectModel<typeof note>;
+/** Enough of a note to title and link to it. */
+export type NoteLinkTarget = Pick<NoteEntity, "id" | "title" | "subjectId">;
+/** Links in and out of one note. */
+export type NoteConnections = {
+  backlinks: NoteLinkTarget[];
+  outgoing: NoteLinkTarget[];
+  missingIds: string[];
+};
 export type FlashcardEntity = InferSelectModel<typeof flashcard>;
 /** A stored card plus its resolved source link. */
 export type FlashcardWithSourceEntity = FlashcardEntity & {

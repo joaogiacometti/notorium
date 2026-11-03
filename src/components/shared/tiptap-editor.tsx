@@ -21,6 +21,10 @@ import {
   MathEditDialog,
 } from "@/components/shared/math-edit-dialog";
 import {
+  NoteLinkPicker,
+  useNoteLinkPicker,
+} from "@/components/shared/note-link-picker";
+import {
   EDITOR_ROOT_ATTRIBUTE,
   focusToolbarOnShortcut,
   TiptapFormattingToolbar,
@@ -37,12 +41,27 @@ import { TiptapTableControls } from "@/components/shared/tiptap-table-controls";
 import { DocumentTitleHistory } from "@/lib/editor/document-title-history";
 import { shouldSubmitEditorOnCtrlEnter } from "@/lib/editor/editor-submit-shortcuts";
 import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
+import {
+  createNoteLinkTargetStore,
+  EditableNoteLink,
+} from "@/lib/editor/tiptap-editable-note-link";
 import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
 import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
 import { buildMathExtensions } from "@/lib/editor/tiptap-math-extensions";
+import { NoteLinkSuggestion } from "@/lib/editor/tiptap-note-link-suggestion";
 import { SlashCommands } from "@/lib/editor/tiptap-slash-commands";
 import { buildTableExtensions } from "@/lib/editor/tiptap-table-extensions";
+import type { NoteConnections } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
+
+/** Note link behavior for editors of a saved note. */
+interface EditorNoteLinks {
+  /** The note being edited, which the `[[` picker leaves out. */
+  sourceNoteId: string;
+  /** Current titles and missing targets; saved titles show until they load. */
+  targets: NoteConnections | null;
+  navigate: (href: string) => void;
+}
 
 /** What a toolbar outside the editor needs to drive it. */
 export interface EditorToolbarTarget {
@@ -71,6 +90,8 @@ interface TiptapEditorProps {
   imageUploadContext?: EditorImageUploadContext;
   onCtrlEnter?: () => void;
   onImageUploadPendingChange?: (pending: boolean) => void;
+  /** Enables the `[[` note link picker and live link titles. */
+  noteLinks?: EditorNoteLinks;
 }
 
 export function TiptapEditor({
@@ -87,7 +108,13 @@ export function TiptapEditor({
   onImageUploadPendingChange,
   onToolbarTargetChange,
   onFocus,
+  noteLinks,
 }: Readonly<TiptapEditorProps>) {
+  const noteLinkPicker = useNoteLinkPicker();
+  const [noteLinkTargets] = useState(createNoteLinkTargetStore);
+  const noteLinkTargetData = noteLinks?.targets ?? null;
+  const navigateNoteLinkRef = useRef(noteLinks?.navigate);
+  navigateNoteLinkRef.current = noteLinks?.navigate;
   const resolvedPlaceholder = placeholder ?? "Start writing your notes...";
   const onEditorReadyRef = useRef(onEditorReady);
   onEditorReadyRef.current = onEditorReady;
@@ -188,6 +215,15 @@ export function TiptapEditor({
         () => activeUploadsRef.current > 0,
         imageUploadTracker,
       ),
+      EditableNoteLink.configure({
+        targets: noteLinkTargets,
+        navigate: noteLinks
+          ? (href) => navigateNoteLinkRef.current?.(href)
+          : null,
+      }),
+      ...(noteLinks
+        ? [NoteLinkSuggestion.configure({ render: noteLinkPicker.render })]
+        : []),
     ],
     content: resolvedValue || "",
     onUpdate: handleUpdate,
@@ -233,6 +269,10 @@ export function TiptapEditor({
     },
     immediatelyRender: false,
   });
+
+  useEffect(() => {
+    noteLinkTargets.set(noteLinkTargetData);
+  }, [noteLinkTargets, noteLinkTargetData]);
 
   useEffect(() => {
     editorRef.current = editor;
@@ -366,6 +406,14 @@ export function TiptapEditor({
         state={linkDialog}
         onClose={() => setLinkDialog(null)}
       />
+      {noteLinks && noteLinkPicker.session ? (
+        <NoteLinkPicker
+          session={noteLinkPicker.session}
+          currentNoteId={noteLinks.sourceNoteId}
+          keyHandlerRef={noteLinkPicker.keyHandlerRef}
+          onDismiss={noteLinkPicker.dismiss}
+        />
+      ) : null}
     </div>
   );
 }

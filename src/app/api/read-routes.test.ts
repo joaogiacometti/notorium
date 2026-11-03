@@ -8,6 +8,7 @@ const queries = vi.hoisted(() => ({
   getFlashcardReviewStateForUser: vi.fn(),
   ensureFsrsSettings: vi.fn(),
   getNoteByIdForUser: vi.fn(),
+  getNoteConnectionsForUser: vi.fn(),
   getSearchDataForUser: vi.fn(),
   getAllSubjectsWithPathsForUser: vi.fn(),
   getSubjectDocumentsForUser: vi.fn(),
@@ -167,6 +168,20 @@ describe("read route handlers", () => {
     );
 
     expect(result).toEqual({ status: 200, body: { id: "n1", updatedAt } });
+  });
+
+  it("note connections are scoped to the session user and 404 when missing", async () => {
+    queries.getNoteConnectionsForUser.mockResolvedValue(null);
+    const result = await callRoute(
+      import("@/app/api/notes/[noteId]/connections/route"),
+      "/api/notes/n1/connections",
+      { noteId: "n1" },
+    );
+    expect(result.body).toMatchObject({ errorCode: "notes.notFound" });
+    expect(queries.getNoteConnectionsForUser).toHaveBeenCalledWith(
+      "user-1",
+      "n1",
+    );
   });
 
   it("search skips the query below the minimum length", async () => {

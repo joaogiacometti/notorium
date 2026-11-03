@@ -103,6 +103,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.Global,
   },
   {
+    id: "editor-note-link",
+    kind: "typed",
+    keys: ["[["],
+    description: "Link to another note",
+    category: ShortcutCategory.NotesEditor,
+  },
+  {
     id: "editor-slash-table",
     kind: "typed",
     keys: ["/table"],

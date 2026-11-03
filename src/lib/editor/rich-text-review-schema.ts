@@ -7,6 +7,7 @@ import TaskList from "@tiptap/extension-task-list";
 import StarterKit from "@tiptap/starter-kit";
 import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
 import { buildMathExtensions } from "@/lib/editor/tiptap-math-extensions";
+import { NoteLink } from "@/lib/editor/tiptap-note-link";
 import { buildTableExtensions } from "@/lib/editor/tiptap-table-extensions";
 
 /** Read-only editor schema, also used to normalize proposed rich text.
@@ -29,6 +30,7 @@ export function buildRichTextReviewExtensions() {
     TaskItem.configure({ nested: true }),
     ...buildTableExtensions(),
     ...buildMathExtensions(),
+    NoteLink,
   ];
 }
 

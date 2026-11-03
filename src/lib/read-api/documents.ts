@@ -3,7 +3,21 @@ import {
   fetchReadApi,
   fetchReadApiOrNull,
 } from "@/lib/read-api/read-api-client";
-import type { NoteEntity } from "@/lib/server/api-contracts";
+import type { NoteConnections, NoteEntity } from "@/lib/server/api-contracts";
+
+/**
+ * Load the links in and out of a note, or `null` when it no longer exists.
+ *
+ * @example
+ * const connections = await fetchNoteConnections(noteId);
+ */
+export function fetchNoteConnections(
+  noteId: string,
+): Promise<NoteConnections | null> {
+  return fetchReadApiOrNull<NoteConnections>(
+    `/api/notes/${encodeURIComponent(noteId)}/connections`,
+  );
+}
 
 /**
  * Load one subject's notes for the tree sidebar.

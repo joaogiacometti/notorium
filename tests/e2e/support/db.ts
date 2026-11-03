@@ -235,6 +235,17 @@ export async function createNote(
   return newNote;
 }
 
+export async function updateNoteContent(
+  userId: string,
+  noteId: string,
+  content: string,
+) {
+  await getDb()
+    .update(note)
+    .set({ content })
+    .where(and(eq(note.id, noteId), eq(note.userId, userId)));
+}
+
 export async function getNoteById(userId: string, noteId: string) {
   const [existingNote] = await getDb()
     .select({

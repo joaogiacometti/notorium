@@ -20,6 +20,10 @@ import { DocumentTitleReview } from "@/components/documents/document-title-revie
 import { ZenModeToggle } from "@/components/documents/zen-mode-toggle";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { NoteDocumentReview } from "@/components/notes/note-document-review";
+import {
+  NoteLinkedFrom,
+  useNoteConnections,
+} from "@/components/notes/note-linked-from";
 import { AppPageContainer } from "@/components/shared/app-page-container";
 import { LazyTiptapEditor as TiptapEditor } from "@/components/shared/lazy-tiptap-editor";
 import { PageTopBar } from "@/components/shared/page-top-bar";
@@ -114,6 +118,7 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
     }
   }, [form, note]);
 
+  const connections = useNoteConnections(note.id);
   const autosave = useDocumentAutosave({
     documentId: note.id,
     initialValue: getEditValues(note),
@@ -131,7 +136,12 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
       }
       if (form.getValues("id") === values.id)
         lastSavedValuesRef.current = values;
-      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["search-data"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["note-connections", values.id],
+        }),
+      ]);
       return true;
     },
     onError: () => toast.error("Couldn't save the note"),
@@ -289,6 +299,12 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
                     id="form-edit-note-content"
                     aria-invalid={fieldState.invalid}
                     imageUploadContext="notes"
+                    noteLinks={{
+                      sourceNoteId: note.id,
+                      targets: connections.data ?? null,
+                      navigate: (href) =>
+                        startNavTransition(() => router.push(href)),
+                    }}
                     className={cn(
                       "w-full min-w-0 overflow-hidden",
                       isZenMode
@@ -317,6 +333,7 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
               )}
             />
           </form>
+          {!isZenMode ? <NoteLinkedFrom connections={connections} /> : null}
         </div>
 
         <DeleteNoteDialog

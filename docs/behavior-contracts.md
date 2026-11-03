@@ -7,7 +7,7 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 ## Access and Account Lifecycle
 
 - Workspace reads and writes require an approved authenticated user and enforce ownership, including search, media, and assistant tool results. Admin access changes require an admin. UI visibility is not authorization.
-- Password-reset policy is approved accounts only, with a generic response for missing or unapproved accounts and a daily email cap from [limits.ts](../src/lib/config/limits.ts). Successful resets revoke existing sessions; token lifetime is configured in [auth.ts](../src/lib/auth/auth.ts).
+- Password-reset policy is approved accounts only, with a generic response for missing or unapproved accounts and a daily email cap from [limits.ts](../src/lib/config/limits.ts). Successful resets revoke existing sessions.
 - Account deletion removes the user's database records and owned stored files. Ordinary document/subtree deletion instead leaves shared attachments for the scheduled orphan sweep; see [storage operations](./setup/optional-features.md#blob-orphan-garbage-collection).
 
 **Verification gaps from static review; not runtime-confirmed or fixed:**
@@ -19,19 +19,18 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 ## Review and Persistence
 
 - Deleting a card or subject preserves historical review activity and FSRS optimization input. Undoing the latest regular grade restores its prior scheduling state and removes that grade's history entry.
-- Exam grading does not change regular spaced-repetition scheduling. Explicit card edits, resets, and deletes remain writes.
-- Study later changes queue priority, not due dates or scheduling. Resetting progress clears lapses but preserves the source document and study-later mark.
-- Scheduler optimization changes tuning, not existing card progress or due dates. Automatic runs select opted-in users who have never optimized or whose tuning is older than the configured interval.
+- Exam grading and study-later marks do not change regular spaced-repetition scheduling. Explicit card edits, resets, and deletes remain writes.
+- Scheduler optimization changes tuning, not existing card progress or due dates.
 - Failed background grades return the card for retry. Leaving waits for pending saves; queue refill must not report completion prematurely or reintroduce an already graded card.
 
 **Coverage to strengthen:** real card/subtree deletion with retained logs, exam grading without scheduling writes, optimization without progress changes, and struggling-card recovery against actual review histories rather than SQL-parameter assertions alone.
 
 ## Documents and Sources
 
-- Subject path creation is atomic; sibling names are unique per user and case-sensitive. Concurrent moves must not create cycles or exceed depth and destination resource limits.
+- Subject path creation is atomic. Concurrent moves must not create cycles or exceed depth and destination resource limits.
 - A proposed card's note source is captured with its originating request, not inferred from history, library search, or whichever page is open when accepted. Renames and moves resolve current link metadata; deleting a source preserves the card. PDF context does not establish a card source.
 - Failed saves retain the draft for retry. Uploads and unresolved AI suggestions block saving until their content is safe to persist. Preview decorations never become stored content.
-- PDF context is selectable text from a selection or the current page, not the entire book or OCR. Empty or failed extraction must not be presented as successfully read content. Global PDF search does not search file contents.
+- PDF context is selectable text from a selection or the current page, not the entire book or OCR. Empty or failed extraction must not be presented as successfully read content.
 
 **Coverage to strengthen:** source preservation through edit/move/reset and deletion, old proposals accepted after navigation, upload-attempt accounting for invalid requests, and actual byte-range loading.
 
@@ -44,7 +43,7 @@ Model-visible behavior belongs in [the system prompt](../src/features/assistant/
 - Proposals bind to an editor session and content revision. New typing, switching editors, navigation, and teardown invalidate or settle unresolved proposals. Selection and viewport changes alone do not invalidate content. Accepting twice must have no effect; new chat ignores late replies.
 - Handling proposals and delivering their outcomes on the next user message must not generate another AI request or spend another message allowance. A blocked send must preserve unresolved suggestions.
 - Hidden review answers guide hints and feedback but are disclosed only on request. This is a model instruction, not a security boundary: the model receives the answer, and library excerpts may contain answers too.
-- Guided lessons start from `/learn` or an explicit request for interactive tutoring, marked by a server-echoed start tool call. Contextual explanations, selected material, and exercise answers do not authorize a mode change. Choice-answer turns hide mode-transition tools and reject their execution. Only the user requests exit: the indicator ends locally before requesting one closing summary, new chat clears without a summary, and a conversational exit is recorded by the end tool in that reply. Summary failure must not reopen a lesson. Summaries distinguish covered content, observed attempts and assistance, difficulties, and unassessed areas; ending is not evidence of mastery. Long chats retain the lesson anchor and disclose omitted history. Answer-choice controls send explicit user messages, never automatic follow-up requests.
+- Guided lessons start only from `/learn` or an explicit request for tutoring, and only the user ends one. Ending is not evidence of mastery, and a failed closing summary must not reopen the lesson. Answer-choice controls send explicit user messages, never automatic follow-up requests.
 - Conversations are in browser memory, survive minimizing and client navigation, and clear on reload or new chat; they are not a durable chat archive.
 
 **Coverage to strengthen:** no automatic follow-up requests after proposal actions, double acceptance, late replies after new chat, selection-only changes, and real-model evaluations for language precedence, edit permission, hidden answers, source trust, and guided-lesson triggering.

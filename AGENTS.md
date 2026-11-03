@@ -22,8 +22,14 @@ For isolated E2E services and migrations, follow [Development](docs/setup/develo
 - Before structural or cross-boundary changes: [Architecture](docs/architecture.md).
 - Before UI changes: [DESIGN.md](DESIGN.md); reuse its primitives and semantic tokens.
 - Before auth, scheduling, deletion, or proposal-lifecycle changes: [Behavior Contracts](docs/behavior-contracts.md).
-- Update only the doc that owns an affected decision. Detailed behavior belongs in
-  tests, schemas, constants, and production prompts; do not recreate a feature spec.
+
+## Documentation
+
+- Document only what outlasts individual features: core concepts, setup, boundaries,
+  and cross-feature decisions. Sub-features and fixes don't belong in docs; tests,
+  schemas, constants, and production prompts own that detail.
+- When a change removes or replaces one of those (say, subjects or how they work),
+  update its owning doc in the same change and delete what is no longer true.
 
 ## Server Boundaries
 
@@ -74,9 +80,12 @@ For isolated E2E services and migrations, follow [Development](docs/setup/develo
 
 ## Automated Guards
 
-Do not weaken Biome boundaries, size limits, or Knip checks to pass a change. Remove
-orphaned code/dependencies instead of adding ignores; justify verified false positives.
-Run checks relevant to the change; report what ran and anything left unverified.
+- Do not weaken Biome boundaries, size limits, or Knip checks to pass a change.
+- Remove orphaned code/dependencies instead of adding ignores; justify verified false positives.
+- Run checks relevant to the change; report what ran and anything left unverified.
 
-Commit only when asked, using Conventional Commits. Stage only the requested work;
-report the commit hash and remaining worktree changes. Never discard unrelated edits.
+## Commits
+
+- Commit only when asked, using Conventional Commits.
+- Stage only the requested work; never discard unrelated edits.
+- Report the commit hash and remaining worktree changes.

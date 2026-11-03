@@ -11,6 +11,7 @@ import { useActiveNoteEditor } from "@/components/assistant/use-active-note-edit
 import { NoteDocumentReview } from "@/components/notes/note-document-review";
 import type { EditNoteForm } from "@/features/notes/validation";
 import { DocumentTitleHistory } from "@/lib/editor/document-title-history";
+import { NoteLink } from "@/lib/editor/tiptap-note-link";
 import { FakeDocumentEditChat } from "@/test/fake-document-edit-chat";
 import "@/components/assistant/prepare-document-edit";
 
@@ -21,7 +22,8 @@ function NoteSurface({ editor }: { editor: Editor }) {
     defaultValues: {
       id,
       title: "Original title",
-      content: "<p>Original explanation</p><p>Preserved</p>",
+      content:
+        '<p>Original explanation</p><p>Preserved <a data-note-id="n1" data-note-link="" href="/notes/n1">Linked note</a></p>',
     },
   });
   const values = form.watch();
@@ -110,8 +112,9 @@ describe("document proposal lifecycle", () => {
     container = document.createElement("div");
     document.body.append(container);
     editor = new Editor({
-      extensions: [StarterKit, DocumentTitleHistory],
-      content: "<p>Original explanation</p><p>Preserved</p>",
+      extensions: [StarterKit, DocumentTitleHistory, NoteLink],
+      content:
+        '<p>Original explanation</p><p>Preserved <a data-note-id="n1" data-note-link="" href="/notes/n1">Linked note</a></p>',
     });
     root = createRoot(container);
     transport = new FakeDocumentEditChat();
@@ -149,6 +152,8 @@ describe("document proposal lifecycle", () => {
     expect(read("values")).toContain("Improved explanation");
     expect(read("values")).toContain("Improved title");
     expect(read("values")).toContain("Preserved");
+    // `values` is JSON, so the attribute's quotes are escaped.
+    expect(read("values")).toContain(String.raw`data-note-id=\"n1\"`);
     expect(read("messages")).toContain('"outcome":"accepted"');
     await click("Undo");
     expect(read("values")).toContain("Original explanation");

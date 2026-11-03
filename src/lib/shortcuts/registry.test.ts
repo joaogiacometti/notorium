@@ -126,6 +126,14 @@ describe("shortcutRegistry", () => {
     );
     expect(formatShortcutKeys(["arrowup", "arrowdown"])).toEqual(["↑", "↓"]);
   });
+  it("documents the note link trigger under the notes editor", () => {
+    expect(getShortcutsByCategory(ShortcutCategory.NotesEditor)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "editor-note-link", keys: ["[["] }),
+      ]),
+    );
+  });
+
   it("has at least one shortcut in every displayed category", () => {
     for (const section of shortcutCategorySections) {
       expect(getShortcutsByCategory(section.category).length).toBeGreaterThan(

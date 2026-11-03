@@ -2,11 +2,9 @@
 
 Notorium is a self-hosted knowledge editor. Write notes, read PDFs, and keep what matters in memory with spaced repetition.
 
-Keep your material organized by subject, take notes, read PDFs, and review flashcards with FSRS spaced repetition. Exam mode lets you practice without changing your review schedule. Search finds notes, PDF titles, and cards across your library.
+Your material is organized into subjects, and each account has its own. If you configure AI, you can ask about your material and review its suggested edits and cards before applying them.
 
-If you configure AI, you can ask questions about your material or ask it to draft cards and suggest edits. You review the suggestions before applying them.
-
-Each account has its own material. The first person to sign up becomes the admin and can approve later users from **Account → Admin Panel**.
+The first person to sign up becomes the admin and can approve later users from **Account → Admin Panel**.
 
 ## Run locally
 
