@@ -78,12 +78,7 @@ export function getServerEnv(): ServerEnv {
     return cachedServerEnv;
   }
 
-  const serverEnvResult = process.env.SKIP_ENV_VALIDATION
-    ? {
-        success: true as const,
-        data: process.env as unknown as ServerEnv,
-      }
-    : serverEnvSchema.safeParse(process.env);
+  const serverEnvResult = serverEnvSchema.safeParse(process.env);
 
   if (!serverEnvResult.success) {
     const errorMessages = serverEnvResult.error.issues.map((issue) => {

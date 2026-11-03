@@ -5,8 +5,7 @@ function stubRequiredEnv() {
     "DATABASE_URL",
     "postgresql://postgres:postgres@localhost:5432/notorium",
   );
-  vi.stubEnv("BETTER_AUTH_SECRET", "secretsecretsecretsecret");
-  vi.stubEnv("SKIP_ENV_VALIDATION", "1");
+  vi.stubEnv("BETTER_AUTH_SECRET", "12345678901234567890123456789012");
 }
 
 function stubUpstashEnv() {
@@ -321,9 +320,10 @@ describe("consumeUserDailyRateLimit", () => {
     });
   });
 
-  it("throws when the upstash backend is selected but unconfigured", async () => {
-    stubRequiredEnv();
-    vi.stubEnv("RATE_LIMIT_BACKEND", "memory");
+  it("rejects an unconfigured upstash backend before consuming quota", async () => {
+    stubUpstashEnv();
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", undefined);
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", undefined);
 
     const { consumeUserDailyRateLimit } = await import(
       "@/lib/rate-limit/user-rate-limit"
@@ -336,7 +336,7 @@ describe("consumeUserDailyRateLimit", () => {
         limit: 5,
         errorCode: "ai_daily_limit",
       }),
-    ).rejects.toThrow("Upstash Redis is not configured");
+    ).rejects.toThrow("UPSTASH_REDIS_REST_URL");
   });
 });
 

@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const ORIGINAL_DATABASE_URL = process.env.DATABASE_URL;
-const ORIGINAL_SKIP_ENV_VALIDATION = process.env.SKIP_ENV_VALIDATION;
 
 function restoreEnv() {
   if (ORIGINAL_DATABASE_URL === undefined) {
@@ -9,19 +8,12 @@ function restoreEnv() {
   } else {
     process.env.DATABASE_URL = ORIGINAL_DATABASE_URL;
   }
-
-  if (ORIGINAL_SKIP_ENV_VALIDATION === undefined) {
-    delete process.env.SKIP_ENV_VALIDATION;
-  } else {
-    process.env.SKIP_ENV_VALIDATION = ORIGINAL_SKIP_ENV_VALIDATION;
-  }
 }
 
 describe("db init", () => {
   beforeEach(() => {
     vi.resetModules();
     delete process.env.DATABASE_URL;
-    delete process.env.SKIP_ENV_VALIDATION;
   });
 
   afterEach(() => {

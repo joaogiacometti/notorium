@@ -17,19 +17,12 @@ vi.mock("@/db/index", () => ({
 }));
 
 const ORIGINAL_DATABASE_URL = process.env.DATABASE_URL;
-const ORIGINAL_SKIP_ENV_VALIDATION = process.env.SKIP_ENV_VALIDATION;
 
 function restoreEnv() {
   if (ORIGINAL_DATABASE_URL === undefined) {
     delete process.env.DATABASE_URL;
   } else {
     process.env.DATABASE_URL = ORIGINAL_DATABASE_URL;
-  }
-
-  if (ORIGINAL_SKIP_ENV_VALIDATION === undefined) {
-    delete process.env.SKIP_ENV_VALIDATION;
-  } else {
-    process.env.SKIP_ENV_VALIDATION = ORIGINAL_SKIP_ENV_VALIDATION;
   }
 }
 
@@ -39,7 +32,6 @@ describe("auth init", () => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
     delete process.env.DATABASE_URL;
-    delete process.env.SKIP_ENV_VALIDATION;
   });
 
   afterEach(() => {
