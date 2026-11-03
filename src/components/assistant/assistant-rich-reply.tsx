@@ -1,7 +1,7 @@
 "use client";
 
 import { lazy, Suspense } from "react";
-import { plainTextToRichText } from "@/lib/ai/plain-text-rich-text";
+import { plainTextToDocument } from "@/lib/ai/plain-text-rich-text";
 
 function loadTiptapRenderer() {
   return import("@/components/shared/tiptap-renderer");
@@ -41,7 +41,7 @@ export function AssistantRichReply({
   return (
     <Suspense fallback={plainReply}>
       <TiptapRenderer
-        content={plainTextToRichText(text)}
+        content={plainTextToDocument(text)}
         fallback={plainReply}
       />
     </Suspense>

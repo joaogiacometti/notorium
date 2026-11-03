@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { editToolInputObject } from "@/features/assistant/edit-guards";
+import { editorHtmlText } from "@/features/assistant/editor-html-text";
 import { EDITOR_HTML_MATH_RULE } from "@/lib/ai/prompt-rules";
 import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
-import { richTextToPlainText } from "@/lib/editor/rich-text";
+import type { RichTextDocument } from "@/lib/editor/document";
 
 /** Raw size cap for a card side sent to the assistant; the visible-text limit
  * is checked separately. HTML needs room for tables, math attributes, and
@@ -13,7 +14,7 @@ const draftHtml = (limit: number) =>
     .string()
     .max(ASSISTANT_CARD_SIDE_MAX_CHARS)
     .refine(
-      (value) => richTextToPlainText(value).length <= limit,
+      (value) => editorHtmlText(value).length <= limit,
       `Expected rich text with at most ${limit} visible characters`,
     );
 
@@ -75,3 +76,8 @@ export type FlashcardDraft = z.infer<typeof flashcardDraftSchema>;
 export type FlashcardEditsInput = z.infer<typeof flashcardEditsInputSchema>;
 export type FlashcardEditsOutput = z.infer<typeof flashcardEditsOutputSchema>;
 export type FlashcardEditField = "front" | "back";
+
+export type NativeFlashcardDraft = Omit<FlashcardDraft, "front" | "back"> & {
+  front: RichTextDocument;
+  back: RichTextDocument;
+};

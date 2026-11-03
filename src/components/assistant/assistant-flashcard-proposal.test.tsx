@@ -14,7 +14,10 @@ import type {
   AssistantUIMessage,
 } from "@/features/assistant/types";
 import type { CreateFlashcardForm } from "@/features/flashcards/validation";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { documentToHtml } from "@/lib/editor/document-html";
 import type { CreateFlashcardResult } from "@/lib/server/api-contracts";
+import { testDocument } from "@/test/document";
 import { FakeReadApiFetch } from "@/test/fake-read-api-fetch";
 
 /** Stands in for the flashcard Server Actions; records created cards. */
@@ -52,7 +55,9 @@ vi.mock("sonner", () => ({
 }));
 
 vi.mock("@/components/shared/tiptap-renderer", () => ({
-  TiptapRenderer: ({ content }: { content: string }) => <div>{content}</div>,
+  TiptapRenderer: ({ content }: { content: RichTextDocument }) => (
+    <div>{documentToHtml(content)}</div>
+  ),
 }));
 
 interface RecordedToolOutput {
@@ -223,9 +228,9 @@ describe("AssistantFlashcardProposal", () => {
 
     await click("Discard");
 
-    expect(fakes.actions?.created.map((card) => card.front)).toEqual([
-      "<p>What is ATP?</p>",
-    ]);
+    expect(
+      fakes.actions?.created.map((card) => documentToHtml(card.front)),
+    ).toEqual(["<p>What is ATP?</p>"]);
     expect(resolved).toEqual([
       { toolCallId: "call-1", output: { outcomes: ["created", "dismissed"] } },
     ]);
@@ -239,8 +244,8 @@ describe("AssistantFlashcardProposal", () => {
     expect(fakes.actions?.created).toEqual([
       {
         subjectId: "cells",
-        front: "<p>What is ATP?</p>",
-        back: "<p>Energy carrier.</p>",
+        front: testDocument("<p>What is ATP?</p>"),
+        back: testDocument("<p>Energy carrier.</p>"),
       },
     ]);
     expect(resolved).toEqual([
@@ -255,8 +260,10 @@ describe("AssistantFlashcardProposal", () => {
     expect(container.textContent).toContain("Example");
     await click("Create");
 
-    expect(fakes.actions?.created[0]?.back).toBe(
-      '<p>Energy carrier.</p><pre><code class="language-prolog">p(1).\n\n?- p(X).</code></pre>',
+    expect(fakes.actions?.created[0]?.back).toEqual(
+      testDocument(
+        '<p>Energy carrier.</p><pre><code class="language-prolog">p(1).\n\n?- p(X).</code></pre>',
+      ),
     );
   });
 
@@ -272,9 +279,12 @@ describe("AssistantFlashcardProposal", () => {
     await click("Create");
 
     expect(fakes.actions?.created[0]).toMatchObject({
-      front:
+      front: testDocument(
         "<p>What does <code>functor(filha(ana, bia), Name, Arity)</code> do?</p>",
-      back: "<p>Unifies <code>Name = filha</code> and <code>Arity = 2</code>.</p>",
+      ),
+      back: testDocument(
+        "<p>Unifies <code>Name = filha</code> and <code>Arity = 2</code>.</p>",
+      ),
     });
     expect(container.textContent).toContain(
       "What does functor(filha(ana, bia), Name, Arity) do?",
@@ -293,8 +303,8 @@ describe("AssistantFlashcardProposal", () => {
     expect(container.textContent).toContain("Skipped:What does functor/3 do?");
     await click("Restore");
     await click("Create");
-    expect(fakes.actions?.created[0]?.front).toBe(
-      "<p>What does <code>functor/3</code> do?</p>",
+    expect(fakes.actions?.created[0]?.front).toEqual(
+      testDocument("<p>What does <code>functor/3</code> do?</p>"),
     );
   });
 

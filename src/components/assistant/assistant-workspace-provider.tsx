@@ -11,8 +11,8 @@ import {
 } from "@/components/assistant/assistant-workspace-context";
 import { useDocumentEditWorkspace } from "@/components/assistant/use-document-edit-workspace";
 import { useFlashcardProposalOutcomes } from "@/components/assistant/use-flashcard-proposal-outcomes";
+import type { NativeFlashcardDraft } from "@/features/assistant/edit-contract";
 import {
-  type FlashcardDraft,
   type FlashcardEditField,
   type FlashcardEditsOutput,
   flashcardDraftSchema,
@@ -89,7 +89,7 @@ export function AssistantWorkspaceProvider({
   const [pending, setPending] = useState<PendingFlashcardEdits | null>(null);
   const pendingRef = useRef(pending);
   const [notice, setNotice] = useState<string | null>(null);
-  const requestRef = useRef<FlashcardDraft | null>(null);
+  const requestRef = useRef<NativeFlashcardDraft | null>(null);
   const handled = useRef(new Set<string>());
   const chatGeneration = useRef(0);
   const closingLesson = useRef(false);
@@ -255,7 +255,8 @@ export function AssistantWorkspaceProvider({
         draft || documentDraft
           ? undefined
           : (contexts.current.at(-1)?.() ?? undefined);
-      if (draft && !flashcardDraftSchema.safeParse(draft).success) {
+      const modelDraft = draft ? prepareDraftForAssistant(draft) : undefined;
+      if (modelDraft && !flashcardDraftSchema.safeParse(modelDraft).success) {
         setNotice("This draft is too large to send. Shorten it and try again.");
         return false;
       }
@@ -293,7 +294,7 @@ export function AssistantWorkspaceProvider({
       const options = {
         body: {
           ...(draft
-            ? { draft: prepareDraftForAssistant(draft) }
+            ? { draft: modelDraft }
             : documentDraft
               ? { documentDraft }
               : { context: requestContext }),

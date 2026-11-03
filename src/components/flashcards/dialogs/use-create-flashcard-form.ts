@@ -11,12 +11,13 @@ import {
   type FlashcardFormValues,
   flashcardFormSchema,
 } from "@/features/flashcards/validation";
+import { emptyDocument, type RichTextDocument } from "@/lib/editor/document";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 /** Rich-text front and back that prefill a new card, such as an AI proposal. */
 export interface CreateFlashcardInitialCard {
-  front: string;
-  back: string;
+  front: RichTextDocument;
+  back: RichTextDocument;
   source?: FlashcardSource;
 }
 
@@ -34,8 +35,8 @@ export function getCreateFlashcardFormValues(
   return {
     subjectId: subjectId ?? "",
     ...(initialCard?.source ? { source: initialCard.source } : {}),
-    front: initialCard?.front ?? "",
-    back: initialCard?.back ?? "",
+    front: initialCard?.front ?? emptyDocument(),
+    back: initialCard?.back ?? emptyDocument(),
   };
 }
 

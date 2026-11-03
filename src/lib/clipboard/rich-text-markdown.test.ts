@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import { richTextToMarkdown } from "@/lib/clipboard/rich-text-markdown";
+import { richTextToMarkdown as exportMarkdown } from "@/lib/clipboard/rich-text-markdown";
+import { testDocument } from "@/test/document";
+
+const richTextToMarkdown = (html: string) => exportMarkdown(testDocument(html));
 
 describe("richTextToMarkdown", () => {
   it("converts inline marks and keeps spaces outside the markers", () => {
@@ -109,7 +112,7 @@ describe("richTextToMarkdown", () => {
           "<p>https://example.com/atp.jpg</p>",
       ),
     ).toBe(
-      "[Image]\n\n![Cell](https://example.com/cell.png)\n\n![](https://example.com/atp.jpg)",
+      "[Image]\n\n![Cell](https://example.com/cell.png)\n\nhttps://example.com/atp.jpg",
     );
   });
 

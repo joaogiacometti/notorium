@@ -9,6 +9,9 @@ import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-wor
 import { StudyAssistant } from "@/components/assistant/study-assistant";
 import type { ProposedFlashcard } from "@/features/assistant/tools";
 import type { AssistantUIMessage } from "@/features/assistant/types";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { documentToHtml } from "@/lib/editor/document-html";
+import { testDocument } from "@/test/document";
 import { FakeReadApiFetch } from "@/test/fake-read-api-fetch";
 
 // Stands in for the Tiptap editor, which needs a real layout engine. While
@@ -20,11 +23,11 @@ vi.mock("@/components/shared/tiptap-renderer", () => ({
     content,
     fallback,
   }: {
-    content: string;
+    content: RichTextDocument;
     fallback?: ReactNode;
   }) =>
     fakeTiptapRenderer.ready ? (
-      <div data-testid="rich-reply">{content}</div>
+      <div data-testid="rich-reply">{documentToHtml(content)}</div>
     ) : (
       fallback
     ),
@@ -289,7 +292,11 @@ describe("study assistant", () => {
       [...container.querySelectorAll('[data-testid="rich-reply"]')].some(
         (reply) =>
           reply.textContent ===
-          '<p>B) <span data-type="inline-math" data-latex="6"></span></p>',
+          documentToHtml(
+            testDocument(
+              'B) <span data-type="inline-math" data-latex="6"></span>',
+            ),
+          ),
       ),
     ).toBe(true);
   });

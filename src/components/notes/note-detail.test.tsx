@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NoteDetail } from "@/components/notes/note-detail";
 import type { NoteEntity } from "@/lib/server/api-contracts";
 import { SUBJECT_DOCUMENTS_CHANGED_EVENT } from "@/lib/trees/subject-documents-events";
+import { testDocument, testDocumentHtml } from "@/test/document";
 
 const {
   copyNoteContentMock,
@@ -67,14 +68,14 @@ vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
     value,
     onChange,
   }: {
-    value: string;
-    onChange: (value: string) => void;
+    value: import("@/lib/editor/document").RichTextDocument;
+    onChange: (value: import("@/lib/editor/document").RichTextDocument) => void;
   }) => (
     <textarea
       aria-label="Note content"
       id="form-edit-note-content"
-      value={value}
-      onChange={(event) => onChange(event.currentTarget.value)}
+      value={testDocumentHtml(value)}
+      onChange={(event) => onChange(testDocument(event.currentTarget.value))}
     />
   ),
 }));
@@ -127,7 +128,7 @@ const note: NoteEntity = {
   userId: "user-1",
   subjectId: "subject-1",
   title: "Photosynthesis note",
-  content: "<p>Chlorophyll captures light.</p>",
+  content: testDocument("<p>Chlorophyll captures light.</p>"),
   createdAt: new Date("2026-04-20T10:00:00.000Z"),
   updatedAt: new Date("2026-04-20T10:00:00.000Z"),
 };
@@ -229,7 +230,9 @@ describe("NoteDetail", () => {
     expect(
       titleInput?.parentElement?.parentElement?.parentElement?.className,
     ).not.toContain("overflow-hidden");
-    expect(getContentInput(container)?.value).toBe(note.content);
+    expect(getContentInput(container)?.value).toBe(
+      testDocumentHtml(note.content ?? testDocument("")),
+    );
     expect(
       container.querySelector('button[aria-label="Open note actions"]'),
     ).toBeTruthy();
@@ -274,7 +277,7 @@ describe("NoteDetail", () => {
     expect(editNoteMock).toHaveBeenCalledWith({
       id: note.id,
       title: "Updated note",
-      content: "Updated content",
+      content: testDocument("Updated content"),
     });
     expect(toastLoadingMock).not.toHaveBeenCalled();
     expect(toastSuccessMock).not.toHaveBeenCalled();
@@ -288,12 +291,12 @@ describe("NoteDetail", () => {
     );
     await waitForAutosave();
     expect(toastErrorMock).toHaveBeenCalledWith("Couldn't save the note");
-    expect(getContentInput(container)?.value).toBe("Unsaved draft");
+    expect(getContentInput(container)?.value).toBe("<p>Unsaved draft</p>");
     await act(async () => findButton(container, "Retry save")?.click());
     expect(editNoteMock).toHaveBeenLastCalledWith({
       id: note.id,
       title: note.title,
-      content: "Unsaved draft",
+      content: testDocument("Unsaved draft"),
     });
     expect(findButton(container, "Retry save")).toBeUndefined();
   });
@@ -315,7 +318,7 @@ describe("NoteDetail", () => {
 
     const savedEchoNote = {
       ...note,
-      content: "Saved echo",
+      content: testDocument("Saved echo"),
       updatedAt: new Date("2026-04-20T10:01:00.000Z"),
     };
 
@@ -325,7 +328,7 @@ describe("NoteDetail", () => {
       });
     });
 
-    expect(getContentInput(container)?.value).toBe("Newer local draft");
+    expect(getContentInput(container)?.value).toBe("<p>Newer local draft</p>");
   });
 
   it("offers document actions without dedicated flashcard generation", async () => {

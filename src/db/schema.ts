@@ -18,6 +18,7 @@ import {
   userAccessStatusEnum,
 } from "@/db/schema-enums";
 import type { FlashcardReviewSchedulingSnapshot } from "@/features/flashcard-review/types";
+import type { RichTextDocument } from "@/lib/editor/document";
 
 export * from "@/db/schema-enums";
 
@@ -165,7 +166,8 @@ export const note = pgTable(
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     title: text("title").notNull(),
-    content: text("content"),
+    content: jsonb("content_document").$type<RichTextDocument>().notNull(),
+    contentText: text("content_text").notNull().default(""),
     subjectId: text("subject_id")
       .notNull()
       .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
@@ -183,7 +185,7 @@ export const note = pgTable(
     index("note_userId_idx").on(table.userId),
     index("note_userId_updatedAt_idx").on(table.userId, table.updatedAt),
     unaccentTrigramIndex("note_title_unaccent_trgm_idx", table.title),
-    unaccentTrigramIndex("note_content_unaccent_trgm_idx", table.content),
+    unaccentTrigramIndex("note_content_unaccent_trgm_idx", table.contentText),
   ],
 );
 
@@ -230,12 +232,14 @@ export const flashcard = pgTable(
     id: text("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    front: text("front").notNull(),
+    front: jsonb("front_document").$type<RichTextDocument>().notNull(),
+    frontText: text("front_text").notNull().default(""),
+    backText: text("back_text").notNull().default(""),
     frontNormalized: text("front_normalized").notNull(),
     sourceNoteId: text("source_note_id").references(() => note.id, {
       onDelete: "set null",
     }),
-    back: text("back").notNull(),
+    back: jsonb("back_document").$type<RichTextDocument>().notNull(),
     state: flashcardStateEnum("state").notNull().default("new"),
     dueAt: timestamp("due_at").defaultNow().notNull(),
     stability: numeric("stability", { precision: 10, scale: 4 }),
@@ -277,8 +281,8 @@ export const flashcard = pgTable(
       table.subjectId,
       table.updatedAt,
     ),
-    unaccentTrigramIndex("flashcard_front_unaccent_trgm_idx", table.front),
-    unaccentTrigramIndex("flashcard_back_unaccent_trgm_idx", table.back),
+    unaccentTrigramIndex("flashcard_front_unaccent_trgm_idx", table.frontText),
+    unaccentTrigramIndex("flashcard_back_unaccent_trgm_idx", table.backText),
   ],
 );
 

@@ -10,10 +10,12 @@ import {
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { createDraftRevisionCounter } from "@/components/assistant/draft-revision";
 import type {
-  FlashcardDraft,
   FlashcardEditField,
+  NativeFlashcardDraft,
 } from "@/features/assistant/edit-contract";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { documentSnapshot } from "@/lib/editor/document-snapshot";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 
 interface ActiveFlashcardEditorOptions<TValues extends FlashcardFormValues> {
@@ -49,11 +51,11 @@ export function useActiveFlashcardEditor<TValues extends FlashcardFormValues>(
     const nextRevision = createDraftRevisionCounter(
       typeof options.resetVersion === "number" ? options.resetVersion : 0,
     );
-    const snapshot = (): FlashcardDraft => {
+    const snapshot = (): NativeFlashcardDraft => {
       const current = optionsRef.current;
       const values = current.form.getValues();
       const revision = nextRevision(
-        JSON.stringify([
+        documentSnapshot([
           values.id,
           values.front,
           values.back,
@@ -80,10 +82,10 @@ export function useActiveFlashcardEditor<TValues extends FlashcardFormValues>(
           optionsRef.current.form.getValues().id === recordId
         );
       },
-      apply: (field: FlashcardEditField, html: string) =>
+      apply: (field: FlashcardEditField, content: RichTextDocument) =>
         optionsRef.current.form.setValue(
           field as Path<TValues>,
-          html as PathValue<TValues, Path<TValues>>,
+          content as PathValue<TValues, Path<TValues>>,
           { shouldDirty: true, shouldTouch: true, shouldValidate: true },
         ),
     });

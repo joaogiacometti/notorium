@@ -1,4 +1,5 @@
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
+import { documentsEqual } from "@/lib/editor/document";
 
 interface FlashcardDialogSyncOptions<TValues extends FlashcardFormValues> {
   open: boolean;
@@ -17,8 +18,8 @@ export function haveFlashcardDialogValuesChanged<
   return (
     previousValues.id !== nextValues.id ||
     previousValues.subjectId !== nextValues.subjectId ||
-    previousValues.front !== nextValues.front ||
-    previousValues.back !== nextValues.back
+    !documentsEqual(previousValues.front, nextValues.front) ||
+    !documentsEqual(previousValues.back, nextValues.back)
   );
 }
 

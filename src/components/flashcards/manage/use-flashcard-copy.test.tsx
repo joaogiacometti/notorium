@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useFlashcardCopy } from "@/components/flashcards/manage/use-flashcard-copy";
 import type { FlashcardContentItem } from "@/lib/server/api-contracts";
+import { testDocument } from "@/test/document";
 import { FakeClipboard } from "@/test/fake-clipboard";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
@@ -42,8 +43,8 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 function toContentItem(id: string): FlashcardContentItem {
   return {
     id,
-    front: `<p>Front ${id}</p>`,
-    back: `<p>Back ${id}</p>`,
+    front: testDocument(`<p>Front ${id}</p>`),
+    back: testDocument(`<p>Back ${id}</p>`),
     subjectId: "subject-1",
     subjectName: "Biology",
     subjectPath: "Biology",

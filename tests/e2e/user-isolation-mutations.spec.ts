@@ -25,6 +25,7 @@ import {
   editSubjectForUser,
   moveSubjectForUser,
 } from "@/features/subjects/mutations";
+import { testDocument } from "@/test/document";
 import { snapshotIsolationData } from "./support/isolation-data";
 import { expect, test } from "./support/isolation-test";
 
@@ -43,7 +44,7 @@ test("note mutations reject foreign records and destinations without changing ei
       await editNoteForUser(userId, {
         id: foreign.noteId,
         title: "stolen",
-        content: "overwritten",
+        content: testDocument("overwritten"),
       }),
       await deleteNoteForUser(userId, { id: foreign.noteId }),
       await moveNoteForUser(userId, {
@@ -275,8 +276,8 @@ test("flashcard mutations reject foreign IDs, mixed-owner batches, destinations 
       await editFlashcardForUser(userId, {
         id: foreign.cardId,
         subjectId: own.subjectId,
-        front: "stolen",
-        back: "overwritten",
+        front: testDocument("stolen"),
+        back: testDocument("overwritten"),
       }),
       await deleteFlashcardForUser(userId, { id: foreign.cardId }),
       await resetFlashcardForUser(userId, { id: foreign.cardId }),
@@ -298,14 +299,14 @@ test("flashcard mutations reject foreign IDs, mixed-owner batches, destinations 
     for (const result of [
       await createFlashcardForUser(userId, {
         subjectId: foreign.subjectId,
-        front: "injected",
-        back: "answer",
+        front: testDocument("injected"),
+        back: testDocument("answer"),
       }),
       await editFlashcardForUser(userId, {
         id: own.cardId,
         subjectId: foreign.subjectId,
-        front: "injected",
-        back: "answer",
+        front: testDocument("injected"),
+        back: testDocument("answer"),
       }),
       await bulkMoveFlashcardsForUser(userId, {
         ids: [own.cardId],
@@ -319,8 +320,8 @@ test("flashcard mutations reject foreign IDs, mixed-owner batches, destinations 
     expect(
       await createFlashcardForUser(userId, {
         subjectId: own.subjectId,
-        front: "injected",
-        back: "answer",
+        front: testDocument("injected"),
+        back: testDocument("answer"),
         source: { kind: "note", id: foreign.noteId },
       }),
     ).toMatchObject({ success: false, errorCode: "notes.notFound" });
@@ -337,15 +338,15 @@ test("flashcard mutations reject foreign IDs, mixed-owner batches, destinations 
     await editFlashcardForUser(owner.user.userId, {
       id: owner.data.cardId,
       subjectId: owner.data.subjectId,
-      front: "Owner renamed",
-      back: "Owner answer",
+      front: testDocument("Owner renamed"),
+      back: testDocument("Owner answer"),
     }),
   ).toMatchObject({ success: true });
   expect(
     (await snapshotIsolationData(owner.user.userId)).cards.find(
       (row) => row.id === owner.data.cardId,
     )?.front,
-  ).toBe("Owner renamed");
+  ).toEqual(testDocument("Owner renamed"));
   expect(
     await resetFlashcardForUser(owner.user.userId, { id: owner.data.cardId }),
   ).toMatchObject({ success: true });

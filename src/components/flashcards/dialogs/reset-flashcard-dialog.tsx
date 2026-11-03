@@ -4,13 +4,14 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import { resetFlashcard } from "@/app/actions/flashcards";
 import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
-import { getRichTextExcerpt } from "@/lib/editor/rich-text";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { documentExcerpt } from "@/lib/editor/document-content";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
 interface ResetFlashcardDialogProps {
   flashcardId: string;
-  flashcardFront: string;
+  flashcardFront: RichTextDocument;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onReset?: (flashcard: FlashcardEntity) => void;
@@ -24,7 +25,7 @@ export function ResetFlashcardDialog({
   onReset,
 }: Readonly<ResetFlashcardDialogProps>) {
   const [isPending, startTransition] = useTransition();
-  const flashcardFrontPreview = getRichTextExcerpt(flashcardFront, 120);
+  const flashcardFrontPreview = documentExcerpt(flashcardFront, 120);
 
   function handleReset() {
     startTransition(async () => {

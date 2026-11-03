@@ -5,11 +5,13 @@ import { useAssistantWorkspace } from "@/components/assistant/assistant-workspac
 import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-workspace-provider";
 import { makeCard } from "@/components/flashcards/review/flashcard-review-client-test-support";
 import { ReviewSessionCardContent } from "@/components/flashcards/review/review-session-card-content";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { documentToHtml } from "@/lib/editor/document-html";
 import { FakeFlashcardEditChat } from "@/test/fake-flashcard-edit-chat";
 
 vi.mock("@/components/shared/lazy-tiptap-renderer", () => ({
-  LazyTiptapRenderer: ({ content }: { content: string }) => (
-    <div>{content}</div>
+  LazyTiptapRenderer: ({ content }: { content: RichTextDocument }) => (
+    <div>{documentToHtml(content)}</div>
   ),
 }));
 

@@ -4,7 +4,8 @@ import { Layers, type LucideIcon } from "lucide-react";
 import { DOCUMENT_KIND_ICONS } from "@/components/documents/document-kind-icons";
 import { CommandGroup, CommandItem } from "@/components/ui/command";
 import { LIMITS } from "@/lib/config/limits";
-import { richTextToPlainText } from "@/lib/editor/rich-text";
+
+import { documentText } from "@/lib/editor/document";
 import {
   getDocumentDetailHref,
   getFlashcardDetailHref,
@@ -56,7 +57,7 @@ export function NoteResultGroup({
           />
           {n.content && (
             <ResultSnippet
-              text={richTextToPlainText(n.content)}
+              text={documentText(n.content)}
               highlightQuery={highlightQuery}
               maxLength={LIMITS.contentPreviewTruncate}
             />
@@ -141,7 +142,7 @@ export function FlashcardResultGroup({
             <Layers className="!size-4 text-muted-foreground" />
             <span className="min-w-0 flex-1 truncate">
               <ResultSnippet
-                text={richTextToPlainText(fc.front)}
+                text={documentText(fc.front)}
                 highlightQuery={highlightQuery}
                 maxLength={80}
                 bare
@@ -154,7 +155,7 @@ export function FlashcardResultGroup({
           </div>
           {fc.back && (
             <ResultSnippet
-              text={richTextToPlainText(fc.back)}
+              text={documentText(fc.back)}
               highlightQuery={highlightQuery}
               maxLength={120}
             />

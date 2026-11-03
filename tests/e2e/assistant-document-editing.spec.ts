@@ -1,4 +1,6 @@
 import type { Page } from "@playwright/test";
+import { documentText, emptyDocument } from "@/lib/editor/document";
+import { testDocument } from "@/test/document";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
 import {
@@ -40,9 +42,12 @@ test("reviews note changes, applies through autosave, and preserves them after r
     );
     await page.getByRole("button", { name: "Open assistant" }).click();
     await requestDocumentChanges(page);
-    expect((await getNoteById(e2eUser.userId, note.id))?.content).toContain(
-      "Original explanation.",
-    );
+    expect(
+      documentText(
+        (await getNoteById(e2eUser.userId, note.id))?.content ??
+          emptyDocument(),
+      ),
+    ).toContain("Original explanation.");
     await page.getByRole("button", { name: "Discard changes" }).click();
     await requestDocumentChanges(page);
     await page
@@ -52,7 +57,9 @@ test("reviews note changes, applies through autosave, and preserves them after r
       .poll(() => getNoteById(e2eUser.userId, note.id))
       .toMatchObject({
         title: "Improved note title",
-        content: "<p>A clearer explanation.</p><p>Preserve this paragraph.</p>",
+        content: testDocument(
+          "<p>A clearer explanation.</p><p>Preserve this paragraph.</p>",
+        ),
       });
     await page.reload();
     await expect(page.locator("#form-edit-note-title")).toHaveValue(

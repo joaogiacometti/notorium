@@ -2,17 +2,19 @@ import type {
   DocumentDraft,
   NoteDraft,
 } from "@/features/assistant/document-edit-contract";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { documentSnapshot } from "@/lib/editor/document-snapshot";
 import type { RichTextReviewSegment } from "@/lib/editor/rich-text-review-decorations";
 
 export type DocumentSnapshot = {
   kind: "note";
   draft: NoteDraft;
-  content: string;
+  content: RichTextDocument;
 };
 export type PreparedDocumentEdit = {
   kind: "note";
   title: string;
-  content: string;
+  content: RichTextDocument;
   segments: RichTextReviewSegment[];
 };
 export interface ActiveDocumentEditor {
@@ -42,7 +44,7 @@ export interface DocumentEditControls {
  * @example documentSnapshotSignature(editor.snapshot());
  */
 export function documentSnapshotSignature(snapshot: DocumentSnapshot): string {
-  return JSON.stringify([
+  return documentSnapshot([
     snapshot.draft.sessionId,
     snapshot.draft.revision,
     snapshot.draft.title,

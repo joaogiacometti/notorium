@@ -3,6 +3,7 @@ import { getDb } from "@/db/index";
 import { flashcard, note, pdfDocument, subject } from "@/db/schema";
 import { createFlashcardForUser } from "@/features/flashcards/mutations";
 import { MEDIA_STORAGE_CONTEXTS } from "@/lib/media-storage/storage-pathname";
+import { testDocument } from "@/test/document";
 import { createNote, createSubject } from "./db";
 import { buildBlankPdf } from "./pdf-file";
 
@@ -17,8 +18,8 @@ export async function seedIsolationData(userId: string, name: string) {
   );
   const card = await createFlashcardForUser(userId, {
     subjectId: home.id,
-    front: `<p>${name} question</p>`,
-    back: `<p>${name} private answer</p>`,
+    front: testDocument(`<p>${name} question</p>`),
+    back: testDocument(`<p>${name} private answer</p>`),
     source: { kind: "note", id: createdNote.id },
   });
   if (!card.success) throw new Error("Could not seed isolation flashcard");

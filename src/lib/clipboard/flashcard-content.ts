@@ -1,10 +1,11 @@
 import { writePendingTextToClipboard } from "@/lib/clipboard/clipboard-writer";
 import { richTextToMarkdown } from "@/lib/clipboard/rich-text-markdown";
+import type { RichTextDocument } from "@/lib/editor/document";
 
 /** The card fields a copy needs; manage, detail, and review all have them. */
 export interface FlashcardCopySource {
-  front: string;
-  back: string;
+  front: RichTextDocument;
+  back: RichTextDocument;
   subjectPath: string;
 }
 
@@ -25,7 +26,7 @@ export class NoFlashcardsToCopyError extends Error {
  *
  * @example
  * formatFlashcardsAsMarkdown([
- *   { front: "<p>What is ATP?</p>", back: "<p>Energy</p>", subjectPath: "Bio" },
+ *   { front: questionDocument, back: answerDocument, subjectPath: "Bio" },
  * ]);
  */
 export function formatFlashcardsAsMarkdown(

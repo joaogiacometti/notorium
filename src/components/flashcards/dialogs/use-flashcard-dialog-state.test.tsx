@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
+import { testDocument, testDocumentHtml } from "@/test/document";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -69,8 +70,10 @@ function TestHarness({
 
   return (
     <div>
-      <output data-testid="front">{currentValues.front}</output>
-      <output data-testid="back">{currentValues.back}</output>
+      <output data-testid="front">
+        {testDocumentHtml(currentValues.front)}
+      </output>
+      <output data-testid="back">{testDocumentHtml(currentValues.back)}</output>
       <output data-testid="subjectId">{currentValues.subjectId}</output>
       <output data-testid="duplicate">
         {dialog.isDuplicateFront ? "true" : "false"}
@@ -83,7 +86,9 @@ function TestHarness({
         type="button"
         data-testid="edit-front"
         onClick={() =>
-          form.setValue("front", "<p>Revised front</p>", { shouldDirty: true })
+          form.setValue("front", testDocument("<p>Revised front</p>"), {
+            shouldDirty: true,
+          })
         }
       />
       <button
@@ -151,8 +156,8 @@ describe("useFlashcardDialogState", () => {
           open
           values={{
             subjectId: "deck-1",
-            front: "<p>Front A</p>",
-            back: "<p>Back A</p>",
+            front: testDocument("<p>Front A</p>"),
+            back: testDocument("<p>Back A</p>"),
           }}
         />,
       );
@@ -164,8 +169,8 @@ describe("useFlashcardDialogState", () => {
           open
           values={{
             subjectId: "deck-2",
-            front: "<p>Front B</p>",
-            back: "<p>Back B</p>",
+            front: testDocument("<p>Front B</p>"),
+            back: testDocument("<p>Back B</p>"),
           }}
         />,
       );
@@ -187,8 +192,8 @@ describe("useFlashcardDialogState", () => {
             open
             values={{
               subjectId: "deck-1",
-              front: "<p>Front</p>",
-              back: "<p>Back</p>",
+              front: testDocument("<p>Front</p>"),
+              back: testDocument("<p>Back</p>"),
             }}
             onSubmitAction={onSubmitAction}
           />,
@@ -198,8 +203,8 @@ describe("useFlashcardDialogState", () => {
       await act(async () => getByTestId(container, "submit").click());
       expect(onSubmitAction).toHaveBeenCalledWith({
         subjectId: "deck-1",
-        front: "<p>Revised front</p>",
-        back: "<p>Back</p>",
+        front: testDocument("<p>Revised front</p>"),
+        back: testDocument("<p>Back</p>"),
       });
     },
   );
@@ -221,8 +226,8 @@ describe("useFlashcardDialogState", () => {
             open
             values={{
               subjectId: "deck-1",
-              front: "<p>Front</p>",
-              back: "<p>Back</p>",
+              front: testDocument("<p>Front</p>"),
+              back: testDocument("<p>Back</p>"),
             }}
             onSubmitAction={onSubmitAction}
           />,
@@ -255,8 +260,8 @@ describe("useFlashcardDialogState", () => {
           open
           values={{
             subjectId: "deck-1",
-            front: "<p>Front</p>",
-            back: "<p>Back</p>",
+            front: testDocument("<p>Front</p>"),
+            back: testDocument("<p>Back</p>"),
           }}
           onSubmitAction={onSubmitAction}
         />,
@@ -278,13 +283,17 @@ describe("useFlashcardDialogState", () => {
           open
           values={{
             subjectId: "deck-1",
-            front: "<p>Front A</p>",
-            back: "<p>Back A</p>",
+            front: testDocument("<p>Front A</p>"),
+            back: testDocument("<p>Back A</p>"),
           }}
           getSuccessValues={(currentValues, options) => ({
             subjectId: currentValues.subjectId,
-            front: options.keepFrontAfterSubmit ? currentValues.front : "",
-            back: options.keepBackAfterSubmit ? currentValues.back : "",
+            front: options.keepFrontAfterSubmit
+              ? currentValues.front
+              : testDocument(""),
+            back: options.keepBackAfterSubmit
+              ? currentValues.back
+              : testDocument(""),
           })}
         />,
       );
@@ -305,13 +314,17 @@ describe("useFlashcardDialogState", () => {
           open
           values={{
             subjectId: "deck-1",
-            front: "<p>Front A</p>",
-            back: "<p>Back A</p>",
+            front: testDocument("<p>Front A</p>"),
+            back: testDocument("<p>Back A</p>"),
           }}
           getSuccessValues={(currentValues, options) => ({
             subjectId: currentValues.subjectId,
-            front: options.keepFrontAfterSubmit ? currentValues.front : "",
-            back: options.keepBackAfterSubmit ? currentValues.back : "",
+            front: options.keepFrontAfterSubmit
+              ? currentValues.front
+              : testDocument(""),
+            back: options.keepBackAfterSubmit
+              ? currentValues.back
+              : testDocument(""),
           })}
         />,
       );
@@ -336,13 +349,17 @@ describe("useFlashcardDialogState", () => {
           open
           values={{
             subjectId: "deck-1",
-            front: "<p>Front A</p>",
-            back: "<p>Back A</p>",
+            front: testDocument("<p>Front A</p>"),
+            back: testDocument("<p>Back A</p>"),
           }}
           getSuccessValues={(currentValues, options) => ({
             subjectId: currentValues.subjectId,
-            front: options.keepFrontAfterSubmit ? currentValues.front : "",
-            back: options.keepBackAfterSubmit ? currentValues.back : "",
+            front: options.keepFrontAfterSubmit
+              ? currentValues.front
+              : testDocument(""),
+            back: options.keepBackAfterSubmit
+              ? currentValues.back
+              : testDocument(""),
           })}
         />,
       );
@@ -371,8 +388,8 @@ describe("useFlashcardDialogState", () => {
           onSubmitAction={onSubmitAction}
           values={{
             subjectId: "deck-1",
-            front: "<p>Front</p>",
-            back: "<p>Back</p>",
+            front: testDocument("<p>Front</p>"),
+            back: testDocument("<p>Back</p>"),
           }}
         />,
       ),
@@ -397,8 +414,8 @@ describe("useFlashcardDialogState", () => {
           onOpenChange={onOpenChange}
           values={{
             subjectId: "deck-1",
-            front: "<p>Front A</p>",
-            back: "<p>Back A</p>",
+            front: testDocument("<p>Front A</p>"),
+            back: testDocument("<p>Back A</p>"),
           }}
           onSubmitAction={onSubmitAction}
           getSuccessValues={(currentValues) => currentValues}

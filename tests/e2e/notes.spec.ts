@@ -4,6 +4,7 @@ import {
   getFlashcardsManagePageForUser,
 } from "@/features/flashcards/queries";
 import { getNoteConnectionsForUser } from "@/features/notes/queries";
+import { documentToHtml } from "@/lib/editor/document-html";
 import { getNoteDetailHref } from "@/lib/navigation/detail-page-back-link";
 import { AssistantChatFixture } from "./support/assistant-chat-fixture";
 import { expect, test } from "./support/authenticated-test";
@@ -144,7 +145,7 @@ test("can edit a note", async ({ page, e2eUser }) => {
     await expect
       .poll(async () => {
         const editedNote = await getNoteById(user.userId, createdNote.id);
-        return editedNote?.content ?? "";
+        return editedNote?.content ? documentToHtml(editedNote.content) : "";
       })
       .toContain(updatedContent);
 
@@ -353,7 +354,10 @@ test("links notes with [[, follows the link, and tracks backlinks and renames", 
       .getByRole("link", { name: targetTitle });
     await expect(chip).toBeVisible();
     await expect
-      .poll(async () => (await getNoteById(e2eUser.userId, source.id))?.content)
+      .poll(async () => {
+        const content = (await getNoteById(e2eUser.userId, source.id))?.content;
+        return content ? documentToHtml(content) : "";
+      })
       .toContain(`data-note-id="${target.id}"`);
 
     await chip.click();
@@ -370,6 +374,13 @@ test("links notes with [[, follows the link, and tracks backlinks and renames", 
       .poll(async () => (await getNoteById(e2eUser.userId, target.id))?.title)
       .toBe(renamedTitle);
 
+    await expect
+      .poll(
+        async () =>
+          (await getNoteConnectionsForUser(e2eUser.userId, source.id))
+            ?.outgoing,
+      )
+      .toEqual([{ id: target.id, title: renamedTitle, subjectId: subject.id }]);
     await page.goto(getNoteDetailHref(subject.id, source.id));
     await expect(
       page
@@ -377,7 +388,7 @@ test("links notes with [[, follows the link, and tracks backlinks and renames", 
         .getByRole("link", { name: renamedTitle }),
     ).toBeVisible();
 
-    // Stored HTML is the source: other accounts, self-links, and text that only
+    // Stored document nodes are the source: other accounts, self-links, and text that only
     // mentions the attribute must not count as backlinks.
     const linkTo = (noteId: string) =>
       `<p><a data-note-id="${noteId}" data-note-link="" href="/notes/${noteId}">x</a></p>`;

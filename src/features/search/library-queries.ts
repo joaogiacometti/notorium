@@ -15,7 +15,8 @@ import { buildTermSearch } from "@/features/search/match-sql";
 import { getSubjectPathMapForUser } from "@/features/subjects/queries";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import { LIMITS } from "@/lib/config/limits";
-import { richTextToPlainText } from "@/lib/editor/rich-text";
+
+import { documentText } from "@/lib/editor/document";
 
 type LibraryKind = LibraryHit["kind"];
 
@@ -63,7 +64,7 @@ async function findNoteHitSources(
 ): Promise<LibraryHitSource[]> {
   const search = buildTermSearch(
     terms,
-    [note.title, note.content, subject.name],
+    [note.title, note.contentText, subject.name],
     note.title,
     note.updatedAt,
   );
@@ -89,7 +90,7 @@ async function findNoteHitSources(
   return rows.map(({ content, ...row }) => ({
     ...row,
     kind: "note",
-    body: richTextToPlainText(content ?? ""),
+    body: documentText(content),
   }));
 }
 
@@ -99,8 +100,8 @@ async function findFlashcardHitSources(
 ): Promise<LibraryHitSource[]> {
   const search = buildTermSearch(
     terms,
-    [flashcard.front, flashcard.back],
-    flashcard.front,
+    [flashcard.frontText, flashcard.backText],
+    flashcard.frontText,
     flashcard.updatedAt,
   );
   const rows = await getDb()
@@ -118,7 +119,7 @@ async function findFlashcardHitSources(
   return rows.map(({ front, back, ...row }) => ({
     ...row,
     kind: "flashcard",
-    title: richTextToPlainText(front),
-    body: richTextToPlainText(back),
+    title: documentText(front),
+    body: documentText(back),
   }));
 }

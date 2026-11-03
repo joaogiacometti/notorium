@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { testDocument } from "@/test/document";
 
 const insertValuesMock = vi.fn();
 const insertMock = vi.fn(() => ({
@@ -83,7 +84,7 @@ describe("createNoteForUser", () => {
     const result = await createNoteForUser("user-1", {
       subjectId: "subject-1",
       title: "New note",
-      content: "",
+      content: testDocument(""),
     });
 
     expect(result).toEqual({
@@ -96,7 +97,8 @@ describe("createNoteForUser", () => {
       subjectId: "subject-1",
       userId: "user-1",
       title: "New note",
-      content: "",
+      content: testDocument(""),
+      contentText: "",
     });
 
     randomUUIDSpy.mockRestore();
@@ -120,7 +122,7 @@ describe("editNoteForUser", () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
       subjectId: "subject-1",
-      content: sharedContent,
+      content: testDocument(sharedContent),
     });
     getMediaStorageProviderMock.mockResolvedValue(storage);
     const { createNoteForUser, editNoteForUser } = await import(
@@ -130,7 +132,7 @@ describe("editNoteForUser", () => {
     const copiedNote = createNoteSchema.parse({
       title: "Copy with shared image",
       subjectId: "subject-1",
-      content: sharedContent,
+      content: testDocument(sharedContent),
     });
 
     expect((await createNoteForUser("user-1", copiedNote)).success).toBe(true);
@@ -138,7 +140,7 @@ describe("editNoteForUser", () => {
     const result = await editNoteForUser("user-1", {
       id: "note-1",
       title: "Original without image",
-      content: "<p>Image removed</p>",
+      content: testDocument("<p>Image removed</p>"),
     });
 
     expect(result.success).toBe(true);
@@ -151,7 +153,7 @@ describe("editNoteForUser", () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
       subjectId: "subject-1",
-      content: "<p>Keep</p>",
+      content: testDocument("<p>Keep</p>"),
     });
 
     const { editNoteForUser } = await import("@/features/notes/mutations");
@@ -169,8 +171,9 @@ describe("editNoteForUser", () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
       subjectId: "subject-1",
-      content:
+      content: testDocument(
         '<p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fold.png"></p><p>Keep</p>',
+      ),
     });
 
     const { editNoteForUser } = await import("@/features/notes/mutations");
@@ -178,7 +181,7 @@ describe("editNoteForUser", () => {
     const result = await editNoteForUser("user-1", {
       id: "note-1",
       title: "Updated",
-      content: "<p>Keep</p>",
+      content: testDocument("<p>Keep</p>"),
     });
 
     expect(result).toEqual({ success: true, subjectId: "subject-1" });
@@ -189,8 +192,9 @@ describe("editNoteForUser", () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
       subjectId: "subject-1",
-      content:
+      content: testDocument(
         '<p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fold.png"></p><p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-2%2Fforeign.png"></p>',
+      ),
     });
 
     const { editNoteForUser } = await import("@/features/notes/mutations");
@@ -198,7 +202,7 @@ describe("editNoteForUser", () => {
     const result = await editNoteForUser("user-1", {
       id: "note-1",
       title: "Updated",
-      content: "<p>Keep</p>",
+      content: testDocument("<p>Keep</p>"),
     });
 
     expect(result).toEqual({ success: true, subjectId: "subject-1" });
@@ -328,8 +332,9 @@ describe("deleteNoteForUser", () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
       subjectId: "subject-1",
-      content:
+      content: testDocument(
         "<p>/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fold.png</p>",
+      ),
     });
 
     const { deleteNoteForUser } = await import("@/features/notes/mutations");

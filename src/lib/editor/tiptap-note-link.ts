@@ -5,8 +5,7 @@ const NOTE_ID_ATTRIBUTE = "data-note-id";
 
 /**
  * Inline link to another note. `label` is the title when the link was made;
- * editors show the current title, and this keeps stored HTML readable by every
- * plain-text path. Shared by the editor and review schemas, so keep it free of UI.
+ * editors show the current title, and exports retain this label. Shared by the editor and review schemas, so keep it free of UI.
  */
 export const NoteLink = Node.create({
   name: "noteLink",

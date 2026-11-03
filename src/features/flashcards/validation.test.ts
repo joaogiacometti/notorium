@@ -10,16 +10,34 @@ import {
   resetFlashcardSchema,
 } from "@/features/flashcards/validation";
 import { LIMITS } from "@/lib/config/limits";
+import { testDocument } from "@/test/document";
 
 const richFront = "<p>What is 2 + 2?</p>";
 const richBack = "<p>4</p>";
 
 describe("createFlashcardSchema", () => {
+  it("rejects malformed faces as validation failures", () => {
+    for (const front of [
+      undefined,
+      null,
+      "<p>HTML</p>",
+      { version: 1, type: "doc", content: "bad" },
+    ]) {
+      expect(
+        createFlashcardSchema.safeParse({
+          subjectId: "s1",
+          front,
+          back: richBack,
+        }).success,
+      ).toBe(false);
+    }
+  });
+
   it("accepts valid input", () => {
     const result = createFlashcardSchema.safeParse({
       subjectId: "deck-1",
-      front: richFront,
-      back: richBack,
+      front: testDocument(richFront),
+      back: testDocument(richBack),
     });
 
     expect(result.success).toBe(true);
@@ -27,8 +45,8 @@ describe("createFlashcardSchema", () => {
 
   it("rejects missing subjectId", () => {
     const result = createFlashcardSchema.safeParse({
-      front: richFront,
-      back: richBack,
+      front: testDocument(richFront),
+      back: testDocument(richBack),
     });
 
     expect(result.success).toBe(false);
@@ -37,8 +55,8 @@ describe("createFlashcardSchema", () => {
   it("rejects empty rich text front", () => {
     const result = createFlashcardSchema.safeParse({
       subjectId: "deck-1",
-      front: "<p> </p>",
-      back: richBack,
+      front: testDocument("<p> </p>"),
+      back: testDocument(richBack),
     });
 
     expect(result.success).toBe(false);
@@ -55,8 +73,8 @@ describe("createFlashcardSchema", () => {
 
     const result = createFlashcardSchema.safeParse({
       subjectId: "deck-1",
-      front,
-      back,
+      front: testDocument(front),
+      back: testDocument(back),
     });
 
     expect(result.success).toBe(false);
@@ -68,8 +86,8 @@ describe("editFlashcardSchema", () => {
     const result = editFlashcardSchema.safeParse({
       id: "flashcard-1",
       subjectId: "deck-1",
-      front: richFront,
-      back: richBack,
+      front: testDocument(richFront),
+      back: testDocument(richBack),
     });
 
     expect(result.success).toBe(true);
@@ -78,8 +96,8 @@ describe("editFlashcardSchema", () => {
   it("rejects missing id", () => {
     const result = editFlashcardSchema.safeParse({
       subjectId: "deck-1",
-      front: richFront,
-      back: richBack,
+      front: testDocument(richFront),
+      back: testDocument(richBack),
     });
 
     expect(result.success).toBe(false);
@@ -137,7 +155,11 @@ describe("flashcardsManageQuerySchema", () => {
 });
 
 describe("flashcard source validation", () => {
-  const card = { subjectId: "s1", front: "<p>Q</p>", back: "<p>A</p>" };
+  const card = {
+    subjectId: "s1",
+    front: testDocument("<p>Q</p>"),
+    back: testDocument("<p>A</p>"),
+  };
   it("preserves a valid note source", () => {
     expect(
       createFlashcardSchema.parse({

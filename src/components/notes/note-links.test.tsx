@@ -13,6 +13,7 @@ import {
 } from "@/components/shared/note-link-picker";
 import { TiptapEditor } from "@/components/shared/tiptap-editor";
 import type { NoteConnections } from "@/lib/server/api-contracts";
+import { testDocument } from "@/test/document";
 
 const fetchNoteConnections = vi.hoisted(() => vi.fn());
 const fetchSearchData = vi.hoisted(() => vi.fn());
@@ -125,7 +126,7 @@ describe("note links", () => {
       }, [editor, title]);
       return (
         <TiptapEditor
-          value={LINKED_CONTENT}
+          value={testDocument(LINKED_CONTENT)}
           onChange={() => {}}
           onEditorReady={setEditor}
         />
@@ -154,7 +155,7 @@ describe("note links", () => {
     function renderEditorUi(targets: NoteConnections | null) {
       return render(
         <TiptapEditor
-          value={LINKED_CONTENT}
+          value={testDocument(LINKED_CONTENT)}
           onChange={() => {}}
           noteLinks={{ sourceNoteId: "source", targets, navigate }}
         />,

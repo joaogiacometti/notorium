@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { documentSnapshot } from "@/lib/editor/document-snapshot";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 
 interface DocumentAutosaveOptions<T> {
@@ -35,7 +36,7 @@ export function useDocumentAutosave<T>(
   options: DocumentAutosaveOptions<T>,
 ): DocumentAutosaveState {
   const session = useAutosaveSession(options);
-  const snapshot = JSON.stringify(options.value);
+  const snapshot = documentSnapshot(options.value);
   useAutosaveLifecycle(session);
   useAutosaveTimer(session, snapshot);
   useBeforeUnload(
@@ -71,7 +72,7 @@ function createAutosaveSession<T>(
   return {
     ...options,
     blocked: options.blocked ?? false,
-    savedSnapshot: JSON.stringify(options.initialValue),
+    savedSnapshot: documentSnapshot(options.initialValue),
     saving: false,
     failed: false,
     mounted: false,
@@ -111,7 +112,7 @@ async function flushDocumentSession<T>(
 ): Promise<void> {
   if (session.saving || session.blocked) return;
   const value = session.value;
-  const snapshot = JSON.stringify(value);
+  const snapshot = documentSnapshot(value);
   if (snapshot === session.savedSnapshot) return;
   session.saving = true;
   session.failed = false;
@@ -121,7 +122,7 @@ async function flushDocumentSession<T>(
   session.failed = !succeeded;
   if (succeeded) session.savedSnapshot = snapshot;
   if (session.mounted) session.notify();
-  if (JSON.stringify(session.value) !== snapshot)
+  if (documentSnapshot(session.value) !== snapshot)
     await flushDocumentSession(session);
 }
 

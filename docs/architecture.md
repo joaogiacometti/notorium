@@ -87,6 +87,12 @@ Detailed contributor rules belong in [AGENTS.md](../AGENTS.md), not here.
 - **Hierarchy moves need concurrency protection.** Subject moves validate and update
   under a per-user transaction lock so overlapping moves cannot create cycles;
   [subject mutations](../src/features/subjects/mutations.ts) own that coordination.
+- **Rich text has one document model.** Notes and card faces store versioned
+  Tiptap JSON, validated against the supported schema at write boundaries.
+  Editors and autosave carry documents directly. HTML, Markdown, and plain text
+  are derived exchange formats; assistant fragments are imported at acceptance,
+  and unaffected note blocks retain their original nodes. Search text is derived
+  in the same write as its document, never repaired during reads.
 - **Editor and renderer must share formats.** Their extension sets and math helpers
   live in [editor infrastructure](../src/lib/editor/) and [math infrastructure](../src/lib/math/).
   Diverging schemas can silently discard stored nodes. Autosave is an in-memory

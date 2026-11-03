@@ -3,7 +3,10 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReviewSessionScreen } from "@/components/flashcards/review/review-session-screen";
 import { formatFlashcardsAsMarkdown } from "@/lib/clipboard/flashcard-content";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { documentToHtml } from "@/lib/editor/document-html";
 import type { FlashcardReviewEntity } from "@/lib/server/api-contracts";
+import { testDocument } from "@/test/document";
 import { FakeClipboard } from "@/test/fake-clipboard";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
@@ -15,8 +18,8 @@ vi.mock("@/app/actions/flashcards", () => ({
 }));
 
 vi.mock("@/components/shared/lazy-tiptap-renderer", () => ({
-  LazyTiptapRenderer: ({ content }: { content: string }) => (
-    <div>{content}</div>
+  LazyTiptapRenderer: ({ content }: { content: RichTextDocument }) => (
+    <div>{documentToHtml(content)}</div>
   ),
 }));
 
@@ -36,8 +39,8 @@ const baseHandlers = {
 function makeCard(): FlashcardReviewEntity {
   return {
     id: "card-1",
-    front: "<p>Front</p>",
-    back: "<p>Back</p>",
+    front: testDocument("<p>Front</p>"),
+    back: testDocument("<p>Back</p>"),
     state: "new",
     dueAt: new Date("2026-03-07T11:00:00.000Z"),
     stability: null,
@@ -169,7 +172,11 @@ describe("ReviewSessionScreen", () => {
 
     expect(clipboard?.lastText()).toBe(
       formatFlashcardsAsMarkdown([
-        { front: "<p>Front</p>", back: "<p>Back</p>", subjectPath: "Biology" },
+        {
+          front: testDocument("<p>Front</p>"),
+          back: testDocument("<p>Back</p>"),
+          subjectPath: "Biology",
+        },
       ]),
     );
   });

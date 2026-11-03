@@ -11,6 +11,7 @@ import {
 } from "@/components/flashcards/shared/flashcard-face";
 import { FlashcardSourceReference } from "@/components/flashcards/shared/flashcard-source-reference";
 import { LazyTiptapRenderer as TiptapRenderer } from "@/components/shared/lazy-tiptap-renderer";
+import type { RichTextDocument } from "@/lib/editor/document";
 import type { FlashcardReviewState } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
@@ -126,7 +127,7 @@ function AssistedRecallNote() {
 
 interface CardFaceProps {
   side: FlashcardSide;
-  content: string;
+  content: RichTextDocument;
 }
 
 function CardFace({ side, content }: Readonly<CardFaceProps>) {

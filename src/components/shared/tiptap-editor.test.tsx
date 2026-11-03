@@ -2,8 +2,6 @@ import type { Editor } from "@tiptap/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   handleEditorPaste,
-  isExternalEditorValueChange,
-  shouldApplyNormalizedEditorValue,
   uploadPastedImage,
 } from "@/components/shared/tiptap-helpers";
 
@@ -222,40 +220,5 @@ describe("uploadPastedImage", () => {
     expect(handled).toBe(true);
     expect(event.preventDefault).toHaveBeenCalledTimes(1);
     expect(event.stopPropagation).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("editor value synchronization", () => {
-  it("treats editor-emitted updates as internal echoes", () => {
-    expect(
-      isExternalEditorValueChange(
-        '<p>Legacy note<img src="/api/attachments/blob?pathname=image.png"></p>',
-        '<p>Legacy note<img src="/api/attachments/blob?pathname=image.png"></p>',
-      ),
-    ).toBe(false);
-  });
-
-  it("treats differing incoming values as external changes", () => {
-    expect(
-      isExternalEditorValueChange("<p>Legacy note</p>", "<p>Edited note</p>"),
-    ).toBe(true);
-  });
-
-  it("drops stale normalization results after the latest value changes", () => {
-    expect(
-      shouldApplyNormalizedEditorValue(
-        "<p>Legacy note</p>",
-        '<p>Legacy note</p><p><img src="/api/attachments/blob?pathname=image.png"></p>',
-      ),
-    ).toBe(false);
-  });
-
-  it("applies normalization results when the requested value is still current", () => {
-    expect(
-      shouldApplyNormalizedEditorValue(
-        "<p>Legacy note</p>",
-        "<p>Legacy note</p>",
-      ),
-    ).toBe(true);
   });
 });

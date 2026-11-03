@@ -2,6 +2,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it } from "vitest";
 import { FlashcardFieldReview } from "@/components/flashcards/dialogs/flashcard-field-review";
+import { testDocument } from "@/test/document";
 
 it("updates the visible review when a later proposal replaces it", async () => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -15,8 +16,8 @@ it("updates the visible review when a later proposal replaces it", async () => {
           <FlashcardFieldReview
             field="back"
             proposal={{
-              original: "<p>Original</p>",
-              replacement: `<p>${replacement}</p>`,
+              original: testDocument("<p>Original</p>"),
+              replacement: testDocument(`<p>${replacement}</p>`),
             }}
             onDecide={() => {}}
           />,

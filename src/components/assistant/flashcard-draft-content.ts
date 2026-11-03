@@ -1,65 +1,86 @@
+import type { JSONContent } from "@tiptap/core";
 import DOMPurify from "dompurify";
 import {
-  mathTextToRichText,
-  plainTextToRichText,
+  inlineNodes,
+  plainTextToDocument,
 } from "@/lib/ai/plain-text-rich-text";
 import {
-  replaceImagesWithPlaceholders,
-  restoreImagePlaceholders,
-} from "@/lib/editor/rich-text";
-import { normalizeReviewedRichText } from "@/lib/editor/rich-text-review-schema";
+  documentFromJSON,
+  documentNodes,
+  documentSchema,
+  type RichTextDocument,
+  richTextDocumentSchema,
+} from "@/lib/editor/document";
+import { documentFromHtml } from "@/lib/editor/document-html";
 import { normalizeOverEscapedLatex } from "@/lib/math/dollar-math";
 import { MATH_NODE_SELECTOR, readMathNode } from "@/lib/math/math-nodes";
 
-const PROTECTED_MATH_TEXT = `pre, code, ${MATH_NODE_SELECTOR}`;
-
-/** Restore only images belonging to the source field, then normalize to editor HTML.
- * @example restoreDraftReplacement("<p>Short answer</p>", "<p>Long answer</p>");
- */
+/** Import untrusted assistant HTML once; original images remain native nodes. */
 export function restoreDraftReplacement(
   replacement: string,
-  original: string,
-): string {
-  const { images } = replaceImagesWithPlaceholders(original);
-  // Models sometimes JSON-escape LaTeX twice (`\\hat`), which renders as a
-  // line break followed by plain text.
+  original: RichTextDocument,
+): RichTextDocument {
+  const images = documentNodes(original).filter(
+    (node) => node.type === "image",
+  );
   const latex = normalizeOverEscapedLatex(replacement);
-  const html = /<\/?[a-z][^>]*>/i.test(latex)
-    ? latex
-    : plainTextToRichText(latex);
-  const sanitized = DOMPurify.sanitize(html, {
+  const parsed = /<\/?[a-z][^>]*>/i.test(latex)
+    ? importAssistantHtml(latex)
+    : plainTextToDocument(latex);
+  const used = new Set<number>();
+  function restore(node: JSONContent): JSONContent[] {
+    if (node.type === "text") {
+      const parts: JSONContent[] = [];
+      let cursor = 0;
+      for (const match of (node.text ?? "").matchAll(/\{\{IMAGE_(\d+)\}\}/g)) {
+        if (match.index > cursor)
+          parts.push({ ...node, text: node.text?.slice(cursor, match.index) });
+        const index = Number(match[1]);
+        if (!images[index] || used.has(index))
+          throw new Error("Invalid or duplicate image placeholder");
+        parts.push(images[index]);
+        used.add(index);
+        cursor = match.index + match[0].length;
+      }
+      if (cursor < (node.text?.length ?? 0))
+        parts.push({ ...node, text: node.text?.slice(cursor) });
+      return parts;
+    }
+    if (!node.content) return [node];
+    const children = node.content.flatMap(restore);
+    if (node.type !== "paragraph") return [{ ...node, content: children }];
+    const result: JSONContent[] = [];
+    let inline: JSONContent[] = [];
+    for (const child of children) {
+      if (child.type === "image" || child.type === "blockMath") {
+        if (inline.length) result.push({ type: "paragraph", content: inline });
+        inline = [];
+        result.push(child);
+      } else inline.push(child);
+    }
+    if (inline.length || !result.length)
+      result.push({ type: "paragraph", content: inline });
+    return result;
+  }
+  const content = parsed.content.flatMap(restore);
+  content.push(...images.filter((_, index) => !used.has(index)));
+  return richTextDocumentSchema.parse(
+    documentFromJSON({ type: "doc", content }),
+  );
+}
+
+function importAssistantHtml(html: string): RichTextDocument {
+  const template = document.createElement("template");
+  template.innerHTML = DOMPurify.sanitize(html, {
     FORBID_TAGS: ["img", "script", "style", "iframe", "object"],
   });
-  return normalizeReviewedRichText(
-    restoreImagePlaceholders(normalizeDraftMath(sanitized), images),
-  );
-}
-
-function normalizeDraftMath(html: string): string {
-  const template = document.createElement("template");
-  template.innerHTML = html;
-  repairDraftMathNodes(template.content);
-  const walker = document.createTreeWalker(
-    template.content,
-    NodeFilter.SHOW_TEXT,
-  );
-  const textNodes: Text[] = [];
-  while (walker.nextNode()) textNodes.push(walker.currentNode as Text);
-  for (const text of textNodes) {
-    const protectedText = text.parentElement?.closest(PROTECTED_MATH_TEXT);
-    if (!text.textContent?.includes("$") || protectedText) continue;
-    replaceDraftMathText(text);
-  }
-  return template.innerHTML;
-}
-
-// Models sometimes write LaTeX as a math node's text instead of `data-latex`;
-// the schema reads only the attribute, so that text became an empty equation.
-function repairDraftMathNodes(root: DocumentFragment): void {
-  for (const math of root.querySelectorAll(MATH_NODE_SELECTOR)) {
+  for (const math of template.content.querySelectorAll(MATH_NODE_SELECTOR)) {
     const latex =
       readMathNode(math).latex.trim() ||
-      stripMathDelimiters(math.textContent ?? "");
+      (math.textContent ?? "")
+        .trim()
+        .replace(/^\$+|\$+$/g, "")
+        .trim();
     if (!latex) {
       math.remove();
       continue;
@@ -67,26 +88,43 @@ function repairDraftMathNodes(root: DocumentFragment): void {
     math.setAttribute("data-latex", latex);
     math.replaceChildren();
   }
-}
-
-function stripMathDelimiters(text: string): string {
-  return text
-    .trim()
-    .replace(/^\$+|\$+$/g, "")
-    .trim();
-}
-
-function replaceDraftMathText(text: Text): void {
-  const fragment = document.createElement("template");
-  fragment.innerHTML = mathTextToRichText(text.textContent ?? "");
-  const parent = text.parentElement;
-  if (
-    parent?.tagName === "P" &&
-    parent.childNodes.length === 1 &&
-    fragment.content.querySelector('[data-type="block-math"]')
-  ) {
-    parent.replaceWith(fragment.content);
-    return;
+  const walker = document.createTreeWalker(
+    template.content,
+    NodeFilter.SHOW_TEXT,
+  );
+  const texts: Text[] = [];
+  while (walker.nextNode()) texts.push(walker.currentNode as Text);
+  for (const text of texts) {
+    if (
+      !text.textContent?.includes("$") ||
+      text.parentElement?.closest(`pre, code, ${MATH_NODE_SELECTOR}`)
+    )
+      continue;
+    const nodes = inlineNodes(text.textContent);
+    const fragment = document.createDocumentFragment();
+    // The DOM exists only at this external HTML boundary.
+    for (const json of nodes) {
+      const node = documentSchema().nodeFromJSON(json);
+      if (node.isText)
+        fragment.append(document.createTextNode(node.text ?? ""));
+      else {
+        const math = document.createElement(
+          node.type.name === "blockMath" ? "div" : "span",
+        );
+        math.dataset.type =
+          node.type.name === "blockMath" ? "block-math" : "inline-math";
+        math.dataset.latex = node.attrs.latex;
+        fragment.append(math);
+      }
+    }
+    const parent = text.parentElement;
+    if (
+      parent?.tagName === "P" &&
+      parent.childNodes.length === 1 &&
+      nodes.some((node) => node.type === "blockMath")
+    )
+      parent.replaceWith(fragment);
+    else text.replaceWith(fragment);
   }
-  text.replaceWith(fragment.content);
+  return documentFromHtml(template.innerHTML);
 }

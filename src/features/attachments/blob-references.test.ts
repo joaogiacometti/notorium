@@ -17,7 +17,7 @@ vi.mock("@/db/schema", () => ({
   pdfDocument: pdfDocumentTable,
 }));
 
-vi.mock("@/lib/editor/rich-text", () => ({
+vi.mock("@/lib/editor/document-content", () => ({
   getInternalAttachmentPathnames: (value: string) =>
     value ? value.split(",").filter(Boolean) : [],
 }));
@@ -51,7 +51,7 @@ describe("collectAllReferencedPathnames", () => {
     const referenced = await collectAllReferencedPathnames();
 
     expect(referenced).toEqual(
-      new Set(["note-a", "front-aback-a", "notorium/pdfs/u/book.pdf"]),
+      new Set(["note-a", "front-a", "back-a", "notorium/pdfs/u/book.pdf"]),
     );
   });
 });

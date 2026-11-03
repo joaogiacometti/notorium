@@ -29,6 +29,7 @@ import {
   type CreateNoteForm,
   createNoteSchema,
 } from "@/features/notes/validation";
+import { emptyDocument } from "@/lib/editor/document";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
@@ -54,7 +55,11 @@ export function CreateNoteTitleDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<CreateNoteForm>({
     resolver: zodResolver(createNoteSchema),
-    defaultValues: { subjectId: subjectId ?? "", title: "", content: "" },
+    defaultValues: {
+      subjectId: subjectId ?? "",
+      title: "",
+      content: emptyDocument(),
+    },
   });
   const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
     initialSubjects,
@@ -67,7 +72,11 @@ export function CreateNoteTitleDialog({
 
   useEffect(() => {
     if (open) {
-      form.reset({ subjectId: subjectId ?? "", title: "", content: "" });
+      form.reset({
+        subjectId: subjectId ?? "",
+        title: "",
+        content: emptyDocument(),
+      });
     }
   }, [form, open, subjectId]);
 
@@ -82,7 +91,7 @@ export function CreateNoteTitleDialog({
       const result = await createNote({
         subjectId: data.subjectId,
         title: data.title,
-        content: "",
+        content: emptyDocument(),
       });
 
       if (!result.success) {
@@ -92,7 +101,11 @@ export function CreateNoteTitleDialog({
 
       await queryClient.invalidateQueries({ queryKey: ["search-data"] });
       notifySubjectDocumentsChanged(result.subjectId);
-      form.reset({ subjectId: subjectId ?? "", title: "", content: "" });
+      form.reset({
+        subjectId: subjectId ?? "",
+        title: "",
+        content: emptyDocument(),
+      });
       onOpenChange(false);
       onSuccess(result.noteId, data.subjectId);
     } finally {
@@ -102,7 +115,11 @@ export function CreateNoteTitleDialog({
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      form.reset({ subjectId: subjectId ?? "", title: "", content: "" });
+      form.reset({
+        subjectId: subjectId ?? "",
+        title: "",
+        content: emptyDocument(),
+      });
     }
 
     onOpenChange(nextOpen);

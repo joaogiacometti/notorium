@@ -1,3 +1,4 @@
+import { testDocument } from "@/test/document";
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it } from "vitest";
@@ -9,14 +10,14 @@ import {
 import { FakeClipboard } from "@/test/fake-clipboard";
 
 const atpCard = {
-  front: "<p>What does <strong>ATP</strong> store?</p>",
-  back: "<ul><li><p>Chemical energy</p></li></ul>",
+  front: testDocument("<p>What does <strong>ATP</strong> store?</p>"),
+  back: testDocument("<ul><li><p>Chemical energy</p></li></ul>"),
   subjectPath: "Biology::Cells",
 };
 
 const dnaCard = {
-  front: "<p>What is DNA?</p>",
-  back: "<p>Genetic material</p>",
+  front: testDocument("<p>What is DNA?</p>"),
+  back: testDocument("<p>Genetic material</p>"),
   subjectPath: "Biology::Genetics",
 };
 

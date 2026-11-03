@@ -1,5 +1,9 @@
+import type { JSONContent } from "@tiptap/core";
 import type { ChatStatus } from "ai";
-import type { FlashcardDraft } from "@/features/assistant/edit-contract";
+import type {
+  FlashcardDraft,
+  NativeFlashcardDraft,
+} from "@/features/assistant/edit-contract";
 import type { LibraryHit } from "@/features/assistant/library-search-contract";
 import type { StudyContext } from "@/features/assistant/study-context";
 import type {
@@ -13,8 +17,8 @@ import type {
   AssistantUIMessage,
 } from "@/features/assistant/types";
 import type { FlashcardSource } from "@/features/flashcards/source-contract";
-import { replaceImagesWithPlaceholders } from "@/lib/editor/rich-text";
-import { delimitMathNodesInHtml } from "@/lib/math/math-nodes";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { documentToHtml } from "@/lib/editor/document-html";
 import {
   getDocumentDetailHref,
   getFlashcardDetailHref,
@@ -63,7 +67,7 @@ function normalizeSubjectPath(path: string): string {
 
 /**
  * A code example as a fenced block. The tag keeps only the characters
- * `plainTextToRichText` accepts, so an odd tag such as "c++" cannot leave the
+ * `plainTextToDocument` accepts, so an odd tag such as "c++" cannot leave the
  * fence unrecognized and spill the code into paragraphs.
  *
  * @example
@@ -93,7 +97,7 @@ export function composeProposedFlashcardBack(card: ProposedFlashcard): string {
  * @example prepareDraftForAssistant(draft).front;
  */
 export function prepareDraftForAssistant(
-  draft: FlashcardDraft,
+  draft: NativeFlashcardDraft,
 ): FlashcardDraft {
   return {
     ...draft,
@@ -106,8 +110,27 @@ export function prepareDraftForAssistant(
  * the model writes, so it never copies math elements with misplaced LaTeX.
  * @example draftHtmlForAssistant("<p>Hi</p>"); // "<p>Hi</p>"
  */
-export function draftHtmlForAssistant(html: string): string {
-  return replaceImagesWithPlaceholders(delimitMathNodesInHtml(html)).text;
+export function draftHtmlForAssistant(value: RichTextDocument): string {
+  let image = 0;
+  function redact(node: JSONContent): JSONContent {
+    if (node.type === "image")
+      return {
+        type: "paragraph",
+        content: [{ type: "text", text: `{{IMAGE_${image++}}}` }],
+      };
+    if (node.type === "inlineMath" || node.type === "blockMath") {
+      const delimiter = node.type === "blockMath" ? "$$" : "$";
+      const text = {
+        type: "text",
+        text: `${delimiter}${node.attrs?.latex ?? ""}${delimiter}`,
+      };
+      return node.type === "blockMath"
+        ? { type: "paragraph", content: [text] }
+        : text;
+    }
+    return node.content ? { ...node, content: node.content.map(redact) } : node;
+  }
+  return documentToHtml({ ...value, content: value.content.map(redact) });
 }
 
 /** True while a reply is requested or streaming; sends and tool outputs wait.

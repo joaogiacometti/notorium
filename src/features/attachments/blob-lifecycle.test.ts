@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { flashcard, note, pdfDocument } from "@/db/schema";
+import type { RichTextDocument } from "@/lib/editor/document";
 import type { StoredBlobEntry } from "@/lib/media-storage/provider";
+import { testDocument } from "@/test/document";
 
 const { getDbMock, getMediaStorageProviderMock } = vi.hoisted(() => ({
   getDbMock: vi.fn(),
@@ -14,11 +16,11 @@ vi.mock("@/lib/media-storage/provider", () => ({
 
 const SHARED_PATHNAME = "notorium/notes/user-1/shared.png";
 const SHARED_URL = `/api/attachments/blob?pathname=${encodeURIComponent(SHARED_PATHNAME)}`;
-const SHARED_HTML = `<p><img src="${SHARED_URL}"></p>`;
+const SHARED_HTML = testDocument(`<p><img src="${SHARED_URL}"></p>`);
 
 class AttachmentRowsFake {
-  notes: { content: string }[] = [];
-  cards: { front: string; back: string }[] = [];
+  notes: { content: RichTextDocument }[] = [];
+  cards: { front: RichTextDocument; back: RichTextDocument }[] = [];
   pdfs: { blobPathname: string }[] = [];
 
   select() {
@@ -92,8 +94,10 @@ describe("shared attachment lifecycle", () => {
       getDbMock.mockReturnValue(rows);
       getMediaStorageProviderMock.mockResolvedValue(storage);
       if (surface === "note") rows.notes = [{ content: SHARED_HTML }];
-      if (surface === "front") rows.cards = [{ front: SHARED_HTML, back: "" }];
-      if (surface === "back") rows.cards = [{ front: "", back: SHARED_HTML }];
+      if (surface === "front")
+        rows.cards = [{ front: SHARED_HTML, back: testDocument("") }];
+      if (surface === "back")
+        rows.cards = [{ front: testDocument(""), back: SHARED_HTML }];
       const { sweepOrphanBlobs } = await import(
         "@/features/attachments/blob-gc"
       );

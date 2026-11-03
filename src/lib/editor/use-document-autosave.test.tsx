@@ -189,3 +189,38 @@ it("restores the original snapshot when an in-flight edit is reverted", async ()
   window.dispatchEvent(unload);
   expect(unload.defaultPrevented).toBe(false);
 });
+
+it("skips a JSONB echo whose only difference is object key order", async () => {
+  const writes: object[] = [];
+  const initial = { version: 1, type: "doc", content: [] };
+  const edited = { version: 1, type: "doc", content: [{ type: "paragraph" }] };
+  function NativeHarness({ value }: { value: object }) {
+    useDocumentAutosave({
+      documentId: "n",
+      initialValue: initial,
+      value,
+      persist: async (next) => {
+        writes.push(next);
+        return true;
+      },
+      onError: () => {},
+    });
+    return null;
+  }
+  await act(async () => root.render(<NativeHarness value={edited} />));
+  await advanceAutosave();
+  expect(writes).toHaveLength(1);
+  await act(async () =>
+    root.render(
+      <NativeHarness
+        value={{
+          type: edited.type,
+          content: edited.content,
+          version: edited.version,
+        }}
+      />,
+    ),
+  );
+  await advanceAutosave();
+  expect(writes).toHaveLength(1);
+});

@@ -4,12 +4,13 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteFlashcard } from "@/app/actions/flashcards";
 import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
-import { getRichTextExcerpt } from "@/lib/editor/rich-text";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { documentExcerpt } from "@/lib/editor/document-content";
 import { t } from "@/lib/server/server-action-errors";
 
 interface DeleteFlashcardDialogProps {
   flashcardId: string;
-  flashcardFront: string;
+  flashcardFront: RichTextDocument;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleted?: (id: string) => void | Promise<void>;
@@ -23,7 +24,7 @@ export function DeleteFlashcardDialog({
   onDeleted,
 }: Readonly<DeleteFlashcardDialogProps>) {
   const [isPending, startTransition] = useTransition();
-  const flashcardFrontPreview = getRichTextExcerpt(flashcardFront, 120);
+  const flashcardFrontPreview = documentExcerpt(flashcardFront, 120);
 
   function handleDelete() {
     startTransition(async () => {

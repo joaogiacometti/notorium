@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CreateFlashcardForm } from "@/components/flashcards/dialogs/create-flashcard-form";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
 import type { SubjectOption } from "@/lib/server/api-contracts";
+import { testDocument } from "@/test/document";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -40,8 +41,8 @@ function Harness({
   const form = useForm<FlashcardFormValues>({
     defaultValues: {
       subjectId: "",
-      front: "",
-      back: "",
+      front: testDocument(""),
+      back: testDocument(""),
     },
   });
 

@@ -1,12 +1,15 @@
 import { z } from "zod";
 import { LIMITS } from "@/lib/config/limits";
-import { countInternalAttachmentImages } from "@/lib/editor/rich-text";
+import {
+  documentCharacterCount,
+  richTextDocumentSchema,
+} from "@/lib/editor/document";
+import { countInternalAttachmentImages } from "@/lib/editor/document-content";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
-const noteContentSchema = z
-  .string()
-  .max(
-    LIMITS.noteContentMax,
+const noteContentSchema = richTextDocumentSchema
+  .refine(
+    (value) => documentCharacterCount(value) <= LIMITS.noteContentMax,
     validationMessage("Validation.notes.contentMaxLength"),
   )
   .refine(

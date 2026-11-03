@@ -8,6 +8,7 @@ import type {
   subject,
 } from "@/db/schema";
 import type { FlashcardSourceLink } from "@/features/flashcards/source-contract";
+import type { RichTextDocument } from "@/lib/editor/document";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
 export type SubjectEntity = InferSelectModel<typeof subject>;
@@ -23,7 +24,7 @@ export interface SubjectTreeNode extends SubjectEntity {
   children: SubjectTreeNode[];
   path: string;
 }
-export type NoteEntity = InferSelectModel<typeof note>;
+export type NoteEntity = Omit<InferSelectModel<typeof note>, "contentText">;
 /** Enough of a note to title and link to it. */
 export type NoteLinkTarget = Pick<NoteEntity, "id" | "title" | "subjectId">;
 /** Links in and out of one note. */
@@ -32,7 +33,10 @@ export type NoteConnections = {
   outgoing: NoteLinkTarget[];
   missingIds: string[];
 };
-export type FlashcardEntity = InferSelectModel<typeof flashcard>;
+export type FlashcardEntity = Omit<
+  InferSelectModel<typeof flashcard>,
+  "frontText" | "backText"
+>;
 /** A stored card plus its resolved source link. */
 export type FlashcardWithSourceEntity = FlashcardEntity & {
   source: FlashcardSourceLink | null;
@@ -45,7 +49,7 @@ export type FlashcardManageItem = Pick<
   FlashcardEntity,
   "id" | "subjectId" | "updatedAt" | "studyLaterAt" | "lapseCount"
 > & {
-  front: string;
+  front: RichTextDocument;
   frontExcerpt: string;
   frontTitle: string | null;
   subjectName: string;

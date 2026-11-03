@@ -1,3 +1,4 @@
+import { testDocument } from "@/test/document";
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -9,8 +10,8 @@ const toastMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock("sonner", () => ({ toast: toastMock }));
 
 const card = {
-  front: "<p>What is ATP?</p>",
-  back: "<p>Energy</p>",
+  front: testDocument("<p>What is ATP?</p>"),
+  back: testDocument("<p>Energy</p>"),
   subjectPath: "Biology",
 };
 

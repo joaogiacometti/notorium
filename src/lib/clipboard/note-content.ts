@@ -1,26 +1,23 @@
 "use client";
 
+import type { JSONContent } from "@tiptap/core";
 import DOMPurify from "dompurify";
 import { canWriteClipboardItems } from "@/lib/clipboard/clipboard-writer";
-import {
-  MATH_NODE_SELECTOR,
-  mathNodeToDelimitedLatex,
-} from "@/lib/math/math-nodes";
-
+import type { RichTextDocument } from "@/lib/editor/document";
+import { documentToHtml } from "@/lib/editor/document-html";
 export type NoteCopyFormat = "plain" | "rich";
 
 /**
  * Copies note content to the clipboard in the requested format.
  *
  * @example
- * await copyNoteContentToClipboard("<p>Cell biology</p>", "rich");
+ * await copyNoteContentToClipboard(document, "rich");
  */
 export async function copyNoteContentToClipboard(
-  html: string,
+  content: RichTextDocument,
   format: NoteCopyFormat,
 ) {
-  const sanitizedHtml = sanitizeRichHtmlForClipboard(html);
-  const plainText = getPlainTextFromHtml(sanitizedHtml);
+  const plainText = clipboardText(content);
 
   if (format === "plain" || !canWriteClipboardItems()) {
     await navigator.clipboard.writeText(plainText);
@@ -29,7 +26,10 @@ export async function copyNoteContentToClipboard(
 
   await navigator.clipboard.write([
     new ClipboardItem({
-      "text/html": new Blob([sanitizedHtml], { type: "text/html" }),
+      "text/html": new Blob(
+        [sanitizeRichHtmlForClipboard(documentToHtml(content))],
+        { type: "text/html" },
+      ),
       "text/plain": new Blob([plainText], { type: "text/plain" }),
     }),
   ]);
@@ -42,27 +42,28 @@ function sanitizeRichHtmlForClipboard(html: string): string {
   return container.innerHTML;
 }
 
-function getPlainTextFromHtml(html: string): string {
-  const container = document.createElement("div");
-  container.innerHTML = html;
-
-  // Math nodes serialize as empty elements with the LaTeX in data-latex, so
-  // textContent would drop equations. Surface them as round-trippable $...$.
-  for (const element of container.querySelectorAll(MATH_NODE_SELECTOR))
-    element.replaceWith(
-      document.createTextNode(mathNodeToDelimitedLatex(element)),
-    );
-
-  container.querySelectorAll("br").forEach((br) => {
-    br.replaceWith(document.createTextNode("\n"));
-  });
-  container
-    .querySelectorAll("blockquote,div,h1,h2,h3,h4,h5,h6,li,p,pre")
-    .forEach((el) => {
-      el.after(document.createTextNode("\n"));
-    });
-
-  return (container.textContent ?? "")
+function clipboardText(value: RichTextDocument): string {
+  function text(node: JSONContent): string {
+    if (node.type === "text") return node.text ?? "";
+    if (node.type === "noteLink") return node.attrs?.label ?? "";
+    if (node.type === "inlineMath") return `$${node.attrs?.latex ?? ""}$`;
+    if (node.type === "blockMath") return `$$${node.attrs?.latex ?? ""}$$\n`;
+    if (node.type === "hardBreak") return "\n";
+    const result = (node.content ?? []).map(text).join("");
+    return [
+      "paragraph",
+      "heading",
+      "listItem",
+      "taskItem",
+      "codeBlock",
+      "blockquote",
+    ].includes(node.type ?? "")
+      ? `${result}\n`
+      : result;
+  }
+  return value.content
+    .map(text)
+    .join("")
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)

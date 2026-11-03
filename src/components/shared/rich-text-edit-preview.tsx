@@ -2,27 +2,26 @@
 
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useRef } from "react";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { documentToNode } from "@/lib/editor/document";
+import { buildDocumentExtensions } from "@/lib/editor/document-extensions";
 import {
   buildRichTextReviewExtension,
   type RichTextReviewSegment,
 } from "@/lib/editor/rich-text-review-decorations";
-import {
-  buildRichTextReviewExtensions,
-  parseReviewedRichText,
-} from "@/lib/editor/rich-text-review-schema";
 import { cn } from "@/lib/utils";
 
 interface RichTextEditPreviewProps {
   segments?: RichTextReviewSegment[];
   onReadyChange?: (ready: boolean) => void;
-  original: string;
-  replacement: string;
+  original: RichTextDocument;
+  replacement: RichTextDocument;
   label: string;
   className?: string;
 }
 
 /** Display proposed rich text with additions and removals outside persisted editor values.
- * @example <RichTextEditPreview original="<p>Old</p>" replacement="<p>New</p>" label="Suggested changes" />
+ * @example <RichTextEditPreview original={before} replacement={after} label="Suggested changes" />
  */
 export function RichTextEditPreview({
   original,
@@ -35,8 +34,8 @@ export function RichTextEditPreview({
   const editor = useEditor(
     {
       extensions: [
-        ...buildRichTextReviewExtensions(),
-        buildRichTextReviewExtension(parseReviewedRichText(original), segments),
+        ...buildDocumentExtensions(),
+        buildRichTextReviewExtension(documentToNode(original), segments),
       ],
       content: replacement,
       editable: false,

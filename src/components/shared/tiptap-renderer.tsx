@@ -2,15 +2,14 @@
 
 import { createDocument } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { type ReactNode, useEffect, useState } from "react";
-import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
-import { buildRichTextReviewExtensions } from "@/lib/editor/rich-text-review-schema";
-import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
+import { type ReactNode, useEffect } from "react";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { buildDocumentExtensions } from "@/lib/editor/document-extensions";
 import { trimDisplayParagraphs } from "@/lib/editor/trim-display-paragraphs";
 import { cn } from "@/lib/utils";
 
 interface TiptapRendererProps {
-  content: string;
+  content: RichTextDocument;
   className?: string;
   /** Shown until the editor exists; it is created after the first render. */
   fallback?: ReactNode;
@@ -21,12 +20,10 @@ export function TiptapRenderer({
   className,
   fallback,
 }: Readonly<TiptapRendererProps>) {
-  const [resolvedContent, setResolvedContent] = useState(content);
-
   const editor = useEditor({
     // The trailing empty paragraph only gives editors a place to type
     // after a list or code block; read-only, it renders as a blank gap.
-    extensions: buildRichTextReviewExtensions(),
+    extensions: buildDocumentExtensions(),
     editable: false,
     immediatelyRender: false,
     editorProps: {
@@ -37,28 +34,12 @@ export function TiptapRenderer({
   });
 
   useEffect(() => {
-    let active = true;
-
-    void normalizeRichTextForRendering(content, async (candidate) =>
-      resolveEmbeddableImageUrl(candidate),
-    ).then((nextContent) => {
-      if (active) {
-        setResolvedContent(nextContent);
-      }
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [content]);
-
-  useEffect(() => {
     if (!editor) return;
-    const document = createDocument(resolvedContent, editor.schema);
+    const document = createDocument(content, editor.schema);
     editor.commands.setContent(trimDisplayParagraphs(document.toJSON()), {
       emitUpdate: false,
     });
-  }, [editor, resolvedContent]);
+  }, [editor, content]);
 
   if (!editor && fallback !== undefined) return fallback;
 

@@ -9,6 +9,8 @@ import type { PendingDocumentEdit } from "@/components/assistant/document-editor
 import { createDraftRevisionCounter } from "@/components/assistant/draft-revision";
 import { buildNoteDraft } from "@/components/assistant/note-edit-content";
 import type { EditNoteForm } from "@/features/notes/validation";
+import { emptyDocument } from "@/lib/editor/document";
+import { documentSnapshot } from "@/lib/editor/document-snapshot";
 
 interface ActiveNoteEditorOptions {
   editor: Editor | null;
@@ -47,17 +49,17 @@ export function useActiveNoteEditor(
       snapshot: () => {
         const values = current.current.options.form.getValues();
         const revision = nextRevision(
-          JSON.stringify([values.id, values.title, values.content]),
+          documentSnapshot([values.id, values.title, values.content]),
         );
         return {
           kind: "note",
-          content: values.content ?? "",
+          content: values.content ?? emptyDocument(),
           draft: {
             ...buildNoteDraft(
               sessionId,
               revision,
               values.title,
-              values.content ?? "",
+              values.content ?? emptyDocument(),
               selectedNoteBlocks(editor),
             ),
             subjectPath: current.current.options.subjectPath,

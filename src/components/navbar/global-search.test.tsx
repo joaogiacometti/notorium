@@ -13,6 +13,7 @@ import {
 import { GlobalSearch } from "@/components/navbar/global-search";
 import { ShortcutsDialogOpenProvider } from "@/components/shortcuts/shortcuts-suspension-context";
 import type { SearchData } from "@/lib/server/api-contracts";
+import { testDocument } from "@/test/document";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -66,7 +67,7 @@ function note(id: string, title: string): SearchData["notes"][number] {
   return {
     id,
     title,
-    content: null,
+    content: testDocument(""),
     subjectId: "subject-1",
     subjectName: "Biology",
   };
@@ -82,8 +83,8 @@ function flashcard(
 ): SearchData["flashcards"][number] {
   return {
     id,
-    front,
-    back: "",
+    front: testDocument(front),
+    back: testDocument(""),
     subjectId: "subject-1",
     subjectName: "Biology",
     subjectPath: "Biology",

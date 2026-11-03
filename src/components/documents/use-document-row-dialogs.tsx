@@ -16,6 +16,7 @@ import {
   copyNoteContentToClipboard,
   type NoteCopyFormat,
 } from "@/lib/clipboard/note-content";
+import { emptyDocument } from "@/lib/editor/document";
 import { getDocumentDeleteRedirectHref } from "@/lib/navigation/delete-redirects";
 import { fetchNoteById } from "@/lib/read-api/documents";
 
@@ -27,7 +28,7 @@ async function copySavedNoteContent(noteId: string, format: NoteCopyFormat) {
     if (!note) {
       throw new Error(`Note ${noteId} not found`);
     }
-    await copyNoteContentToClipboard(note.content ?? "", format);
+    await copyNoteContentToClipboard(note.content ?? emptyDocument(), format);
     toast.success("Note copied.");
   } catch {
     toast.error("Could not copy note.");

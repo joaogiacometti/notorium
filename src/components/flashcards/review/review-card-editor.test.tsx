@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { editFlashcard } from "@/app/actions/flashcards";
 import { ReviewCardEditor } from "@/components/flashcards/review/review-card-editor";
 import type { FlashcardReviewEntity } from "@/lib/server/api-contracts";
+import { testDocument } from "@/test/document";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -22,8 +23,8 @@ vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 function makeCard(): FlashcardReviewEntity {
   return {
     id: "card-1",
-    front: "<p>Front</p>",
-    back: "<p>Back</p>",
+    front: testDocument("<p>Front</p>"),
+    back: testDocument("<p>Back</p>"),
     state: "new",
     dueAt: new Date("2026-03-07T11:00:00.000Z"),
     stability: null,
@@ -101,7 +102,7 @@ describe("ReviewCardEditor", () => {
   });
 
   it("saves the card, hands back the result, and closes", async () => {
-    const saved = { ...makeCard(), back: "<p>New</p>" };
+    const saved = { ...makeCard(), back: testDocument("<p>New</p>") };
     vi.mocked(editFlashcard).mockResolvedValue({
       success: true,
       flashcard: saved,
@@ -112,7 +113,10 @@ describe("ReviewCardEditor", () => {
 
     await vi.waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(editFlashcard).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "card-1", front: "<p>Front</p>" }),
+      expect.objectContaining({
+        id: "card-1",
+        front: testDocument("<p>Front</p>"),
+      }),
     );
     expect(onSaved).toHaveBeenCalledWith(saved);
   });

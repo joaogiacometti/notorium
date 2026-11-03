@@ -2,10 +2,12 @@ import { z } from "zod";
 import { flashcardSourceSchema } from "@/features/flashcards/source-contract";
 import { LIMITS } from "@/lib/config/limits";
 import {
-  countInternalAttachmentImages,
-  hasRichTextContent,
-  richTextToPlainText,
-} from "@/lib/editor/rich-text";
+  documentHasContent,
+  documentText,
+  type RichTextDocument,
+  richTextDocumentSchema,
+} from "@/lib/editor/document";
+import { countInternalAttachmentImages } from "@/lib/editor/document-content";
 import {
   bulkIdsSchema,
   idSchema,
@@ -13,25 +15,23 @@ import {
 } from "@/lib/validations/schemas";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
-export const flashcardFrontSchema = z
-  .string()
+export const flashcardFrontSchema = richTextDocumentSchema
   .refine(
-    (value) => hasRichTextContent(value),
+    (value) => documentHasContent(value),
     validationMessage("Validation.flashcards.frontRequired"),
   )
   .refine(
-    (value) => richTextToPlainText(value).length <= LIMITS.flashcardFrontMax,
+    (value) => documentText(value).length <= LIMITS.flashcardFrontMax,
     validationMessage("Validation.flashcards.frontMaxLength"),
   );
 
-export const flashcardBackSchema = z
-  .string()
+export const flashcardBackSchema = richTextDocumentSchema
   .refine(
-    (value) => hasRichTextContent(value),
+    (value) => documentHasContent(value),
     validationMessage("Validation.flashcards.backRequired"),
   )
   .refine(
-    (value) => richTextToPlainText(value).length <= LIMITS.flashcardBackMax,
+    (value) => documentText(value).length <= LIMITS.flashcardBackMax,
     validationMessage("Validation.flashcards.backMaxLength"),
   );
 
@@ -40,7 +40,10 @@ const subjectIdField = z
   .min(1, validationMessage("Validation.flashcards.subjectRequired"));
 
 function withFlashcardAttachmentLimit<
-  TSchema extends z.ZodType<{ front: string; back: string }>,
+  TSchema extends z.ZodType<{
+    front: RichTextDocument;
+    back: RichTextDocument;
+  }>,
 >(schema: TSchema) {
   return schema.refine(
     (value) =>
@@ -83,7 +86,7 @@ export const flashcardFormSchema = withFlashcardAttachmentLimit(
 
 export type FlashcardFormValues = z.infer<typeof flashcardFormSchema>;
 
-export { hasRichTextContent } from "@/lib/editor/rich-text";
+export { documentHasContent } from "@/lib/editor/document";
 
 export const deleteFlashcardSchema = z.object({
   id: idSchema,

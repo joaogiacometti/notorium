@@ -17,7 +17,8 @@ import type {
 import { getSubjectRecordForUser } from "@/features/subjects/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { isUniqueViolationError } from "@/lib/db/errors";
-import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
+import { documentText } from "@/lib/editor/document";
+import { documentUniquenessText } from "@/lib/editor/document-content";
 import type {
   CreateFlashcardResult,
   EditFlashcardResult,
@@ -43,7 +44,7 @@ async function validateCreateFlashcardInput(
 ): Promise<
   { error: ActionErrorResult } | { subjectId: string; frontNormalized: string }
 > {
-  const frontNormalized = normalizeRichTextForUniqueness(data.front);
+  const frontNormalized = documentUniquenessText(data.front);
 
   const [existingSubject, currentCount, ownedSource] = await Promise.all([
     getSubjectRecordForUser(userId, data.subjectId),
@@ -84,8 +85,10 @@ async function createFlashcardRecord(
       subjectId,
       userId,
       front: data.front,
+      frontText: documentText(data.front),
       frontNormalized,
       back: data.back,
+      backText: documentText(data.back),
       sourceNoteId: data.source?.kind === "note" ? data.source.id : null,
       state: schedulingState.state,
       dueAt: schedulingState.dueAt,
@@ -143,7 +146,7 @@ async function validateEditFlashcardInput(
   data: EditFlashcardForm,
   existingFlashcard: FlashcardEntity,
 ): Promise<ValidateEditFlashcardResult> {
-  const frontNormalized = normalizeRichTextForUniqueness(data.front);
+  const frontNormalized = documentUniquenessText(data.front);
 
   const existingSubject = await getSubjectRecordForUser(userId, data.subjectId);
 
@@ -186,8 +189,10 @@ async function performFlashcardUpdate(
       .set({
         subjectId: data.subjectId,
         front: data.front,
+        frontText: documentText(data.front),
         frontNormalized,
         back: data.back,
+        backText: documentText(data.back),
       })
       .where(and(eq(flashcard.id, data.id), eq(flashcard.userId, userId)))
       .returning();

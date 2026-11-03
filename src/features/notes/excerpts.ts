@@ -1,3 +1,5 @@
+import { documentText, type RichTextDocument } from "@/lib/editor/document";
+
 const EMPTY_NOTE_PREVIEW = "No content yet";
 const MAX_NOTE_PREVIEW_LENGTH = 72;
 
@@ -5,10 +7,12 @@ const MAX_NOTE_PREVIEW_LENGTH = 72;
  * Builds a compact plain-text preview for rich note content.
  *
  * @example
- * getNoteContentPreview("<p>Chapter summary</p>")
+ * getNoteContentPreview(document)
  */
-export function getNoteContentPreview(content: string | null): string {
-  const plainText = decodeBasicEntities(stripMarkup(content ?? ""))
+export function getNoteContentPreview(
+  content: RichTextDocument | null,
+): string {
+  const plainText = (content ? documentText(content) : "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -21,18 +25,4 @@ export function getNoteContentPreview(content: string | null): string {
   }
 
   return `${plainText.slice(0, MAX_NOTE_PREVIEW_LENGTH - 3).trimEnd()}...`;
-}
-
-function stripMarkup(content: string): string {
-  return content.replace(/<[^>]*>/g, " ");
-}
-
-function decodeBasicEntities(content: string): string {
-  return content
-    .replaceAll("&nbsp;", " ")
-    .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">")
-    .replaceAll("&quot;", '"')
-    .replaceAll("&#39;", "'")
-    .replaceAll("&amp;", "&");
 }

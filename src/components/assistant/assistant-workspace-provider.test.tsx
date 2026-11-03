@@ -7,6 +7,7 @@ import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-wor
 import { useActiveFlashcardEditor } from "@/components/assistant/use-active-flashcard-editor";
 import { useStudyContext } from "@/components/assistant/use-study-context";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
+import { testDocument } from "@/test/document";
 import { FakeFlashcardEditChat } from "@/test/fake-flashcard-edit-chat";
 import "@/components/assistant/flashcard-draft-content";
 
@@ -38,8 +39,8 @@ function DraftHarness() {
   const [generation, setGeneration] = useState(0);
   const form = useForm<FlashcardFormValues>({
     defaultValues: {
-      front: "<p>Original front</p>",
-      back: "<p>Original back</p>",
+      front: testDocument("<p>Original front</p>"),
+      back: testDocument("<p>Original back</p>"),
       subjectId: "s1",
     },
   });
@@ -79,7 +80,9 @@ function DraftHarness() {
       <button
         type="button"
         onClick={() =>
-          form.setValue("front", "<p>New typing</p>", { shouldDirty: true })
+          form.setValue("front", testDocument("<p>New typing</p>"), {
+            shouldDirty: true,
+          })
         }
       >
         Type
@@ -92,7 +95,7 @@ function DraftHarness() {
       </button>
       <button
         type="button"
-        onClick={() => form.setValue("front", "x".repeat(100001))}
+        onClick={() => form.setValue("front", testDocument("x".repeat(100001)))}
       >
         Oversize draft
       </button>

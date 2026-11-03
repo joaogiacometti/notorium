@@ -1,4 +1,4 @@
-import { and, desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq, or } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, note, pdfDocument, subject } from "@/db/schema";
 import { foldedContains } from "@/features/search/match-sql";
@@ -29,7 +29,7 @@ export async function getSearchDataForUser(
       .select({
         id: note.id,
         title: note.title,
-        content: sql<string>`coalesce(${note.content}, '')`,
+        content: note.content,
         subjectId: note.subjectId,
         subjectName: subject.name,
       })
@@ -41,7 +41,7 @@ export async function getSearchDataForUser(
           ...subjectFilters,
           or(
             foldedContains(note.title, searchPattern),
-            foldedContains(note.content, searchPattern),
+            foldedContains(note.contentText, searchPattern),
             foldedContains(subject.name, searchPattern),
           ),
         ),
@@ -83,8 +83,8 @@ export async function getSearchDataForUser(
         and(
           eq(flashcard.userId, userId),
           or(
-            foldedContains(flashcard.front, searchPattern),
-            foldedContains(flashcard.back, searchPattern),
+            foldedContains(flashcard.frontText, searchPattern),
+            foldedContains(flashcard.backText, searchPattern),
           ),
         ),
       )

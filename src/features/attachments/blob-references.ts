@@ -2,14 +2,12 @@ import "server-only";
 
 import { getDb } from "@/db/index";
 import { flashcard, note, pdfDocument } from "@/db/schema";
-import { getInternalAttachmentPathnames } from "@/lib/editor/rich-text";
+import { getInternalAttachmentPathnames } from "@/lib/editor/document-content";
 
 async function collectNotePathnames(): Promise<string[]> {
   const rows = await getDb().select({ content: note.content }).from(note);
 
-  return rows.flatMap((row) =>
-    getInternalAttachmentPathnames(row.content ?? ""),
-  );
+  return rows.flatMap((row) => getInternalAttachmentPathnames(row.content));
 }
 
 async function collectFlashcardPathnames(): Promise<string[]> {
@@ -23,7 +21,8 @@ async function collectFlashcardPathnames(): Promise<string[]> {
   const pathnames: string[] = [];
   for (const row of rows) {
     pathnames.push(
-      ...getInternalAttachmentPathnames(`${row.front}${row.back}`),
+      ...getInternalAttachmentPathnames(row.front),
+      ...getInternalAttachmentPathnames(row.back),
     );
   }
 

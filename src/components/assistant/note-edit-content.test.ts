@@ -6,6 +6,7 @@ import {
   splitNoteBlocks,
 } from "@/components/assistant/note-edit-content";
 import type { NoteEditsInput } from "@/features/assistant/document-edit-contract";
+import { testDocument, testDocumentHtml } from "@/test/document";
 
 const content = "<h2>Cells</h2><p>Original explanation</p><p>Keep this</p>";
 const identity = { sessionId: "s", revision: 0 };
@@ -20,15 +21,13 @@ function proposal(
 
 describe("targeted note edits", () => {
   it("assigns ephemeral block ids and preserves unrelated blocks", () => {
-    expect(splitNoteBlocks(content).map((block) => block.id)).toEqual([
-      "b0",
-      "b1",
-      "b2",
-    ]);
-    const draft = buildNoteDraft("s", 0, "Cells", content);
+    expect(
+      splitNoteBlocks(testDocument(content)).map((block) => block.id),
+    ).toEqual(["b0", "b1", "b2"]);
+    const draft = buildNoteDraft("s", 0, "Cells", testDocument(content));
     const result = prepareNoteEdits(
       draft,
-      content,
+      testDocument(content),
       proposal([
         {
           firstBlockId: "b1",
@@ -37,7 +36,7 @@ describe("targeted note edits", () => {
         },
       ]),
     );
-    expect(result.content).toBe(
+    expect(testDocumentHtml(result.content)).toBe(
       "<h2>Cells</h2><p>Clear explanation</p><p>Keep this</p>",
     );
     expect(content).toContain("Original explanation");
@@ -45,14 +44,19 @@ describe("targeted note edits", () => {
   it("shows math to the model as delimited LaTeX and restores edited math nodes", () => {
     const mathContent =
       '<p>Weight <span data-type="inline-math" data-latex="w_1"></span></p><div data-type="block-math" data-latex="y = ax + b"></div>';
-    const draft = buildNoteDraft("s", 0, "Regression", mathContent);
+    const draft = buildNoteDraft(
+      "s",
+      0,
+      "Regression",
+      testDocument(mathContent),
+    );
     expect(draft.blocks.map((block) => block.html)).toEqual([
       "<p>Weight $w_1$</p>",
       "<p>$$y = ax + b$$</p>",
     ]);
     const result = prepareNoteEdits(
       draft,
-      mathContent,
+      testDocument(mathContent),
       proposal([
         {
           firstBlockId: "b0",
@@ -61,13 +65,13 @@ describe("targeted note edits", () => {
         },
       ]),
     );
-    expect(result.content).toBe(
+    expect(testDocumentHtml(result.content)).toBe(
       '<p><strong>Weight</strong> <span data-latex="w_1" data-type="inline-math"></span></p><div data-latex="\\hat{y} = ax + b" data-type="block-math"></div>',
     );
   });
   it("supports insertion, deletion, and title changes together", () => {
-    const draft = buildNoteDraft("s", 0, "Cells", content);
-    const result = prepareNoteEdits(draft, content, {
+    const draft = buildNoteDraft("s", 0, "Cells", testDocument(content));
+    const result = prepareNoteEdits(draft, testDocument(content), {
       ...proposal(
         [{ firstBlockId: "b1", lastBlockId: "b1", html: "" }],
         [{ anchorBlockId: "b2", side: "after", html: "<p>Added</p>" }],
@@ -76,50 +80,51 @@ describe("targeted note edits", () => {
     });
     expect(result).toMatchObject({
       title: "Cell biology",
-      content: "<h2>Cells</h2><p>Keep this</p><p>Added</p>",
+      content: testDocument("<h2>Cells</h2><p>Keep this</p><p>Added</p>"),
     });
   });
   it("inserts into an empty document", () => {
     expect(
       prepareNoteEdits(
-        buildNoteDraft("s", 0, "Empty", ""),
-        "",
+        buildNoteDraft("s", 0, "Empty", testDocument("")),
+        testDocument(""),
         proposal([], [{ side: "after", html: "First" }]),
       ).content,
-    ).toBe("<p>First</p>");
+    ).toEqual(testDocument("<p>First</p>"));
   });
   it("applies an insertion just before an adjacent replaced block", () => {
-    const draft = buildNoteDraft("s", 0, "Cells", content);
+    const draft = buildNoteDraft("s", 0, "Cells", testDocument(content));
     const result = prepareNoteEdits(
       draft,
-      content,
+      testDocument(content),
       proposal(
         [{ firstBlockId: "b1", lastBlockId: "b1", html: "" }],
         [{ anchorBlockId: "b0", side: "after", html: "<p>Moved</p>" }],
       ),
     );
-    expect(result.content).toBe("<h2>Cells</h2><p>Moved</p><p>Keep this</p>");
-    expect(result.segments.map((segment) => segment.replacement)).toEqual([
-      "<p>Moved</p>",
-      "",
-    ]);
+    expect(testDocumentHtml(result.content)).toBe(
+      "<h2>Cells</h2><p>Moved</p><p>Keep this</p>",
+    );
+    expect(
+      result.segments.map((segment) => testDocumentHtml(segment.replacement)),
+    ).toEqual(["<p>Moved</p>", ""]);
   });
   it("rejects an unanchored insertion into a non-empty note", () => {
-    const draft = buildNoteDraft("s", 0, "Cells", content);
+    const draft = buildNoteDraft("s", 0, "Cells", testDocument(content));
     expect(() =>
       prepareNoteEdits(
         draft,
-        content,
+        testDocument(content),
         proposal([], [{ side: "after", html: "<p>Last</p>" }]),
       ),
     ).toThrow("anchorBlockId");
   });
   it("rejects ambiguous insertions at the same position", () => {
-    const draft = buildNoteDraft("s", 0, "Cells", content);
+    const draft = buildNoteDraft("s", 0, "Cells", testDocument(content));
     expect(() =>
       prepareNoteEdits(
         draft,
-        content,
+        testDocument(content),
         proposal(
           [],
           [
@@ -131,7 +136,7 @@ describe("targeted note edits", () => {
     ).toThrow("overlaps");
   });
   it("rejects overlap and unseen blocks", () => {
-    const draft = buildNoteDraft("s", 0, "Cells", content);
+    const draft = buildNoteDraft("s", 0, "Cells", testDocument(content));
     const replace = {
       firstBlockId: "b0",
       lastBlockId: "b1",
@@ -140,26 +145,26 @@ describe("targeted note edits", () => {
     expect(() =>
       prepareNoteEdits(
         draft,
-        content,
+        testDocument(content),
         proposal([replace, { ...replace, firstBlockId: "b1" }]),
       ),
     ).toThrow("overlaps");
     expect(() =>
       prepareNoteEdits(
         { ...draft, blocks: draft.blocks.filter((block) => block.id !== "b1") },
-        content,
+        testDocument(content),
         proposal([replace]),
       ),
     ).toThrow("visible");
   });
   it("prioritizes selected complete blocks and never edits omitted content", () => {
     const large = `<p>${"x".repeat(12500)}</p><p>Target</p><p>Untouched</p>`;
-    const draft = buildNoteDraft("s", 0, "Large", large, [1]);
+    const draft = buildNoteDraft("s", 0, "Large", testDocument(large), [1]);
     expect(draft.partial).toBe(true);
     expect(draft.blocks.map((block) => block.id)).toEqual(["b1", "b2"]);
     const result = prepareNoteEdits(
       draft,
-      large,
+      testDocument(large),
       proposal([
         {
           firstBlockId: "b1",
@@ -168,43 +173,45 @@ describe("targeted note edits", () => {
         },
       ]),
     );
-    expect(result.content).toContain("x".repeat(12500));
-    expect(result.content).toContain("<p>Improved</p><p>Untouched</p>");
+    expect(testDocumentHtml(result.content)).toContain("x".repeat(12500));
+    expect(testDocumentHtml(result.content)).toContain(
+      "<p>Improved</p><p>Untouched</p>",
+    );
   });
   it("restores each original image once across multiple blocks", () => {
     const images =
-      '<p>One<img src="/api/attachments/blob?pathname=one"></p><p>Two<img src="/api/attachments/blob?pathname=two"></p>';
-    const draft = buildNoteDraft("s", 0, "Images", images);
+      '<p>One</p><img src="/api/attachments/blob?pathname=one"><p>Two</p><img src="/api/attachments/blob?pathname=two">';
+    const draft = buildNoteDraft("s", 0, "Images", testDocument(images));
     expect(JSON.stringify(draft)).not.toContain("pathname");
     const result = prepareNoteEdits(
       draft,
-      images,
+      testDocument(images),
       proposal([
         {
           firstBlockId: "b0",
-          lastBlockId: "b1",
-          html: "<p>Combined {{NOTE_IMAGE_b0_0}} {{NOTE_IMAGE_b1_0}}</p>",
+          lastBlockId: "b3",
+          html: "<p>Combined {{NOTE_IMAGE_b1_0}} {{NOTE_IMAGE_b3_0}}</p>",
         },
       ]),
     );
-    expect(result.content.match(/<img/g)).toHaveLength(2);
-    expect(result.content).toContain("pathname=one");
-    expect(result.content).toContain("pathname=two");
+    expect(testDocumentHtml(result.content).match(/<img/g)).toHaveLength(2);
+    expect(testDocumentHtml(result.content)).toContain("pathname=one");
+    expect(testDocumentHtml(result.content)).toContain("pathname=two");
   });
   it("rejects invented images and sanitizes script content", () => {
-    const draft = buildNoteDraft("s", 0, "Cells", content);
+    const draft = buildNoteDraft("s", 0, "Cells", testDocument(content));
     const replace = {
       firstBlockId: "b1",
       lastBlockId: "b1",
       html: '<img src="https://example.com/invented.png">',
     };
-    expect(() => prepareNoteEdits(draft, content, proposal([replace]))).toThrow(
-      "attachment",
-    );
+    expect(() =>
+      prepareNoteEdits(draft, testDocument(content), proposal([replace])),
+    ).toThrow("attachment");
     expect(
       prepareNoteEdits(
         draft,
-        content,
+        testDocument(content),
         proposal([
           {
             ...replace,
@@ -212,11 +219,11 @@ describe("targeted note edits", () => {
           },
         ]),
       ).content,
-    ).toContain("<p>Safe</p>");
+    ).toEqual(testDocument("<h2>Cells</h2><p>Safe</p><p>Keep this</p>"));
     expect(
       prepareNoteEdits(
         draft,
-        content,
+        testDocument(content),
         proposal([
           {
             ...replace,
@@ -224,6 +231,6 @@ describe("targeted note edits", () => {
           },
         ]),
       ).content,
-    ).not.toMatch(/script|onclick/);
+    ).toEqual(testDocument("<h2>Cells</h2><p>Safe</p><p>Keep this</p>"));
   });
 });

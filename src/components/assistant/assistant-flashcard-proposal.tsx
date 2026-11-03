@@ -25,8 +25,9 @@ import {
   formatFlashcardExample,
 } from "@/features/assistant/utils";
 import type { FlashcardSource } from "@/features/flashcards/source-contract";
-import { plainTextToRichText } from "@/lib/ai/plain-text-rich-text";
-import { richTextToPlainText } from "@/lib/editor/rich-text";
+import { plainTextToDocument } from "@/lib/ai/plain-text-rich-text";
+
+import { documentText } from "@/lib/editor/document";
 import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
@@ -279,7 +280,7 @@ function ResolvedFlashcardProposal({
       <Icon className="size-3.5 shrink-0" />
       <span className="shrink-0">{OUTCOME_LABELS[status]}</span>
       <span className="min-w-0 flex-1 truncate">
-        {richTextToPlainText(plainTextToRichText(front))}
+        {documentText(plainTextToDocument(front))}
       </span>
       {onRestore ? (
         <Button type="button" variant="ghost" size="xs" onClick={onRestore}>
@@ -316,7 +317,7 @@ function useProposedSubject(proposedPath: string | undefined) {
 
 function toRichFlashcard(input: ProposedFlashcard) {
   return {
-    front: plainTextToRichText(input.front),
-    back: plainTextToRichText(composeProposedFlashcardBack(input)),
+    front: plainTextToDocument(input.front),
+    back: plainTextToDocument(composeProposedFlashcardBack(input)),
   };
 }

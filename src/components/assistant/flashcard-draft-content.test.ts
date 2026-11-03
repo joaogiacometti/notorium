@@ -1,12 +1,29 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import { restoreDraftReplacement } from "@/components/assistant/flashcard-draft-content";
-import { prepareDraftForAssistant } from "@/features/assistant/utils";
-import {
-  normalizeReviewedRichText,
-  parseReviewedRichText,
-} from "@/lib/editor/rich-text-review-schema";
+import { restoreDraftReplacement as importReplacement } from "@/components/assistant/flashcard-draft-content";
+import { prepareDraftForAssistant as exportDraft } from "@/features/assistant/utils";
+import { documentToNode as parseDocument } from "@/lib/editor/document";
+
+import { testDocument, testDocumentHtml } from "@/test/document";
+
+const restoreDraftReplacement = (replacement: string, original: string) =>
+  testDocumentHtml(importReplacement(replacement, testDocument(original)));
+const normalizeReviewedRichText = (html: string) =>
+  testDocumentHtml(testDocument(html));
+const parseReviewedRichText = (html: string) =>
+  parseDocument(testDocument(html));
+const prepareDraftForAssistant = (draft: {
+  sessionId: string;
+  revision: number;
+  front: string;
+  back: string;
+}) =>
+  exportDraft({
+    ...draft,
+    front: testDocument(draft.front),
+    back: testDocument(draft.back),
+  });
 
 const originalImage =
   '<img src="/api/attachments/blob?pathname=private-image.webp" alt="diagram">';

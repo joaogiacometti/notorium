@@ -1,3 +1,4 @@
+import { testDocument } from "@/test/document";
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -44,7 +45,10 @@ describe("copyNoteContentToClipboard", () => {
   });
 
   it("copies plain note text", async () => {
-    await copyNoteContentToClipboard("<p>First</p><p>Second</p>", "plain");
+    await copyNoteContentToClipboard(
+      testDocument("<p>First</p><p>Second</p>"),
+      "plain",
+    );
 
     expect(writeText).toHaveBeenCalledWith("First\nSecond");
     expect(write).not.toHaveBeenCalled();
@@ -53,7 +57,7 @@ describe("copyNoteContentToClipboard", () => {
   it("copies rich note text with plain text fallback", async () => {
     const html = "<p><strong>First</strong> note</p>";
 
-    await copyNoteContentToClipboard(html, "rich");
+    await copyNoteContentToClipboard(testDocument(html), "rich");
 
     const item = write.mock.calls[0]?.[0]?.[0] as FakeClipboardItem;
     expect(await item.items["text/html"].text()).toBe(html);
@@ -63,7 +67,9 @@ describe("copyNoteContentToClipboard", () => {
 
   it("sanitizes rich note HTML before copying", async () => {
     await copyNoteContentToClipboard(
-      '<p>Safe</p><img src="x" onerror="alert(1)"><script>alert(2)</script>',
+      testDocument(
+        '<p>Safe</p><img src="x" onerror="alert(1)"><script>alert(2)</script>',
+      ),
       "rich",
     );
 
@@ -80,7 +86,7 @@ describe("copyNoteContentToClipboard", () => {
       value: undefined,
     });
 
-    await copyNoteContentToClipboard("<h1>Title</h1>", "rich");
+    await copyNoteContentToClipboard(testDocument("<h1>Title</h1>"), "rich");
 
     expect(writeText).toHaveBeenCalledWith("Title");
     expect(write).not.toHaveBeenCalled();
@@ -88,7 +94,7 @@ describe("copyNoteContentToClipboard", () => {
 
   it("decodes HTML entities in plain text output", async () => {
     await copyNoteContentToClipboard(
-      "<p>a &amp; b &lt;c&gt; &quot;d&quot;</p>",
+      testDocument("<p>a &amp; b &lt;c&gt; &quot;d&quot;</p>"),
       "plain",
     );
 
@@ -97,7 +103,7 @@ describe("copyNoteContentToClipboard", () => {
 
   it("strips inline formatting tags from plain text output", async () => {
     await copyNoteContentToClipboard(
-      "<p><strong>Bold</strong> and <em>italic</em> text</p>",
+      testDocument("<p><strong>Bold</strong> and <em>italic</em> text</p>"),
       "plain",
     );
 
@@ -106,7 +112,7 @@ describe("copyNoteContentToClipboard", () => {
 
   it("converts br tags and block elements to newlines", async () => {
     await copyNoteContentToClipboard(
-      "<p>Line one</p><br><p>Line two</p>",
+      testDocument("<p>Line one</p><br><p>Line two</p>"),
       "plain",
     );
 
@@ -115,8 +121,10 @@ describe("copyNoteContentToClipboard", () => {
 
   it("surfaces inline and block math as LaTeX in plain text", async () => {
     await copyNoteContentToClipboard(
-      '<p>Area <span data-type="inline-math" data-latex="A = \\pi r^2"></span></p>' +
-        '<div data-type="block-math" data-latex="F = ma"></div>',
+      testDocument(
+        '<p>Area <span data-type="inline-math" data-latex="A = \\pi r^2"></span></p>' +
+          '<div data-type="block-math" data-latex="F = ma"></div>',
+      ),
       "plain",
     );
 

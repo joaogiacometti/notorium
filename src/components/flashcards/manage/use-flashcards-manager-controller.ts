@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
 import type { FlashcardManageFilter } from "@/features/flashcards/validation";
 import { LIMITS } from "@/lib/config/limits";
+import type { RichTextDocument } from "@/lib/editor/document";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination/page-size";
 import { fetchFlashcardsManagePage } from "@/lib/read-api/flashcards";
 import type { FlashcardManagePage } from "@/lib/server/api-contracts";
@@ -23,7 +24,7 @@ interface UseFlashcardsManagerControllerOptions {
 
 export type FlashcardTarget = {
   id: string;
-  front: string;
+  front: RichTextDocument;
 };
 
 type FlashcardManagerDialog =

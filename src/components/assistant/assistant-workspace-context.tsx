@@ -5,23 +5,24 @@ import { createContext, useContext } from "react";
 import type { DocumentEditControls } from "@/components/assistant/document-editor-types";
 import type { FlashcardProposalControls } from "@/components/assistant/use-flashcard-proposal-outcomes";
 import type {
-  FlashcardDraft,
   FlashcardEditField,
   FlashcardEditsOutput,
+  NativeFlashcardDraft,
 } from "@/features/assistant/edit-contract";
 import type { StudyContext } from "@/features/assistant/study-context";
 import type { AssistantUIMessage } from "@/features/assistant/types";
+import type { RichTextDocument } from "@/lib/editor/document";
 
 export interface ActiveFlashcardEditor {
   sessionId: string;
-  snapshot: () => FlashcardDraft;
-  apply: (field: FlashcardEditField, html: string) => void;
+  snapshot: () => NativeFlashcardDraft;
+  apply: (field: FlashcardEditField, content: RichTextDocument) => void;
   available: () => boolean;
 }
 
 export interface PendingFlashcardField {
-  original: string;
-  replacement: string;
+  original: RichTextDocument;
+  replacement: RichTextDocument;
 }
 
 export interface PendingFlashcardEdits {

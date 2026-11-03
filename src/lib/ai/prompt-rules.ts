@@ -1,4 +1,4 @@
-// Shared with outputs rendered by plainTextToRichText, which recognizes
+// Shared with outputs rendered by plainTextToDocument, which recognizes
 // dollar-delimited LaTeX rather than other math delimiters.
 export const MATH_RULE =
   "Write every mathematical symbol and expression as LaTeX with $...$ inline and $$...$$ for block equations; never place an undelimited duplicate beside an equation. In chat use single backslashes in LaTeX commands. In JSON tool arguments, escape each backslash as required by JSON so the decoded string contains a literal backslash, not a tab, backspace, or other control character. Keep code and currency literal. Do not use other math delimiters or introduce images.";

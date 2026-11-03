@@ -1,105 +1,142 @@
-import { gfm } from "@joplin/turndown-plugin-gfm";
-import TurndownService from "turndown";
-import { normalizeRichTextForStaticRendering } from "@/lib/editor/rich-text";
-import {
-  MATH_NODE_SELECTOR,
-  mathNodeToDelimitedLatex,
-  readMathNode,
-} from "@/lib/math/math-nodes";
+import type { JSONContent } from "@tiptap/core";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { getNoteLinkHref } from "@/lib/editor/note-links";
 
-// Stored rich text is Tiptap HTML. AI chats and messengers render Markdown, so
-// copy-for-sharing converts it with Turndown plus GFM (tables, strikethrough,
-// task lists). The code below only covers what is specific to this app: how
-// Tiptap stores math, task items, list paragraphs, and images.
-
-let markdownConverter: TurndownService | null = null;
-
-/**
- * Converts stored rich text (Tiptap HTML) to Markdown for pasting into an AI
- * chat or a message. Uploaded images become `[Image]` placeholders: their
- * URLs only open for the signed-in owner. Runs in the browser (DOMParser).
- *
- * @example
- * richTextToMarkdown("<p><strong>ATP</strong> stores energy</p>");
- * // "**ATP** stores energy"
- */
-export function richTextToMarkdown(html: string): string {
-  // Match what the card shows: the renderer turns image-URL paragraphs into
-  // images and degrades unsupported image sources to text.
-  const renderedHtml = normalizeRichTextForStaticRendering(html);
-  // DOMParser builds an inert document: unlike innerHTML on a live element,
-  // it neither runs scripts nor starts loading <img> sources.
-  const body = new DOMParser().parseFromString(renderedHtml, "text/html").body;
-  replaceMathWithLatex(body);
-  unwrapTaskItemContent(body);
-  unwrapSingleParagraphListItems(body);
-  markdownConverter ??= createMarkdownConverter();
-  return markdownConverter.turndown(body);
+/** Export native document nodes directly; attachment URLs never leave the app. */
+export function richTextToMarkdown(document: RichTextDocument): string {
+  return blocks(document.content).trim();
 }
 
-function createMarkdownConverter(): TurndownService {
-  const converter = new TurndownService({
-    headingStyle: "atx",
-    hr: "---",
-    bulletListMarker: "-",
-    codeBlockStyle: "fenced",
-    emDelimiter: "*",
-  });
-  converter.use(gfm);
-  // The output is read by people or an AI; escapes like `2 \* 3` only add noise.
-  converter.escape = (text) => text;
-  converter.addRule("image", { filter: "img", replacement: imageToMarkdown });
-  return converter;
+function blocks(nodes: JSONContent[]): string {
+  return nodes.map(render).filter(Boolean).join("\n\n");
 }
 
-// Math nodes are empty elements holding their LaTeX in data-latex, which
-// Turndown would drop as blank, so the LaTeX goes in as text first.
-function replaceMathWithLatex(body: HTMLElement): void {
-  for (const mathNode of body.querySelectorAll(MATH_NODE_SELECTOR)) {
-    const latex = mathNodeToDelimitedLatex(mathNode);
-    mathNode.replaceWith(
-      readMathNode(mathNode).display ? createParagraph(body, latex) : latex,
-    );
-  }
+function fence(text: string, minimum: number): string {
+  const longest = Math.max(
+    0,
+    ...(text.match(/`+/g) ?? []).map((run) => run.length),
+  );
+  return "`".repeat(Math.max(minimum, longest + 1));
 }
 
-function createParagraph(body: HTMLElement, text: string): HTMLElement {
-  const paragraph = body.ownerDocument.createElement("p");
-  paragraph.textContent = text;
-  return paragraph;
-}
-
-// Tiptap task items hold their text in a <div> after the checkbox <label>;
-// inlining it keeps the checkbox and the text on one line.
-function unwrapTaskItemContent(body: HTMLElement): void {
-  for (const content of body.querySelectorAll(
-    'li[data-type="taskItem"] > div',
-  )) {
-    content.replaceWith(...content.childNodes);
-  }
-}
-
-// Tiptap wraps every list item's text in <p>, which Turndown renders as a
-// loose list with blank lines between items. Unwrapping single-paragraph items
-// keeps lists tight; items with several paragraphs keep their blank lines.
-function unwrapSingleParagraphListItems(body: HTMLElement): void {
-  for (const item of body.querySelectorAll("li")) {
-    const paragraphs = Array.from(item.children).filter(
-      (child) => child.tagName === "P",
-    );
-    const [paragraph] = paragraphs;
-    if (paragraph && paragraphs.length === 1) {
-      paragraph.replaceWith(...paragraph.childNodes);
+function marked(node: JSONContent): string {
+  let result = node.text ?? "";
+  for (const mark of node.marks ?? []) {
+    if (mark.type === "code") {
+      const delimiter = fence(result, 1);
+      result = `${delimiter}${result}${delimiter}`;
+    } else if (mark.type === "link") {
+      result = `[${result}](${mark.attrs?.href ?? ""})`;
+    } else {
+      const marker = { bold: "**", italic: "*", strike: "~~" }[mark.type];
+      if (marker)
+        result = result.replace(
+          /^(\s*)([\s\S]*?)(\s*)$/,
+          (_, before, text, after) =>
+            `${before}${marker}${text}${marker}${after}`,
+        );
     }
   }
+  return result;
 }
 
-function imageToMarkdown(_content: string, image: HTMLElement): string {
-  const src = image.getAttribute("src")?.trim() ?? "";
-  const alt = image.getAttribute("alt")?.trim() ?? "";
-  const markdown = /^https?:\/\//i.test(src) ? `![${alt}](${src})` : "[Image]";
-  // Tiptap images are block nodes, so consecutive images keep their own lines.
-  return image.parentNode?.nodeName === "BODY"
-    ? `\n\n${markdown}\n\n`
-    : markdown;
+function list(node: JSONContent): string {
+  return (node.content ?? [])
+    .map((item, index) => {
+      const prefix =
+        node.type === "orderedList"
+          ? `${(node.attrs?.start ?? 1) + index}.`.padEnd(4)
+          : "-   ";
+      const children = item.content ?? [];
+      const loose =
+        children.filter((child) => child.type === "paragraph").length > 1;
+      const body = children.map(render).join(loose ? "\n\n" : "\n");
+      const checkbox =
+        item.type === "taskItem" ? `[${item.attrs?.checked ? "x" : " "}] ` : "";
+      return prefix + (checkbox + body).replaceAll("\n", "\n    ");
+    })
+    .join("\n");
+}
+
+function table(node: JSONContent): string {
+  const rows = node.content ?? [];
+  if (
+    rows.some((row) =>
+      row.content?.some((cell) =>
+        cell.content?.some((child) => child.type === "table"),
+      ),
+    )
+  ) {
+    function flatten(value: JSONContent): string {
+      if (
+        ["table", "tableRow", "tableCell", "tableHeader"].includes(
+          value.type ?? "",
+        )
+      )
+        return (value.content ?? []).map(flatten).join("\n\n");
+      return render(value);
+    }
+    return flatten(node);
+  }
+  const lines = rows.map(
+    (row) =>
+      `| ${(row.content ?? [])
+        .map((cell) =>
+          blocks(cell.content ?? [])
+            .replaceAll("|", "\\|")
+            .replaceAll("\n", " "),
+        )
+        .join(" | ")} |`,
+  );
+  if (!lines.length) return "";
+  lines.splice(
+    1,
+    0,
+    `| ${(rows[0].content ?? []).map(() => "---").join(" | ")} |`,
+  );
+  return lines.join("\n");
+}
+
+function render(node: JSONContent): string {
+  const inline = () => (node.content ?? []).map(render).join("");
+  switch (node.type) {
+    case "text":
+      return marked(node);
+    case "paragraph":
+      return inline();
+    case "heading":
+      return `${"#".repeat(node.attrs?.level ?? 1)} ${inline()}`;
+    case "hardBreak":
+      return "  \n";
+    case "horizontalRule":
+      return "---";
+    case "inlineMath":
+      return `$${node.attrs?.latex ?? ""}$`;
+    case "blockMath":
+      return `$$${node.attrs?.latex ?? ""}$$`;
+    case "noteLink":
+      return `[${node.attrs?.label ?? ""}](${getNoteLinkHref(node.attrs?.noteId)})`;
+    case "image":
+      return /^https?:\/\//i.test(node.attrs?.src ?? "")
+        ? `![${node.attrs?.alt ?? ""}](${node.attrs?.src})`
+        : "[Image]";
+    case "codeBlock": {
+      const code = inline().replace(/\n$/, "");
+      const delimiter = fence(code, 3);
+      return `${delimiter}${node.attrs?.language === "plaintext" ? "" : (node.attrs?.language ?? "")}\n${code}\n${delimiter}`;
+    }
+    case "blockquote":
+      return blocks(node.content ?? [])
+        .split("\n")
+        .map((line) => `> ${line}`)
+        .join("\n");
+    case "bulletList":
+    case "orderedList":
+    case "taskList":
+      return list(node);
+    case "table":
+      return table(node);
+    default:
+      return blocks(node.content ?? []);
+  }
 }

@@ -23,10 +23,8 @@ import {
   getSubjectPathForUser,
   getSubjectPathMapForUser,
 } from "@/features/subjects/queries";
-import {
-  getRichTextExcerpt,
-  richTextToPlainText,
-} from "@/lib/editor/rich-text";
+import { documentText } from "@/lib/editor/document";
+import { documentExcerpt } from "@/lib/editor/document-content";
 import { buildContainsSearchPattern } from "@/lib/search/pattern";
 import type {
   FlashcardContentItem,
@@ -80,8 +78,8 @@ export function getFlashcardsManageOrderBy(
 
   return [
     sql<number>`case
-      when ${foldedContains(flashcard.front, searchPattern)} then 0
-      when ${foldedContains(flashcard.back, searchPattern)} then 1
+      when ${foldedContains(flashcard.frontText, searchPattern)} then 0
+      when ${foldedContains(flashcard.backText, searchPattern)} then 1
       when ${foldedContains(subject.name, searchPattern)} then 2
       else 3
     end`,
@@ -140,8 +138,8 @@ export async function getFlashcardsManagePageForUser(
       ? [
           ...filters,
           or(
-            foldedContains(flashcard.front, searchPattern),
-            foldedContains(flashcard.back, searchPattern),
+            foldedContains(flashcard.frontText, searchPattern),
+            foldedContains(flashcard.backText, searchPattern),
             foldedContains(subject.name, searchPattern),
           ),
         ]
@@ -198,8 +196,8 @@ export async function getFlashcardsManagePageForUser(
       studyLaterAt: row.studyLaterAt,
       lapseCount: row.lapseCount,
       front: row.front,
-      frontExcerpt: getRichTextExcerpt(row.front, 160),
-      frontTitle: richTextToPlainText(row.front) || null,
+      frontExcerpt: documentExcerpt(row.front, 160),
+      frontTitle: documentText(row.front) || null,
       subjectName: row.subjectName,
       subjectPath:
         (row.subjectId ? subjectPathMap.get(row.subjectId) : undefined) ??

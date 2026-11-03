@@ -18,20 +18,6 @@ export interface EditorImageUploadTracker {
   finish: () => void;
 }
 
-export function isExternalEditorValueChange(
-  value: string,
-  lastEmittedValue: string,
-) {
-  return value !== lastEmittedValue;
-}
-
-export function shouldApplyNormalizedEditorValue(
-  requestedValue: string,
-  latestValue: string,
-) {
-  return latestValue === requestedValue;
-}
-
 function insertImage(editor: Editor, src: string) {
   editor.chain().focus().setImage({ src }).run();
 }

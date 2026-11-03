@@ -3,6 +3,7 @@ import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
 } from "@/lib/server/api-contracts";
+import { testDocument } from "@/test/document";
 
 const scheduler = {
   desiredRetention: 0.9,
@@ -12,8 +13,8 @@ const scheduler = {
 export function makeCard(id: string): FlashcardReviewEntity {
   return {
     id,
-    front: `<p>${id} front</p>`,
-    back: `<p>${id} back</p>`,
+    front: testDocument(`<p>${id} front</p>`),
+    back: testDocument(`<p>${id} back</p>`),
     state: "new",
     dueAt: new Date("2026-03-07T11:00:00.000Z"),
     stability: null,

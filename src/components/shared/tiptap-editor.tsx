@@ -1,14 +1,8 @@
 "use client";
 
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import Highlight from "@tiptap/extension-highlight";
-import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
-import TaskItem from "@tiptap/extension-task-item";
-import TaskList from "@tiptap/extension-task-list";
 import Typography from "@tiptap/extension-typography";
 import { type Editor, EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -33,24 +27,23 @@ import {
   createImageUrlPasteExtension,
   type EditorImageUploadContext,
   type EditorImageUploadTracker,
-  isExternalEditorValueChange,
-  shouldApplyNormalizedEditorValue,
   uploadPastedImage,
 } from "@/components/shared/tiptap-helpers";
 import { TiptapTableControls } from "@/components/shared/tiptap-table-controls";
+import {
+  documentFromJSON,
+  documentsEqual,
+  type RichTextDocument,
+} from "@/lib/editor/document";
+import { buildDocumentExtensions } from "@/lib/editor/document-extensions";
 import { DocumentTitleHistory } from "@/lib/editor/document-title-history";
 import { shouldSubmitEditorOnCtrlEnter } from "@/lib/editor/editor-submit-shortcuts";
-import { normalizeRichTextForRendering } from "@/lib/editor/rich-text";
 import {
   createNoteLinkTargetStore,
   EditableNoteLink,
 } from "@/lib/editor/tiptap-editable-note-link";
-import { resolveEmbeddableImageUrl } from "@/lib/editor/tiptap-image-url";
-import { tiptapLowlight } from "@/lib/editor/tiptap-lowlight";
-import { buildMathExtensions } from "@/lib/editor/tiptap-math-extensions";
 import { NoteLinkSuggestion } from "@/lib/editor/tiptap-note-link-suggestion";
 import { SlashCommands } from "@/lib/editor/tiptap-slash-commands";
-import { buildTableExtensions } from "@/lib/editor/tiptap-table-extensions";
 import type { NoteConnections } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
@@ -80,8 +73,8 @@ interface TiptapEditorProps {
    */
   onToolbarTargetChange?: (target: EditorToolbarTarget | null) => void;
   onFocus?: () => void;
-  value: string;
-  onChange: (value: string) => void;
+  value: RichTextDocument;
+  onChange: (value: RichTextDocument) => void;
   placeholder?: string;
   id?: string;
   "aria-invalid"?: boolean;
@@ -126,17 +119,13 @@ export function TiptapEditor({
   const onCtrlEnterRef = useRef(onCtrlEnter);
   const onImageUploadPendingChangeRef = useRef(onImageUploadPendingChange);
   const activeUploadsRef = useRef(0);
-  const [resolvedValue, setResolvedValue] = useState(value);
   const [isImageUploadPending, setIsImageUploadPending] = useState(false);
   const [mathDialog, setMathDialog] = useState<MathDialogState | null>(null);
   const [linkDialog, setLinkDialog] = useState<LinkDialogState | null>(null);
   const editorRef = useRef<Editor | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
-  const lastEmittedValueRef = useRef(value);
-  const latestValueRef = useRef(value);
   onCtrlEnterRef.current = onCtrlEnter;
   onImageUploadPendingChangeRef.current = onImageUploadPendingChange;
-  latestValueRef.current = value;
 
   const imageUploadTracker: EditorImageUploadTracker = {
     start: () => {
@@ -155,56 +144,38 @@ export function TiptapEditor({
 
   const handleUpdate = ({
     editor,
+    transaction,
   }: {
-    editor: { getHTML: () => string; isEmpty: boolean };
+    editor: Editor;
+    transaction: import("@tiptap/pm/state").Transaction;
   }) => {
-    const html = editor.isEmpty ? "" : editor.getHTML();
-    lastEmittedValueRef.current = html;
-    onChange(html);
+    // Title history changes document attributes, not the persisted body.
+    if (transaction.before.content.eq(transaction.doc.content)) return;
+    onChange(documentFromJSON(editor.getJSON()));
   };
 
   const editor = useEditor({
     extensions: [
       DocumentTitleHistory,
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-        codeBlock: false,
-        link: {
-          autolink: true,
-          openOnClick: true,
-          linkOnPaste: true,
-          enableClickSelection: true,
+      ...buildDocumentExtensions({
+        editable: true,
+        noteLink: EditableNoteLink.configure({
+          targets: noteLinkTargets,
+          navigate: noteLinks
+            ? (href) => navigateNoteLinkRef.current?.(href)
+            : null,
+        }),
+        math: {
+          onClickMath: (target) =>
+            setMathDialog({
+              mode: "edit",
+              nodeType: target.type,
+              pos: target.pos,
+              latex: target.latex,
+            }),
         },
-      }),
-      CodeBlockLowlight.configure({
-        defaultLanguage: "plaintext",
-        enableTabIndentation: true,
-        lowlight: tiptapLowlight,
       }),
       Placeholder.configure({ placeholder: resolvedPlaceholder }),
-      Highlight.configure({ multicolor: false }),
-      Image.configure({
-        allowBase64: false,
-        resize: {
-          enabled: true,
-          directions: ["left", "right"],
-          minWidth: 120,
-          minHeight: 80,
-          alwaysPreserveAspectRatio: true,
-        },
-      }),
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      ...buildTableExtensions(),
-      ...buildMathExtensions({
-        onClickMath: (target) =>
-          setMathDialog({
-            mode: "edit",
-            nodeType: target.type,
-            pos: target.pos,
-            latex: target.latex,
-          }),
-      }),
       Typography,
       SlashCommands.configure({
         onRequestBlockMath: (range) =>
@@ -215,17 +186,11 @@ export function TiptapEditor({
         () => activeUploadsRef.current > 0,
         imageUploadTracker,
       ),
-      EditableNoteLink.configure({
-        targets: noteLinkTargets,
-        navigate: noteLinks
-          ? (href) => navigateNoteLinkRef.current?.(href)
-          : null,
-      }),
       ...(noteLinks
         ? [NoteLinkSuggestion.configure({ render: noteLinkPicker.render })]
         : []),
     ],
-    content: resolvedValue || "",
+    content: value,
     onUpdate: handleUpdate,
     onFocus: () => onFocusRef.current?.(),
     editorProps: {
@@ -281,36 +246,12 @@ export function TiptapEditor({
   }, [editor]);
 
   useEffect(() => {
-    if (!isExternalEditorValueChange(value, lastEmittedValueRef.current)) {
-      return;
-    }
-
-    let active = true;
-    const requestedValue = value;
-
-    void normalizeRichTextForRendering(requestedValue, async (candidate) =>
-      resolveEmbeddableImageUrl(candidate),
-    ).then((nextValue) => {
-      if (
-        active &&
-        shouldApplyNormalizedEditorValue(requestedValue, latestValueRef.current)
-      ) {
-        setResolvedValue(nextValue);
-      }
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [value]);
-
-  useEffect(() => {
     if (!editor) return;
-    const currentHTML = editor.isEmpty ? "" : editor.getHTML();
-    if (resolvedValue !== currentHTML) {
-      editor.commands.setContent(resolvedValue || "", { emitUpdate: false });
+    const currentDocument = documentFromJSON(editor.getJSON());
+    if (!documentsEqual(value, currentDocument)) {
+      editor.commands.setContent(value, { emitUpdate: false });
     }
-  }, [editor, resolvedValue]);
+  }, [editor, value]);
 
   useEffect(() => {
     onImageUploadPendingChangeRef.current?.(isImageUploadPending);

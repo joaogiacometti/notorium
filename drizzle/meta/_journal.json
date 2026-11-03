@@ -547,6 +547,20 @@
       "when": 1793390571891,
       "tag": "0077_right_taskmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1793745146364,
+      "tag": "0078_faulty_darkstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1793747137993,
+      "tag": "0079_absent_iceman",
+      "breakpoints": true
     }
   ]
 }

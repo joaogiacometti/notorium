@@ -20,6 +20,7 @@ import {
 } from "@/components/shared/tiptap-formatting-toolbar";
 import { FieldError } from "@/components/ui/field";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
+import { emptyDocument, type RichTextDocument } from "@/lib/editor/document";
 import { cn } from "@/lib/utils";
 
 const FlashcardFieldReview = dynamic(
@@ -140,7 +141,7 @@ export function FlashcardCardEditor<TValues extends FlashcardFormValues>({
                 ) : (
                   <TiptapEditor
                     key={`${id}-${editorKey}`}
-                    value={(field.value ?? "") as string}
+                    value={(field.value ?? emptyDocument()) as RichTextDocument}
                     onChange={field.onChange}
                     placeholder={placeholders[side]}
                     id={id}

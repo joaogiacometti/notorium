@@ -1,14 +1,17 @@
 // @vitest-environment jsdom
 import { Editor } from "@tiptap/core";
 import { describe, expect, it } from "vitest";
+import { documentToNode as parseDocument } from "@/lib/editor/document";
+import { buildDocumentExtensions } from "@/lib/editor/document-extensions";
 import {
   buildReviewDecorations,
   buildRichTextReviewExtension,
 } from "@/lib/editor/rich-text-review-decorations";
-import {
-  buildRichTextReviewExtensions,
-  parseReviewedRichText,
-} from "@/lib/editor/rich-text-review-schema";
+
+import { testDocument } from "@/test/document";
+
+const parseReviewedRichText = (html: string) =>
+  parseDocument(testDocument(html));
 
 describe("rich text review decorations", () => {
   it("leaves unchanged documents undecorated", () => {
@@ -20,7 +23,7 @@ describe("rich text review decorations", () => {
     const original = parseReviewedRichText("<p>The long answer.</p>");
     const editor = new Editor({
       extensions: [
-        ...buildRichTextReviewExtensions(),
+        ...buildDocumentExtensions(),
         buildRichTextReviewExtension(original),
       ],
       content: "<p>The short answer.</p>",
@@ -45,7 +48,7 @@ describe("rich text review decorations", () => {
     (before, after) => {
       const editor = new Editor({
         extensions: [
-          ...buildRichTextReviewExtensions(),
+          ...buildDocumentExtensions(),
           buildRichTextReviewExtension(parseReviewedRichText(before)),
         ],
         content: after,

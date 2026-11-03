@@ -20,6 +20,7 @@ import type {
   EditNoteForm,
 } from "@/features/notes/validation";
 import { LIMITS } from "@/lib/config/limits";
+import { documentText, emptyDocument } from "@/lib/editor/document";
 import {
   type ActionErrorResult,
   actionError,
@@ -51,7 +52,8 @@ function getNoteMutationValues(
 ) {
   return {
     title: values.title,
-    content: values.content ?? null,
+    content: values.content ?? emptyDocument(),
+    contentText: values.content ? documentText(values.content) : "",
   };
 }
 

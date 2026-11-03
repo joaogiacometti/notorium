@@ -12,6 +12,7 @@ import { NoteDocumentReview } from "@/components/notes/note-document-review";
 import type { EditNoteForm } from "@/features/notes/validation";
 import { DocumentTitleHistory } from "@/lib/editor/document-title-history";
 import { NoteLink } from "@/lib/editor/tiptap-note-link";
+import { testDocument } from "@/test/document";
 import { FakeDocumentEditChat } from "@/test/fake-document-edit-chat";
 import "@/components/assistant/prepare-document-edit";
 
@@ -22,14 +23,17 @@ function NoteSurface({ editor }: { editor: Editor }) {
     defaultValues: {
       id,
       title: "Original title",
-      content:
+      content: testDocument(
         '<p>Original explanation</p><p>Preserved <a data-note-id="n1" data-note-link="" href="/notes/n1">Linked note</a></p>',
+      ),
     },
   });
   const values = form.watch();
   useEffect(() => {
     const update = () =>
-      form.setValue("content", editor.getHTML(), { shouldDirty: true });
+      form.setValue("content", testDocument(editor.getHTML()), {
+        shouldDirty: true,
+      });
     editor.on("update", update);
     return () => {
       editor.off("update", update);
@@ -152,8 +156,7 @@ describe("document proposal lifecycle", () => {
     expect(read("values")).toContain("Improved explanation");
     expect(read("values")).toContain("Improved title");
     expect(read("values")).toContain("Preserved");
-    // `values` is JSON, so the attribute's quotes are escaped.
-    expect(read("values")).toContain(String.raw`data-note-id=\"n1\"`);
+    expect(read("values")).toContain('"noteId":"n1"');
     expect(read("messages")).toContain('"outcome":"accepted"');
     await click("Undo");
     expect(read("values")).toContain("Original explanation");

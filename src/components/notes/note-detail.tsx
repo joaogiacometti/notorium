@@ -42,6 +42,7 @@ import {
   copyNoteContentToClipboard,
   type NoteCopyFormat,
 } from "@/lib/clipboard/note-content";
+import { documentsEqual, emptyDocument } from "@/lib/editor/document";
 import { useDocumentAutosave } from "@/lib/editor/use-document-autosave";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
 
@@ -59,12 +60,18 @@ function getEditValues(note: NoteEntity): EditNoteForm {
   return {
     id: note.id,
     title: note.title,
-    content: note.content ?? "",
+    content: note.content ?? emptyDocument(),
   };
 }
 
 function isSameNoteEdit(left: EditNoteForm, right: EditNoteForm) {
-  return left.title === right.title && (left.content ?? "") === right.content;
+  return (
+    left.title === right.title &&
+    documentsEqual(
+      left.content ?? emptyDocument(),
+      right.content ?? emptyDocument(),
+    )
+  );
 }
 
 export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
@@ -82,7 +89,7 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
     defaultValues: getEditValues(note),
   });
   const watchedTitle = form.watch("title");
-  const watchedContent = form.watch("content") ?? "";
+  const watchedContent = form.watch("content") ?? emptyDocument();
   const documentReview = useActiveNoteEditor({
     editor: assistantEditor,
     form,
@@ -149,7 +156,10 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
 
   async function copyNoteContent(format: NoteCopyFormat) {
     try {
-      await copyNoteContentToClipboard(form.getValues("content") ?? "", format);
+      await copyNoteContentToClipboard(
+        form.getValues("content") ?? emptyDocument(),
+        format,
+      );
       toast.success("Note copied.");
     } catch {
       toast.error("Could not copy note.");
@@ -293,7 +303,7 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
                 >
                   <TiptapEditor
                     onEditorReady={setAssistantEditor}
-                    value={field.value ?? ""}
+                    value={field.value ?? emptyDocument()}
                     onChange={field.onChange}
                     placeholder="Write your notes here..."
                     id="form-edit-note-content"

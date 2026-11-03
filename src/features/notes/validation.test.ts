@@ -5,8 +5,22 @@ import {
   editNoteSchema,
 } from "@/features/notes/validation";
 import { LIMITS } from "@/lib/config/limits";
+import { testDocument } from "@/test/document";
 
 describe("createNoteSchema", () => {
+  it("rejects malformed documents without running document-only refinements", () => {
+    for (const content of [
+      null,
+      "<p>HTML</p>",
+      { version: 1, type: "doc", content: "bad" },
+    ]) {
+      expect(
+        createNoteSchema.safeParse({ title: "Note", subjectId: "s1", content })
+          .success,
+      ).toBe(false);
+    }
+  });
+
   it("accepts valid input with required fields only", () => {
     const result = createNoteSchema.safeParse({
       title: "My Note",
@@ -20,7 +34,7 @@ describe("createNoteSchema", () => {
     const result = createNoteSchema.safeParse({
       title: "My Note",
       subjectId: "s1",
-      content: "Some content",
+      content: testDocument("Some content"),
     });
 
     expect(result.success).toBe(true);
@@ -54,7 +68,7 @@ describe("createNoteSchema", () => {
     const result = createNoteSchema.safeParse({
       title: "Valid",
       subjectId: "s1",
-      content: "x".repeat(LIMITS.noteContentMax + 1),
+      content: testDocument("x".repeat(LIMITS.noteContentMax + 1)),
     });
 
     expect(result.success).toBe(false);
@@ -64,10 +78,29 @@ describe("createNoteSchema", () => {
     const result = createNoteSchema.safeParse({
       title: "Valid",
       subjectId: "s1",
-      content: "x".repeat(LIMITS.noteContentMax),
+      content: testDocument("x".repeat(LIMITS.noteContentMax)),
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("counts authored whitespace in the character limit", () => {
+    const content = {
+      version: 1,
+      type: "doc",
+      content: [
+        {
+          type: "codeBlock",
+          content: [
+            { type: "text", text: `${" ".repeat(LIMITS.noteContentMax)}x` },
+          ],
+        },
+      ],
+    };
+    expect(
+      createNoteSchema.safeParse({ title: "Note", subjectId: "s1", content })
+        .success,
+    ).toBe(false);
   });
 
   it("accepts content at exactly max internal attachments", () => {
@@ -80,7 +113,7 @@ describe("createNoteSchema", () => {
     const result = createNoteSchema.safeParse({
       title: "Valid",
       subjectId: "s1",
-      content,
+      content: testDocument(content),
     });
 
     expect(result.success).toBe(true);
@@ -96,7 +129,7 @@ describe("createNoteSchema", () => {
     const result = createNoteSchema.safeParse({
       title: "Valid",
       subjectId: "s1",
-      content,
+      content: testDocument(content),
     });
 
     expect(result.success).toBe(false);

@@ -1,12 +1,9 @@
 import { Extension } from "@tiptap/core";
-import {
-  DOMSerializer,
-  Fragment,
-  type Node as ProseMirrorNode,
-} from "@tiptap/pm/model";
+import { DOMSerializer, type Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Plugin } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
-import { parseReviewedRichText } from "@/lib/editor/rich-text-review-schema";
+import type { RichTextDocument } from "@/lib/editor/document";
+import { documentToNode } from "@/lib/editor/document";
 import { MATH_NODE_SELECTOR, readMathNode } from "@/lib/math/math-nodes";
 
 /** Highlight a structural replacement without inserting review markup into HTML.
@@ -104,8 +101,8 @@ export function buildRichTextReviewExtension(
 }
 
 export interface RichTextReviewSegment {
-  original: string;
-  replacement: string;
+  original: RichTextDocument;
+  replacement: RichTextDocument;
   offset: number;
 }
 
@@ -126,7 +123,6 @@ export function buildDocumentReviewDecorations(
   return DecorationSet.create(proposed, decorations);
 }
 
-function reviewFragment(html: string): ProseMirrorNode {
-  const parsed = parseReviewedRichText(html);
-  return html ? parsed : parsed.copy(Fragment.empty);
+function reviewFragment(value: RichTextDocument): ProseMirrorNode {
+  return documentToNode(value);
 }

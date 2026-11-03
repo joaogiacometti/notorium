@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FlashcardCardEditor } from "@/components/flashcards/shared/flashcard-card-editor";
 import type { EditorToolbarTarget } from "@/components/shared/tiptap-editor";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
+import { testDocument } from "@/test/document";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -51,7 +52,11 @@ vi.mock("@/components/shared/tiptap-formatting-toolbar", () => ({
 
 function Harness() {
   const form = useForm<FlashcardFormValues>({
-    defaultValues: { subjectId: "", front: "", back: "" },
+    defaultValues: {
+      subjectId: "",
+      front: testDocument(""),
+      back: testDocument(""),
+    },
   });
   return (
     <FlashcardCardEditor

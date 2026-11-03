@@ -49,7 +49,7 @@ function countEdits(lists: (unknown[] | undefined)[]): number {
   return lists.reduce((total, list) => total + (list?.length ?? 0), 0);
 }
 
-// Block ids exist only in one captured editor revision; they never enter stored HTML.
+// Block ids exist only in one captured editor revision; they never enter stored documents.
 export const noteEditsInputSchema = editToolInputObject(
   {
     ...sessionFields,

@@ -10,6 +10,7 @@ import {
   studyContextSchema,
 } from "@/features/assistant/study-context";
 import { assistantChatRequestSchema } from "@/features/assistant/validation";
+import { testDocument } from "@/test/document";
 
 describe("study context snapshots", () => {
   it("preserves note structure and math without attachment URLs", () => {
@@ -17,29 +18,36 @@ describe("study context snapshots", () => {
       "note",
       "Variance",
       "Stats",
-      '<p>Variance</p><ul><li>Spread</li></ul><span data-type="inline-math" data-latex="x^2"></span><img src="https://private/image">',
+      testDocument(
+        '<p>Variance</p><ul><li>Spread</li></ul><span data-type="inline-math" data-latex="x^2"></span><img src="https://private/image">',
+      ),
     );
     expect(context.content).toContain("x^2");
     expect(context.content).toMatch(/-\s+Spread/);
-    expect(context.content).toContain("{{IMAGE_0}}");
+    expect(context.content).toContain("[Image]");
     expect(context.content).not.toContain("https://private");
     expect(context.partial).toBe(false);
   });
-  it("hides image URLs that the renderer recognizes in standalone paragraphs", () => {
+  it("preserves URL text without interpreting it as an image", () => {
     const html = "<p>Look at this:</p><p>https://example.com/figure.png</p>";
-    const note = buildDocumentContext("note", "Figure", "", html);
+    const note = buildDocumentContext("note", "Figure", "", testDocument(html));
     const card = buildReviewContext(
-      { front: html, back: "Answer" },
+      { front: testDocument(html), back: testDocument("Answer") },
       "",
       false,
       "review",
     );
-    expect(note.content).not.toContain("https://example.com");
-    expect(card.front).not.toContain("https://example.com");
-    expect(note.content).toContain("{{IMAGE_0}}");
+    expect(note.content).toContain("https://example.com/figure.png");
+    expect(card.front).toContain("https://example.com/figure.png");
+    expect(note.content).not.toContain("[Image]");
   });
   it("caps documents and advertises partial context", () => {
-    const context = buildDocumentContext("note", "Long", "", "x".repeat(12001));
+    const context = buildDocumentContext(
+      "note",
+      "Long",
+      "",
+      testDocument("x".repeat(12001)),
+    );
     expect(context.content).toHaveLength(12000);
     expect(describeStudyContext(context)).toContain("partial context");
     expect(
@@ -49,8 +57,8 @@ describe("study context snapshots", () => {
   });
   it("marks an unrevealed answer hidden and updates card content and mode", () => {
     const card = {
-      front: '<p>Question</p><img src="https://private/image">',
-      back: "Hidden answer",
+      front: testDocument('<p>Question</p><img src="https://private/image">'),
+      back: testDocument("Hidden answer"),
     };
     expect(buildReviewContext(card, "Math", false, "review")).toMatchObject({
       hiddenBack: "Hidden answer",
@@ -70,7 +78,7 @@ describe("study context snapshots", () => {
     );
     expect(
       buildReviewContext(
-        { front: "Next", back: "Next answer" },
+        { front: testDocument("Next"), back: testDocument("Next answer") },
         "Math",
         false,
         "review",
@@ -105,7 +113,13 @@ describe("study context snapshots", () => {
 
 it("captures document identity alongside the live content", () => {
   expect(
-    buildDocumentContext("note", "Cells", "Biology", "<p>ATP</p>", "note-1"),
+    buildDocumentContext(
+      "note",
+      "Cells",
+      "Biology",
+      testDocument("<p>ATP</p>"),
+      "note-1",
+    ),
   ).toMatchObject({ documentId: "note-1", kind: "note" });
 });
 

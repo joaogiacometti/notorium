@@ -4,14 +4,15 @@ import {
   shouldSyncFlashcardDialogValues,
 } from "@/features/flashcards/dialog-sync";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
+import { testDocument } from "@/test/document";
 
 function values(
   overrides: Partial<FlashcardFormValues> = {},
 ): FlashcardFormValues {
   return {
     subjectId: "deck-1",
-    front: "",
-    back: "",
+    front: testDocument(""),
+    back: testDocument(""),
     ...overrides,
   };
 }
@@ -36,14 +37,14 @@ describe("haveFlashcardDialogValuesChanged", () => {
     expect(
       haveFlashcardDialogValuesChanged(
         createValues,
-        values({ front: "<p>Front</p>" }),
+        values({ front: testDocument("<p>Front</p>") }),
       ),
     ).toBe(true);
 
     expect(
       haveFlashcardDialogValuesChanged(
         createValues,
-        values({ back: "<p>Back</p>" }),
+        values({ back: testDocument("<p>Back</p>") }),
       ),
     ).toBe(true);
   });
@@ -79,14 +80,14 @@ describe("shouldSyncFlashcardDialogValues", () => {
         wasOpen: true,
         previousValues: values({
           id: "flashcard-1",
-          front: "<p>Front</p>",
-          back: "<p>Back</p>",
+          front: testDocument("<p>Front</p>"),
+          back: testDocument("<p>Back</p>"),
         }),
         nextValues: values({
           id: "flashcard-2",
           subjectId: "deck-2",
-          front: "<p>Other front</p>",
-          back: "<p>Other back</p>",
+          front: testDocument("<p>Other front</p>"),
+          back: testDocument("<p>Other back</p>"),
         }),
       }),
     ).toBe(true);

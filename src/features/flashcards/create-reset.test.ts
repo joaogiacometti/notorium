@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
+import { testDocument } from "@/test/document";
 
 const values: FlashcardFormValues = {
   subjectId: "deck-1",
-  front: "<p>Front</p>",
-  back: "<p>Back</p>",
+  front: testDocument("<p>Front</p>"),
+  back: testDocument("<p>Back</p>"),
 };
 
 describe("getCreateFlashcardResetValues", () => {
@@ -17,8 +18,8 @@ describe("getCreateFlashcardResetValues", () => {
       }),
     ).toEqual({
       subjectId: "deck-1",
-      front: "",
-      back: "",
+      front: testDocument(""),
+      back: testDocument(""),
     });
   });
 
@@ -30,8 +31,8 @@ describe("getCreateFlashcardResetValues", () => {
       }),
     ).toEqual({
       subjectId: "deck-1",
-      front: "<p>Front</p>",
-      back: "",
+      front: testDocument("<p>Front</p>"),
+      back: testDocument(""),
     });
   });
 
@@ -43,8 +44,8 @@ describe("getCreateFlashcardResetValues", () => {
       }),
     ).toEqual({
       subjectId: "deck-1",
-      front: "",
-      back: "<p>Back</p>",
+      front: testDocument(""),
+      back: testDocument("<p>Back</p>"),
     });
   });
 });

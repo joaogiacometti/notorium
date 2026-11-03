@@ -1,6 +1,8 @@
 import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
-import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
+import { documentText } from "@/lib/editor/document";
+import { documentUniquenessText } from "@/lib/editor/document-content";
+import { testDocument } from "@/test/document";
 
 export async function createFlashcardForSubject(
   userId: string,
@@ -14,9 +16,11 @@ export async function createFlashcardForSubject(
     .values({
       userId,
       subjectId,
-      front,
-      frontNormalized: normalizeRichTextForUniqueness(front),
-      back,
+      front: testDocument(front),
+      frontText: documentText(testDocument(front)),
+      frontNormalized: documentUniquenessText(testDocument(front)),
+      back: testDocument(back),
+      backText: documentText(testDocument(back)),
       dueAt,
     })
     .returning({ id: flashcard.id });

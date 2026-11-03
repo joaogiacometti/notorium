@@ -2,7 +2,7 @@ import { and, count, desc, eq, inArray, ne, type SQL, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { note, subject } from "@/db/schema";
 import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
-import { extractNoteLinkIds, getNoteLinkMarker } from "@/lib/editor/note-links";
+import { extractNoteLinkIds } from "@/lib/editor/note-links";
 import type {
   NoteConnections,
   NoteEntity,
@@ -78,7 +78,7 @@ export async function getNoteByIdForUser(
 
 /**
  * Links in and out of an owned note, or `null` when it doesn't exist. Backlinks
- * are read from stored HTML, so they can't drift from note content. A linked id
+ * are read from stored document nodes, so they can't drift from note content. A linked id
  * the user can't read is reported as missing, whether deleted or never theirs.
  *
  * @example
@@ -91,13 +91,13 @@ export async function getNoteConnectionsForUser(
   const current = await getNoteByIdForUser(userId, noteId);
   if (!current) return null;
 
-  const linkedIds = extractNoteLinkIds(current.content ?? "");
+  const linkedIds = current.content ? extractNoteLinkIds(current.content) : [];
   const [backlinks, outgoing] = await Promise.all([
     selectNoteLinkTargets(
       userId,
       and(
         ne(note.id, noteId),
-        sql`strpos(${note.content}, ${getNoteLinkMarker(noteId)}) > 0`,
+        sql`jsonb_path_exists(${note.content}, '$.** ? (@.type == "noteLink" && @.attrs.noteId == $id)', ${JSON.stringify({ id: noteId })}::jsonb)`,
       ),
     ),
     linkedIds.length > 0

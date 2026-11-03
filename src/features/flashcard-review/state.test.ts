@@ -21,6 +21,7 @@ import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
 } from "@/lib/server/api-contracts";
+import { testDocument } from "@/test/document";
 
 const scheduler = {
   desiredRetention: 0.9,
@@ -34,8 +35,8 @@ function makeCard(
 ): FlashcardReviewEntity {
   return {
     id,
-    front: `<p>${id} front</p>`,
-    back: `<p>${id} back</p>`,
+    front: testDocument(`<p>${id} front</p>`),
+    back: testDocument(`<p>${id} back</p>`),
     state: "new",
     dueAt,
     stability: null,
@@ -357,7 +358,7 @@ describe("replaceFlashcardInReviewState", () => {
     };
     const update = {
       id: "c1",
-      back: "Edited",
+      back: testDocument("Edited"),
     } as import("@/lib/server/api-contracts").FlashcardReviewEntity;
     expect(
       replaceFlashcardInReviewState(state, update).cards[0].source,
@@ -380,8 +381,8 @@ describe("replaceFlashcardInReviewState", () => {
     const nextState = replaceFlashcardInReviewState(
       state,
       makeCard("card-1", new Date("2026-03-07T11:00:00.000Z"), {
-        front: "<p>updated front</p>",
-        back: "<p>updated back</p>",
+        front: testDocument("<p>updated front</p>"),
+        back: testDocument("<p>updated back</p>"),
       }),
     );
 
@@ -389,8 +390,12 @@ describe("replaceFlashcardInReviewState", () => {
       "card-1",
       "card-2",
     ]);
-    expect(nextState.cards[0]?.front).toBe("<p>updated front</p>");
-    expect(nextState.cards[0]?.back).toBe("<p>updated back</p>");
+    expect(nextState.cards[0]?.front).toEqual(
+      testDocument("<p>updated front</p>"),
+    );
+    expect(nextState.cards[0]?.back).toEqual(
+      testDocument("<p>updated back</p>"),
+    );
     expect(nextState.summary).toEqual(state.summary);
   });
 
@@ -548,7 +553,7 @@ describe("gradeFlashcardLocally", () => {
 
     expect(graded).toMatchObject({
       id: "a",
-      front: card.front,
+      front: testDocument(card.front),
       subjectPath: "Science::Biology",
       state: expected.state,
       dueAt: expected.dueAt,

@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FlashcardsManagerTable } from "@/components/flashcards/manage/flashcards-manager-table";
 import type { FlashcardManageItem } from "@/lib/server/api-contracts";
+import { testDocument } from "@/test/document";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -18,7 +19,7 @@ function createFlashcard(
   return {
     id: "flashcard-1",
     subjectId: "deck-1",
-    front: "Very long front content for a flashcard manager row",
+    front: testDocument("Very long front content for a flashcard manager row"),
     frontExcerpt: "Very long front content for a flashcard manager row",
     frontTitle: "Very long front content for a flashcard manager row",
     subjectName: "Biology",

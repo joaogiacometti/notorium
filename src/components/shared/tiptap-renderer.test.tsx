@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { TiptapRenderer } from "@/components/shared/tiptap-renderer";
+import { testDocument } from "@/test/document";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -20,7 +21,9 @@ describe("TiptapRenderer", () => {
       const root = createRoot(container);
       await act(async () => {
         root.render(
-          <TiptapRenderer content={`${html}<p>&nbsp;</p><p><br></p>`} />,
+          <TiptapRenderer
+            content={testDocument(`${html}<p>&nbsp;</p><p><br></p>`)}
+          />,
         );
       });
       const prose = container.querySelector(".ProseMirror");
@@ -32,7 +35,10 @@ describe("TiptapRenderer", () => {
 
   it("shows the fallback before the editor exists", () => {
     const markup = renderToStaticMarkup(
-      <TiptapRenderer content="<p>Rich</p>" fallback={<p>Plain</p>} />,
+      <TiptapRenderer
+        content={testDocument("<p>Rich</p>")}
+        fallback={<p>Plain</p>}
+      />,
     );
 
     expect(markup).toBe("<p>Plain</p>");
@@ -43,10 +49,12 @@ describe("TiptapRenderer", () => {
     const container = document.createElement("div");
     const root = createRoot(container);
     await act(async () => {
-      root.render(<TiptapRenderer content="<p>First</p>" />);
+      root.render(<TiptapRenderer content={testDocument("<p>First</p>")} />);
     });
     await act(async () => {
-      root.render(<TiptapRenderer content="<p>Next</p><p><br></p>" />);
+      root.render(
+        <TiptapRenderer content={testDocument("<p>Next</p><p><br></p>")} />,
+      );
     });
     const prose = container.querySelector(".ProseMirror");
     expect(prose?.textContent).toBe("Next");
@@ -61,7 +69,10 @@ describe("TiptapRenderer", () => {
 
     await act(async () => {
       root.render(
-        <TiptapRenderer content="<p>Rich</p>" fallback={<p>Plain</p>} />,
+        <TiptapRenderer
+          content={testDocument("<p>Rich</p>")}
+          fallback={<p>Plain</p>}
+        />,
       );
     });
 
@@ -76,7 +87,11 @@ describe("TiptapRenderer", () => {
 
     await act(async () => {
       root.render(
-        <TiptapRenderer content="<ul><li><p>Item</p></li></ul><pre><code>x</code></pre>" />,
+        <TiptapRenderer
+          content={testDocument(
+            "<ul><li><p>Item</p></li></ul><pre><code>x</code></pre>",
+          )}
+        />,
       );
     });
 

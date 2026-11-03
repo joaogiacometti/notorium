@@ -6,9 +6,10 @@ import { toast } from "sonner";
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { shouldSyncFlashcardDialogValues } from "@/features/flashcards/dialog-sync";
 import {
+  documentHasContent,
   type FlashcardFormValues as FlashcardFormSchemaValues,
-  hasRichTextContent,
 } from "@/features/flashcards/validation";
+import { documentsEqual, type RichTextDocument } from "@/lib/editor/document";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
@@ -57,7 +58,9 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   const hasPendingEdits = Boolean(workspace?.pending);
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [rejectedFront, setRejectedFront] = useState<string | null>(null);
+  const [rejectedFront, setRejectedFront] = useState<RichTextDocument | null>(
+    null,
+  );
   const [keepFrontAfterSubmit, setKeepFrontAfterSubmit] = useState(false);
   const [keepBackAfterSubmit, setKeepBackAfterSubmit] = useState(false);
   const [editorResetVersion, setEditorResetVersion] = useState(0);
@@ -106,7 +109,11 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   );
 
   useEffect(() => {
-    if (!open || rejectedFront !== currentValues.front) {
+    if (
+      !open ||
+      !rejectedFront ||
+      !documentsEqual(rejectedFront, currentValues.front)
+    ) {
       setRejectedFront(null);
     }
   }, [currentValues.front, open, rejectedFront]);
@@ -139,14 +146,16 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     }
     setIsSaved(false);
 
-    const hasFrontContent = hasRichTextContent(currentValues.front);
-    const hasBackContent = hasRichTextContent(currentValues.back);
+    const hasFrontContent = documentHasContent(currentValues.front);
+    const hasBackContent = documentHasContent(currentValues.back);
     const hasContent = hasFrontContent || hasBackContent;
     const savedValues = savedValuesRef.current;
     const hasUnsavedChanges =
       mode === "edit"
-        ? currentValues.front !== savedValues.front ||
-          currentValues.back !== savedValues.back ||
+        ? JSON.stringify(currentValues.front) !==
+            JSON.stringify(savedValues.front) ||
+          JSON.stringify(currentValues.back) !==
+            JSON.stringify(savedValues.back) ||
           currentValues.subjectId !== savedValues.subjectId
         : hasContent;
 
@@ -218,7 +227,11 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
     setKeepFrontAfterSubmit,
     keepBackAfterSubmit,
     setKeepBackAfterSubmit,
-    isDuplicateFront: open && rejectedFront === currentValues.front,
+    isDuplicateFront:
+      open &&
+      Boolean(
+        rejectedFront && documentsEqual(rejectedFront, currentValues.front),
+      ),
     duplicateFrontMessage: t("flashcards.duplicateFront"),
     handleDiscardChanges,
     handleOpenChange,

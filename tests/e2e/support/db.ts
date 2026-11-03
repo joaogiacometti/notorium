@@ -20,7 +20,9 @@ import {
   parseFsrsWeights,
   serializeFsrsWeights,
 } from "@/features/flashcards/fsrs";
-import { normalizeRichTextForUniqueness } from "@/lib/editor/rich-text";
+import { documentText } from "@/lib/editor/document";
+import { documentUniquenessText } from "@/lib/editor/document-content";
+import { testDocument } from "@/test/document";
 import {
   type E2ECredentials,
   type E2EUserKind,
@@ -228,7 +230,8 @@ export async function createNote(
       userId,
       subjectId,
       title,
-      content,
+      content: testDocument(content),
+      contentText: documentText(testDocument(content)),
     })
     .returning({ id: note.id });
 
@@ -242,7 +245,10 @@ export async function updateNoteContent(
 ) {
   await getDb()
     .update(note)
-    .set({ content })
+    .set({
+      content: testDocument(content),
+      contentText: documentText(testDocument(content)),
+    })
     .where(and(eq(note.id, noteId), eq(note.userId, userId)));
 }
 
@@ -283,9 +289,11 @@ async function createFlashcard(
     .values({
       userId,
       subjectId,
-      front,
-      frontNormalized: normalizeRichTextForUniqueness(front),
-      back,
+      front: testDocument(front),
+      frontText: documentText(testDocument(front)),
+      frontNormalized: documentUniquenessText(testDocument(front)),
+      back: testDocument(back),
+      backText: documentText(testDocument(back)),
       dueAt,
     })
     .returning({ id: flashcard.id });

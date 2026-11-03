@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { testDocument } from "@/test/document";
 
 class FakeUniqueConstraintError extends Error {
   readonly code = "23505";
@@ -104,8 +105,8 @@ describe("createFlashcardForUser", () => {
     );
     const result = await createFlashcardForUser("user-1", {
       subjectId: "deck-1",
-      front: "<p>Q</p>",
-      back: "<p>A</p>",
+      front: testDocument("<p>Q</p>"),
+      back: testDocument("<p>A</p>"),
       source: { kind: "note", id: "foreign" },
     });
     expect(result).toMatchObject({
@@ -132,8 +133,8 @@ describe("createFlashcardForUser", () => {
     expect(
       await createFlashcardForUser("user-1", {
         subjectId: "deck-1",
-        front: "<p>Q</p>",
-        back: "<p>A</p>",
+        front: testDocument("<p>Q</p>"),
+        back: testDocument("<p>A</p>"),
         source: { kind: "note", id: "doc-1" },
       }),
     ).toMatchObject({ success: true });
@@ -153,8 +154,8 @@ describe("createFlashcardForUser", () => {
 
     const result = await createFlashcardForUser("user-1", {
       subjectId: "deck-1",
-      front: "<p>Same Front</p>",
-      back: "<p>Back</p>",
+      front: testDocument("<p>Same Front</p>"),
+      back: testDocument("<p>Back</p>"),
     });
 
     expect(result).toEqual({
@@ -171,9 +172,9 @@ describe("createFlashcardForUser", () => {
       {
         id: "flashcard-1",
         subjectId: "deck-1",
-        front: "<p>Front</p>",
+        front: testDocument("<p>Front</p>"),
         frontNormalized: "front",
-        back: "<p>Back</p>",
+        back: testDocument("<p>Back</p>"),
       },
     ]);
 
@@ -183,8 +184,8 @@ describe("createFlashcardForUser", () => {
 
     const result = await createFlashcardForUser("user-1", {
       subjectId: "deck-1",
-      front: "<p>Front</p>",
-      back: "<p>Back</p>",
+      front: testDocument("<p>Front</p>"),
+      back: testDocument("<p>Back</p>"),
     });
 
     expect(result).toEqual({
@@ -192,17 +193,19 @@ describe("createFlashcardForUser", () => {
       flashcard: {
         id: "flashcard-1",
         subjectId: "deck-1",
-        front: "<p>Front</p>",
+        front: testDocument("<p>Front</p>"),
         frontNormalized: "front",
-        back: "<p>Back</p>",
+        back: testDocument("<p>Back</p>"),
       },
     });
     expect(insertValuesMock).toHaveBeenCalledWith({
       subjectId: "deck-1",
       userId: "user-1",
-      front: "<p>Front</p>",
+      front: testDocument("<p>Front</p>"),
       frontNormalized: "front",
-      back: "<p>Back</p>",
+      frontText: "Front",
+      backText: "Back",
+      back: testDocument("<p>Back</p>"),
       sourceNoteId: null,
       state: "new",
       dueAt: new Date("2026-03-18T10:00:00.000Z"),
@@ -230,8 +233,8 @@ describe("editFlashcardForUser", () => {
     getFlashcardByIdForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
       subjectId: "deck-2",
-      front: "<p>Original front</p>",
-      back: "<p>Original back</p>",
+      front: testDocument("<p>Original front</p>"),
+      back: testDocument("<p>Original back</p>"),
     });
     updateReturningMock.mockRejectedValueOnce(new FakeUniqueConstraintError());
     const { editFlashcardForUser } = await import(
@@ -241,8 +244,8 @@ describe("editFlashcardForUser", () => {
       await editFlashcardForUser("user-1", {
         id: "flashcard-1",
         subjectId: "deck-2",
-        front: "<p>Same Front</p>",
-        back: "<p>Back</p>",
+        front: testDocument("<p>Same Front</p>"),
+        back: testDocument("<p>Back</p>"),
       }),
     ).toMatchObject({ success: false, errorCode: "flashcards.duplicateFront" });
   });
@@ -251,16 +254,16 @@ describe("editFlashcardForUser", () => {
     getFlashcardByIdForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
       subjectId: "deck-1",
-      front: "<p>Original front</p>",
-      back: "<p>Original back</p>",
+      front: testDocument("<p>Original front</p>"),
+      back: testDocument("<p>Original back</p>"),
     });
     countFlashcardsBySubjectForUserMock.mockResolvedValueOnce(1);
     updateReturningMock.mockResolvedValueOnce([
       {
         id: "flashcard-1",
         subjectId: "deck-2",
-        front: "<p>Updated front</p>",
-        back: "<p>Updated back</p>",
+        front: testDocument("<p>Updated front</p>"),
+        back: testDocument("<p>Updated back</p>"),
       },
     ]);
 
@@ -271,8 +274,8 @@ describe("editFlashcardForUser", () => {
     const result = await editFlashcardForUser("user-1", {
       id: "flashcard-1",
       subjectId: "deck-2",
-      front: "<p>Updated front</p>",
-      back: "<p>Updated back</p>",
+      front: testDocument("<p>Updated front</p>"),
+      back: testDocument("<p>Updated back</p>"),
     });
 
     expect(result).toEqual({
@@ -280,16 +283,18 @@ describe("editFlashcardForUser", () => {
       flashcard: {
         id: "flashcard-1",
         subjectId: "deck-2",
-        front: "<p>Updated front</p>",
-        back: "<p>Updated back</p>",
+        front: testDocument("<p>Updated front</p>"),
+        back: testDocument("<p>Updated back</p>"),
       },
       previousSubjectId: "deck-1",
     });
     expect(updateSetMock).toHaveBeenCalledWith({
       subjectId: "deck-2",
-      front: "<p>Updated front</p>",
+      front: testDocument("<p>Updated front</p>"),
       frontNormalized: "updated front",
-      back: "<p>Updated back</p>",
+      frontText: "Updated front",
+      backText: "Updated back",
+      back: testDocument("<p>Updated back</p>"),
     });
   });
 });
