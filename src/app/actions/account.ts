@@ -37,12 +37,12 @@ import {
 export async function updateAccount(
   data: UpdateAccountForm,
 ): Promise<MutationResult> {
-  return runValidatedAction(
+  return runValidatedUserAction(
     "account.updateAccount",
     updateAccountSchema,
     data,
     "account.invalidData",
-    async (parsedData) => {
+    async (_userId, parsedData) => {
       try {
         await getAuth().api.updateUser({
           headers: await headers(),
