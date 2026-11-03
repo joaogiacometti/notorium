@@ -9,6 +9,7 @@ import { getDb } from "@/db/index";
 import * as schema from "@/db/schema";
 import { user } from "@/db/schema";
 import { getServerEnv } from "@/env";
+import { authHttpPolicy } from "@/lib/auth/http-policy";
 import { sendEmail } from "@/lib/email/provider";
 import { renderPasswordResetEmail } from "@/lib/email/templates/password-reset";
 
@@ -56,7 +57,7 @@ function createAuth() {
         enabled: true,
       },
     },
-    plugins: [nextCookies()],
+    plugins: [authHttpPolicy(), nextCookies()],
   });
 }
 

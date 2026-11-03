@@ -48,6 +48,12 @@ verification gaps live in [Behavior Contracts](./behavior-contracts.md).
 
 ## Boundary Decisions
 
+- **Auth HTTP exposure is opt-in.** Authentication mutations use Server Actions
+  and Better Auth's internal `auth.api`. A request-only
+  [policy](../src/lib/auth/http-policy.ts) blocks direct auth HTTP endpoints except
+  the password-reset email callback, so they cannot bypass app approval, quota,
+  or account-cleanup rules. New auth integrations must explicitly allow any
+  required HTTP callbacks.
 - **Reads and writes stay separate.** Server Components read feature queries
   directly; client reads use [typed fetchers](../src/lib/read-api/) and the shared
   [read-route wrapper](../src/lib/server/read-route.ts). GETs do not create or repair

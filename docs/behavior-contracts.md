@@ -12,7 +12,6 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 
 **Verification gaps from static review; not runtime-confirmed or fixed:**
 
-- [The public auth handler](../src/app/api/auth/[...all]/route.ts) forwards to Better Auth. Its password-reset endpoint appears to bypass the approval and daily-cap checks in [the app's Server Action](../src/app/actions/auth.ts); the email callback does not repeat them.
 - [Account-name updates](../src/app/actions/account.ts) check a session through Better Auth without an explicit approval check. Login's status lookup uses an exact email match, while Better Auth lowercases the subsequent sign-in lookup. Verify direct endpoints and mixed-case input, not just the normal UI path.
 - Add cross-user integration coverage for reads, mutations, private media, and library search; mocked ownership helpers alone cannot demonstrate isolation.
 
