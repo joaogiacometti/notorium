@@ -1,10 +1,15 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { moveDocument } from "@/app/actions/documents";
 import { moveSubject } from "@/app/actions/subjects";
 import type { DocumentKind } from "@/features/documents/types";
+import {
+  invalidateDocumentViews,
+  invalidateSubjectViews,
+} from "@/lib/client-cache/invalidation";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 import {
@@ -74,6 +79,7 @@ export function useSubjectDragAndDrop({
   onSubjectMoved,
   onDocumentMoved,
 }: UseSubjectDragAndDropParams) {
+  const queryClient = useQueryClient();
   const [draggedSubjectId, setDraggedSubjectId] = useState<string | null>(null);
   const [draggedDocument, setDraggedDocument] =
     useState<DraggedDocument | null>(null);
@@ -225,6 +231,7 @@ export function useSubjectDragAndDrop({
       return;
     }
 
+    await invalidateSubjectViews(queryClient);
     onSubjectMoved(subjectId, proposedParentSubjectId);
     setPendingMoveId(null);
   }
@@ -248,6 +255,10 @@ export function useSubjectDragAndDrop({
       return;
     }
 
+    await invalidateDocumentViews(queryClient, [
+      document.sourceSubjectId,
+      targetSubjectId,
+    ]);
     onDocumentMoved(document, targetSubjectId);
     setPendingMoveId(null);
   }

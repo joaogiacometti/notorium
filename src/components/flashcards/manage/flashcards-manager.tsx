@@ -1,5 +1,7 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
+
 import { Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useTransition } from "react";
@@ -40,6 +42,7 @@ export function FlashcardsManager({
   const warningTone = getStatusToneClasses("warning");
   const router = useRouter();
   const [, startNavTransition] = useTransition();
+  const queryClient = useQueryClient();
   const { isCopying, copyFlashcardsById, copySelectedFlashcards } =
     useFlashcardCopy();
   const {
@@ -49,7 +52,7 @@ export function FlashcardsManager({
     managePageQuery,
     pageIndex,
     searchQuery,
-    refreshManagePage,
+    clearSelection,
     selectedSubjectId,
     selectedFlashcardIds,
     filter,
@@ -118,7 +121,7 @@ export function FlashcardsManager({
           onDeleteRequested={(target) => setDialog({ kind: "delete", target })}
           onResetRequested={(target) => setDialog({ kind: "reset", target })}
           onStudyLaterToggleRequested={(item) =>
-            void toggleStudyLater(item, () => refreshManagePage())
+            void toggleStudyLater(queryClient, item, () => clearSelection())
           }
           onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
           onRowClick={(row) => openFlashcardDetail(row.id)}
@@ -166,7 +169,7 @@ export function FlashcardsManager({
       <CreateFlashcardDialog
         open={dialog?.kind === "create"}
         onOpenChange={(open) => setDialog(open ? { kind: "create" } : null)}
-        onCreated={refreshManagePage}
+        onCreated={clearSelection}
         subjectId={selectedSubjectId}
       />
       <BulkDeleteFlashcardsDialog
@@ -176,7 +179,7 @@ export function FlashcardsManager({
           setDialog(open ? { kind: "bulk-delete" } : null)
         }
         onDeleted={(_ids) => {
-          refreshManagePage();
+          clearSelection();
           setDialog(null);
         }}
       />
@@ -188,7 +191,7 @@ export function FlashcardsManager({
           setSelectedFlashcardIds((currentIds) =>
             currentIds.filter((id) => !movedIds.includes(id)),
           );
-          refreshManagePage();
+          clearSelection();
           setDialog(null);
         }}
       />
@@ -204,7 +207,7 @@ export function FlashcardsManager({
               currentIds.filter((id) => !movedIds.includes(id)),
             );
             setDialog(null);
-            refreshManagePage();
+            clearSelection();
           }}
         />
       )}
@@ -213,7 +216,7 @@ export function FlashcardsManager({
         open={dialog?.kind === "bulk-reset"}
         onOpenChange={(open) => setDialog(open ? { kind: "bulk-reset" } : null)}
         onReset={(_ids) => {
-          refreshManagePage();
+          clearSelection();
           setDialog(null);
         }}
       />
@@ -227,7 +230,7 @@ export function FlashcardsManager({
           }}
           onDeleted={() => {
             setDialog(null);
-            refreshManagePage();
+            clearSelection();
           }}
         />
       )}
@@ -241,7 +244,7 @@ export function FlashcardsManager({
           }}
           onReset={() => {
             setDialog(null);
-            refreshManagePage();
+            clearSelection();
           }}
         />
       )}

@@ -1,9 +1,11 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { bulkDeleteFlashcards } from "@/app/actions/flashcards";
 import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
+import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
 import { t } from "@/lib/server/server-action-errors";
 
 interface BulkDeleteFlashcardsDialogProps {
@@ -19,6 +21,7 @@ export function BulkDeleteFlashcardsDialog({
   onDeleted,
   onOpenChange,
 }: Readonly<BulkDeleteFlashcardsDialogProps>) {
+  const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
@@ -26,6 +29,7 @@ export function BulkDeleteFlashcardsDialog({
       const result = await bulkDeleteFlashcards({ ids });
 
       if (result.success) {
+        await invalidateFlashcardViews(queryClient);
         onDeleted(result.ids);
         onOpenChange(false);
         return;

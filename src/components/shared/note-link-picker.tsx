@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { SuggestionProps } from "@tiptap/suggestion";
 import { type RefObject, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { libraryKeys } from "@/lib/client-cache/queries";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   NoteLinkChoice,
@@ -66,7 +67,7 @@ export function NoteLinkPicker({
   const debouncedQuery = useDebouncedValue(typedQuery, 200);
   const canSearch = debouncedQuery.length >= LIMITS.searchQueryMin;
   const search = useQuery({
-    queryKey: ["search-data", "note-links", debouncedQuery],
+    queryKey: [...libraryKeys.search, "note-links", debouncedQuery],
     queryFn: () => fetchSearchData(debouncedQuery),
     enabled: canSearch,
     placeholderData: (previousData) => previousData,

@@ -13,6 +13,7 @@ import {
   makeReviewState,
 } from "@/components/flashcards/review/flashcard-review-client-test-support";
 import { FlashcardReviewSession } from "@/components/flashcards/review/flashcard-review-session";
+import { QueryProvider } from "@/components/shared/query-provider";
 import { fetchFlashcardReviewState } from "@/lib/read-api/flashcards";
 import type {
   FlashcardReviewEntity,
@@ -646,11 +647,13 @@ describe("FlashcardReviewSession", () => {
   ) {
     await act(async () => {
       root.render(
-        <FlashcardReviewSession
-          initialState={initialState}
-          subjects={[]}
-          subjectId={subjectId}
-        />,
+        <QueryProvider>
+          <FlashcardReviewSession
+            initialState={initialState}
+            subjects={[]}
+            subjectId={subjectId}
+          />
+        </QueryProvider>,
       );
     });
   }

@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { editFlashcard } from "@/app/actions/flashcards";
 import { ReviewCardEditor } from "@/components/flashcards/review/review-card-editor";
+import { QueryProvider } from "@/components/shared/query-provider";
 import type { FlashcardReviewEntity } from "@/lib/server/api-contracts";
 import { testDocument } from "@/test/document";
 
@@ -72,13 +73,15 @@ describe("ReviewCardEditor", () => {
   async function render(onSaved = vi.fn(), onClose = vi.fn()) {
     await act(async () =>
       root.render(
-        <ReviewCardEditor
-          card={makeCard()}
-          subjectLabel="Biology"
-          onSaved={onSaved}
-          onClose={onClose}
-          renderSession={renderSession}
-        />,
+        <QueryProvider>
+          <ReviewCardEditor
+            card={makeCard()}
+            subjectLabel="Biology"
+            onSaved={onSaved}
+            onClose={onClose}
+            renderSession={renderSession}
+          />
+        </QueryProvider>,
       ),
     );
     return { onSaved, onClose };

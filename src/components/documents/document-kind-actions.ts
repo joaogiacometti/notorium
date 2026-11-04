@@ -5,6 +5,7 @@ import { deletePdf, renamePdf } from "@/app/actions/pdfs";
 import type { DocumentKind } from "@/features/documents/types";
 import { editNoteSchema } from "@/features/notes/validation";
 import { pdfTitleFormSchema } from "@/features/pdfs/validation";
+import { invalidateDocumentViews } from "@/lib/client-cache/invalidation";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
 type DocumentActionResult = Promise<{ success: true } | ActionErrorResult>;
@@ -33,16 +34,20 @@ export const DOCUMENT_KIND_ACTIONS = {
 } satisfies Record<DocumentKind, DocumentKindActions>;
 
 /**
- * Runs a rename or delete and, once it succeeds, waits for the search
- * palette's cached titles to reload so they never go stale.
+ * Runs a rename or delete and, once it succeeds, refreshes the dependent
+ * client views through the shared document invalidation policy.
  */
 export async function runDocumentAction(
   queryClient: QueryClient,
   action: () => DocumentActionResult,
+  subjectId?: string,
 ): DocumentActionResult {
   const result = await action();
   if (result.success) {
-    await queryClient.invalidateQueries({ queryKey: ["search-data"] });
+    await invalidateDocumentViews(
+      queryClient,
+      subjectId ? [subjectId] : undefined,
+    );
   }
   return result;
 }

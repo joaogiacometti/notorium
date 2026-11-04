@@ -43,6 +43,8 @@ For isolated E2E services and migrations, follow [Development](docs/setup/develo
   construct client-safe failures with `actionError()`, never raw provider/DB errors.
 - Revalidate through `src/lib/server/revalidate-views.ts`. Subject, document-count,
   and flashcard changes refresh the app shell; review grades/undo refresh on exit.
+- Share client query keys/options and mutation invalidation through
+  `src/lib/client-cache/*`; keep UI state local and server revalidation separate.
 - Client reads need an error path: query error state or a caught failure with retry/toast.
 - Write cookies through Server Actions, not `document.cookie`.
 

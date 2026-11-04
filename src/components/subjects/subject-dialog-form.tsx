@@ -27,6 +27,7 @@ import {
   type EditSubjectForm,
   editSubjectSchema,
 } from "@/features/subjects/validation";
+import { invalidateSubjectViews } from "@/lib/client-cache/invalidation";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 import { t } from "@/lib/server/server-action-errors";
 
@@ -86,7 +87,7 @@ export function SubjectDialogForm({
     try {
       const result = await onSubmitAction(data);
       if (result.success) {
-        await queryClient.invalidateQueries({ queryKey: ["search-data"] });
+        await invalidateSubjectViews(queryClient);
         form.reset(mode === "create" ? { name: "" } : data);
         onOpenChange(false);
         onSuccess?.(data);

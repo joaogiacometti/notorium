@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { libraryKeys } from "@/lib/client-cache/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { useDebouncedValue } from "@/lib/react/use-debounced-value";
 import { fetchSearchData } from "@/lib/read-api/search";
@@ -34,7 +35,7 @@ export function useSearchResults(
     isAuthenticated && debouncedQuery.length >= LIMITS.searchQueryMin;
 
   const searchQuery = useQuery({
-    queryKey: ["search-data", userId, debouncedQuery],
+    queryKey: libraryKeys.searchResults(userId, debouncedQuery),
     queryFn: () => fetchSearchData(debouncedQuery),
     enabled: open && canSearch,
     placeholderData: (previousData) => previousData,

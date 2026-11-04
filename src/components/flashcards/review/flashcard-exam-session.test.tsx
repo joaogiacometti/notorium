@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setFlashcardStudyLater } from "@/app/actions/flashcards";
 import { FlashcardExamSession } from "@/components/flashcards/review/flashcard-exam-session";
 import { makeCard } from "@/components/flashcards/review/flashcard-review-client-test-support";
+import { QueryProvider } from "@/components/shared/query-provider";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -141,11 +142,13 @@ describe("FlashcardExamSession", () => {
   async function renderExam(subjectId?: string) {
     await act(async () => {
       root.render(
-        <FlashcardExamSession
-          initialCards={[makeCard("card-1"), makeCard("card-2")]}
-          subjects={[]}
-          subjectId={subjectId}
-        />,
+        <QueryProvider>
+          <FlashcardExamSession
+            initialCards={[makeCard("card-1"), makeCard("card-2")]}
+            subjects={[]}
+            subjectId={subjectId}
+          />
+        </QueryProvider>,
       );
     });
   }

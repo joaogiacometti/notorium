@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { setFlashcardStudyLater } from "@/app/actions/flashcards";
@@ -24,7 +25,11 @@ describe("toggleStudyLater", () => {
     });
     const onSaved = vi.fn();
 
-    await toggleStudyLater({ id: "card-1", studyLaterAt: null }, onSaved);
+    await toggleStudyLater(
+      new QueryClient(),
+      { id: "card-1", studyLaterAt: null },
+      onSaved,
+    );
 
     expect(setFlashcardStudyLaterMock).toHaveBeenCalledWith({
       id: "card-1",
@@ -40,7 +45,11 @@ describe("toggleStudyLater", () => {
     });
     const onSaved = vi.fn();
 
-    await toggleStudyLater({ id: "card-1", studyLaterAt: new Date() }, onSaved);
+    await toggleStudyLater(
+      new QueryClient(),
+      { id: "card-1", studyLaterAt: new Date() },
+      onSaved,
+    );
 
     expect(setFlashcardStudyLaterMock).toHaveBeenCalledWith({
       id: "card-1",
@@ -58,8 +67,16 @@ describe("toggleStudyLater", () => {
       .mockRejectedValueOnce(new Error("offline"));
     const onSaved = vi.fn();
 
-    await toggleStudyLater({ id: "card-1", studyLaterAt: null }, onSaved);
-    await toggleStudyLater({ id: "card-1", studyLaterAt: null }, onSaved);
+    await toggleStudyLater(
+      new QueryClient(),
+      { id: "card-1", studyLaterAt: null },
+      onSaved,
+    );
+    await toggleStudyLater(
+      new QueryClient(),
+      { id: "card-1", studyLaterAt: null },
+      onSaved,
+    );
 
     expect(toast.error).toHaveBeenCalledTimes(2);
     expect(onSaved).not.toHaveBeenCalled();

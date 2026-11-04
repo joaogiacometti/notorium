@@ -34,14 +34,6 @@ async function copySavedNoteContent(noteId: string, format: NoteCopyFormat) {
   }
 }
 
-interface UseDocumentRowDialogsArgs {
-  /** Called after an edit or delete succeeds, so a caller with its own
-   * client-side document state can reload that subject. Server-rendered views
-   * need no refresh: the action's revalidation re-renders the current page in
-   * the same response. */
-  onChanged?: (item: DocumentListItem) => void;
-}
-
 interface DocumentRowDialogs {
   handlers: DocumentRowActionHandlers;
   dialogs: ReactNode;
@@ -54,12 +46,10 @@ interface DocumentRowDialogs {
  * document actions on their kebab menus.
  *
  * @example
- * const { handlers, dialogs } = useDocumentRowDialogs({ onChanged });
+ * const { handlers, dialogs } = useDocumentRowDialogs();
  * return (<><DocumentRowMenu item={doc} {...handlers} />{dialogs}</>);
  */
-export function useDocumentRowDialogs({
-  onChanged,
-}: Readonly<UseDocumentRowDialogsArgs>): DocumentRowDialogs {
+export function useDocumentRowDialogs(): DocumentRowDialogs {
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
@@ -69,7 +59,6 @@ export function useDocumentRowDialogs({
   );
 
   function handleDeleted(item: DocumentListItem) {
-    onChanged?.(item);
     const redirectHref = getDocumentDeleteRedirectHref(pathname, item);
     if (redirectHref) {
       router.push(redirectHref);
@@ -91,9 +80,8 @@ export function useDocumentRowDialogs({
     if (!open) setDeleteTarget(null);
   }
 
-  function finishEdit(target: DocumentListItem) {
+  function finishEdit() {
     setEditTarget(null);
-    onChanged?.(target);
   }
 
   function finishDelete(target: DocumentListItem) {
@@ -111,14 +99,17 @@ export function useDocumentRowDialogs({
           open
           onOpenChange={closeEdit}
           onRename={(title) =>
-            runDocumentAction(queryClient, () =>
-              DOCUMENT_KIND_ACTIONS[editTarget.kind].rename(
-                editTarget.id,
-                title,
-              ),
+            runDocumentAction(
+              queryClient,
+              () =>
+                DOCUMENT_KIND_ACTIONS[editTarget.kind].rename(
+                  editTarget.id,
+                  title,
+                ),
+              editTarget.subjectId,
             )
           }
-          onSuccess={() => finishEdit(editTarget)}
+          onSuccess={() => finishEdit()}
         />
       ) : null}
       {deleteTarget ? (
@@ -128,8 +119,13 @@ export function useDocumentRowDialogs({
           open
           onOpenChange={closeDelete}
           onDelete={() =>
-            runDocumentAction(queryClient, () =>
-              DOCUMENT_KIND_ACTIONS[deleteTarget.kind].remove(deleteTarget.id),
+            runDocumentAction(
+              queryClient,
+              () =>
+                DOCUMENT_KIND_ACTIONS[deleteTarget.kind].remove(
+                  deleteTarget.id,
+                ),
+              deleteTarget.subjectId,
             )
           }
           onSuccess={() => finishDelete(deleteTarget)}

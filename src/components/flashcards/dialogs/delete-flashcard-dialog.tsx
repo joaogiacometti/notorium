@@ -1,9 +1,11 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteFlashcard } from "@/app/actions/flashcards";
 import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
+import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
 import type { RichTextDocument } from "@/lib/editor/document";
 import { documentExcerpt } from "@/lib/editor/document-content";
 import { t } from "@/lib/server/server-action-errors";
@@ -23,6 +25,7 @@ export function DeleteFlashcardDialog({
   onOpenChange,
   onDeleted,
 }: Readonly<DeleteFlashcardDialogProps>) {
+  const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
   const flashcardFrontPreview = documentExcerpt(flashcardFront, 120);
 
@@ -30,6 +33,7 @@ export function DeleteFlashcardDialog({
     startTransition(async () => {
       const result = await deleteFlashcard({ id: flashcardId });
       if (result.success) {
+        await invalidateFlashcardViews(queryClient);
         await onDeleted?.(result.id);
         onOpenChange(false);
       } else {

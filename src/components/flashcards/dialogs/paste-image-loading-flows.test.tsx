@@ -96,6 +96,9 @@ describe("paste-image loading flows", () => {
       );
     });
 
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
     expect(toast.error).toHaveBeenCalledWith("Could not load subjects.");
   });
 });

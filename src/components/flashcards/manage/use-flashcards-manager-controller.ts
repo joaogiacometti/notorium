@@ -5,10 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useManagerPageState } from "@/components/shared/use-manager-page-state";
 import type { FlashcardManageFilter } from "@/features/flashcards/validation";
+import { flashcardsManageQuery } from "@/lib/client-cache/queries";
 import { LIMITS } from "@/lib/config/limits";
 import type { RichTextDocument } from "@/lib/editor/document";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination/page-size";
-import { fetchFlashcardsManagePage } from "@/lib/read-api/flashcards";
 import type { FlashcardManagePage } from "@/lib/server/api-contracts";
 
 const flashcardManagerSearchDebounceMs = 200;
@@ -139,22 +139,13 @@ export function useFlashcardsManagerController({
   }
 
   const managePageQuery = useQuery({
-    queryKey: [
-      "flashcards-manage-page",
+    ...flashcardsManageQuery({
       pageIndex,
-      pageSizeState,
-      selectedSubjectId ?? "all",
-      resolvedSearchQuery,
-      filter ?? "all",
-    ],
-    queryFn: () =>
-      fetchFlashcardsManagePage({
-        pageIndex,
-        pageSize: pageSizeState,
-        subjectId: selectedSubjectId,
-        search: resolvedSearchQuery,
-        filter,
-      }),
+      pageSize: pageSizeState,
+      subjectId: selectedSubjectId,
+      search: resolvedSearchQuery,
+      filter,
+    }),
     initialData:
       pageIndex === 0 &&
       (selectedSubjectId ?? undefined) === (initialSubjectId ?? undefined) &&
@@ -164,8 +155,6 @@ export function useFlashcardsManagerController({
         ? initialPageData
         : undefined,
     placeholderData: (previousData) => previousData,
-    staleTime: 1000 * 20,
-    retry: false,
   });
 
   const flashcards = managePageQuery.data?.items ?? emptyManageItems;
@@ -195,9 +184,8 @@ export function useFlashcardsManagerController({
     }
   }, [pageIndex, pageSizeState, total, setPageIndex]);
 
-  function refreshManagePage() {
+  function clearSelection() {
     setSelectedFlashcardIds([]);
-    void managePageQuery.refetch();
   }
 
   return {
@@ -207,7 +195,7 @@ export function useFlashcardsManagerController({
     subjectCardCount,
     managePageQuery,
     pageIndex,
-    refreshManagePage,
+    clearSelection,
     resolvedSearchQuery,
     searchQuery,
     selectedSubjectId,

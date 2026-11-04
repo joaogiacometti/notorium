@@ -1,7 +1,9 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
 
 /**
  * Refreshes the server-rendered app shell (sidebar due-card badges) when a
@@ -10,8 +12,8 @@ import { useEffect, useRef } from "react";
  * client: re-rendering the layout and page after every grade would queue each
  * save and the undo behind ~10 queries, and a mid-session refresh would
  * redirect the session page away when the last due card is graded. The sidebar
- * is hidden on session pages, so syncing once on the way out (exit, browser
- * back, or navigation) is enough.
+ * is hidden on session pages. Client flashcard caches also expire here, so
+ * syncing once on the way out (exit, browser back, or navigation) is enough.
  *
  * @example
  * useAppShellRefreshAfterReview(pendingSaveCount);
@@ -20,6 +22,7 @@ export function useAppShellRefreshAfterReview(
   pendingReviewWriteCount: number,
 ): void {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const hasStaleShellRef = useRef(false);
 
   useEffect(() => {
@@ -32,8 +35,9 @@ export function useAppShellRefreshAfterReview(
     const staleShellRef = hasStaleShellRef;
     return () => {
       if (staleShellRef.current) {
+        void invalidateFlashcardViews(queryClient);
         router.refresh();
       }
     };
-  }, [router]);
+  }, [router, queryClient]);
 }

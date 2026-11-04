@@ -39,6 +39,7 @@ import {
   type FlashcardFormValues,
   flashcardFormSchema,
 } from "@/features/flashcards/validation";
+import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
 import { useDocumentAutosave } from "@/lib/editor/use-document-autosave";
 import type { FlashcardDetailEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
@@ -104,7 +105,7 @@ export function FlashcardDetail({
         toast.error(t(result.errorCode, result.errorParams));
         return false;
       }
-      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
+      await invalidateFlashcardViews(queryClient);
       return true;
     },
     onError: () => toast.error("Could not save the flashcard."),
@@ -158,6 +159,7 @@ export function FlashcardDetail({
                 marked={studyLaterAt !== null}
                 onSelect={() =>
                   void toggleStudyLater(
+                    queryClient,
                     { id: flashcard.id, studyLaterAt },
                     setStudyLaterAt,
                   )

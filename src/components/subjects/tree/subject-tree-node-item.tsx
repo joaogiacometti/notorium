@@ -4,12 +4,11 @@ import { ChevronDown, ChevronRight, Folder, Loader2 } from "lucide-react";
 import Link from "next/link";
 import type { DragEvent } from "react";
 import type { DocumentRowActionHandlers } from "@/components/documents/document-row-menu";
+import { SubjectDocumentRows } from "@/components/subjects/tree/subject-document-rows";
 import { SubjectActionsMenu } from "@/components/subjects/tree/subject-tree-actions-menu";
 import { INDENT_REM } from "@/components/subjects/tree/subject-tree-constants";
-import { DocumentRows } from "@/components/subjects/tree/subject-tree-document-rows";
 import type {
   SubjectDeleteTarget,
-  SubjectDocumentsState,
   SubjectEditTarget,
 } from "@/components/subjects/tree/subject-tree-types";
 import type { DraggedDocument } from "@/components/subjects/tree/use-subject-drag-and-drop";
@@ -24,14 +23,12 @@ interface SubjectTreeNodeItemProps {
   expandedIds: Set<string>;
   activeSubjectId?: string;
   activeHref: string;
-  documentsBySubject: SubjectDocumentsState;
   documentActions: DocumentRowActionHandlers;
   draggedSubjectId: string | null;
   draggedDocumentId: string | null;
   dropTargetId: string | null;
   pendingMoveId: string | null;
   onToggle: (subjectId: string) => void;
-  onRetryDocuments: (subjectId: string) => void;
   onCreateChild: (parentSubjectId: string) => void;
   onCreateNote: (subjectId: string) => void;
   onCreatePdf: (subjectId: string) => void;
@@ -52,14 +49,12 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
     expandedIds,
     activeSubjectId,
     activeHref,
-    documentsBySubject,
     documentActions,
     draggedSubjectId,
     draggedDocumentId,
     dropTargetId,
     pendingMoveId,
     onToggle,
-    onRetryDocuments,
     onCreateChild,
     onCreateNote,
     onCreatePdf,
@@ -80,7 +75,6 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
   const isDragging = draggedSubjectId === node.id;
   const isDropTarget = dropTargetId === node.id;
   const isMoving = pendingMoveId === node.id;
-  const documents = documentsBySubject.get(node.id);
 
   return (
     <div>
@@ -132,17 +126,18 @@ export function SubjectTreeNodeItem(props: Readonly<SubjectTreeNodeItemProps>) {
               depth={depth + 1}
             />
           ))}
-          <DocumentRows
-            documents={documents}
-            depth={depth + 1}
-            activeHref={activeHref}
-            documentActions={documentActions}
-            draggedDocumentId={draggedDocumentId}
-            pendingMoveId={pendingMoveId}
-            onDocumentDragStart={onDocumentDragStart}
-            onDragEnd={onDragEnd}
-            onRetry={() => onRetryDocuments(node.id)}
-          />
+          {node.documentCount > 0 ? (
+            <SubjectDocumentRows
+              subjectId={node.id}
+              depth={depth + 1}
+              activeHref={activeHref}
+              documentActions={documentActions}
+              draggedDocumentId={draggedDocumentId}
+              pendingMoveId={pendingMoveId}
+              onDocumentDragStart={onDocumentDragStart}
+              onDragEnd={onDragEnd}
+            />
+          ) : null}
         </div>
       ) : null}
     </div>

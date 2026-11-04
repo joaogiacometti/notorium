@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { AccountSettingsProvider } from "@/components/account/account-settings-provider";
 import { AppLayoutClient } from "@/components/shared/app-layout-client";
+import { QueryProvider } from "@/components/shared/query-provider";
 import { ShortcutsProvider } from "@/components/shortcuts/shortcuts-provider";
 import { getSubjectTreeForUser } from "@/features/subjects/tree-queries";
 import { getOptionalSessionAccess } from "@/lib/auth/auth";
@@ -19,19 +20,21 @@ export default async function AuthenticatedAppLayout({
     cookieStore.get("notorium:sidebar-collapsed")?.value === "true";
 
   return (
-    <ShortcutsProvider>
-      <AccountSettingsProvider userId={session?.user.id ?? ""}>
-        <AppLayoutClient
-          tree={tree}
-          accountName={accountName}
-          email={session?.user.email ?? ""}
-          isAdmin={authState?.account.isAdmin ?? false}
-          userId={session?.user.id ?? ""}
-          initialSidebarCollapsed={initialSidebarCollapsed}
-        >
-          {children}
-        </AppLayoutClient>
-      </AccountSettingsProvider>
-    </ShortcutsProvider>
+    <QueryProvider key={session?.user.id ?? "anonymous"}>
+      <ShortcutsProvider>
+        <AccountSettingsProvider userId={session?.user.id ?? ""}>
+          <AppLayoutClient
+            tree={tree}
+            accountName={accountName}
+            email={session?.user.email ?? ""}
+            isAdmin={authState?.account.isAdmin ?? false}
+            userId={session?.user.id ?? ""}
+            initialSidebarCollapsed={initialSidebarCollapsed}
+          >
+            {children}
+          </AppLayoutClient>
+        </AccountSettingsProvider>
+      </ShortcutsProvider>
+    </QueryProvider>
   );
 }

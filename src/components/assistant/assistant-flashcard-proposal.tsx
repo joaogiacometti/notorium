@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, CircleSlash, Pencil, Undo2, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -26,9 +26,9 @@ import {
 } from "@/features/assistant/utils";
 import type { FlashcardSource } from "@/features/flashcards/source-contract";
 import { plainTextToDocument } from "@/lib/ai/plain-text-rich-text";
-
+import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
+import { subjectOptionsQuery } from "@/lib/client-cache/queries";
 import { documentText } from "@/lib/editor/document";
-import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface AssistantFlashcardProposalProps {
@@ -145,6 +145,7 @@ function PendingFlashcardProposal({
   source,
   onResolve,
 }: Readonly<PendingFlashcardProposalProps>) {
+  const queryClient = useQueryClient();
   const subject = useProposedSubject(input.subjectPath);
   const [isCreating, startCreating] = useTransition();
   const [editorOpen, setEditorOpen] = useState(false);
@@ -159,6 +160,7 @@ function PendingFlashcardProposal({
       }
 
       toast.success("Flashcard created.");
+      await invalidateFlashcardViews(queryClient);
       onResolve("created");
     });
   }
@@ -295,11 +297,7 @@ function ResolvedFlashcardProposal({
 // Every proposal shares one cached subject list. Until the user picks, the
 // selection follows the model's `subjectPath`, so it fills in once loaded.
 function useProposedSubject(proposedPath: string | undefined) {
-  const query = useQuery({
-    queryKey: ["assistant-subject-options"],
-    queryFn: () => fetchSubjectOptions(),
-    staleTime: 1000 * 60 * 5,
-  });
+  const query = useQuery(subjectOptionsQuery());
   const [chosenId, setChosenId] = useState<string | null | undefined>();
   const options = query.data ?? [];
 

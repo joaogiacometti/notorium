@@ -3,8 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { noteConnectionsQuery } from "@/lib/client-cache/queries";
 import { getNoteDetailHref } from "@/lib/navigation/detail-page-back-link";
-import { fetchNoteConnections } from "@/lib/read-api/documents";
 
 /**
  * Links in and out of a note. Always refetches on mount, because other notes
@@ -13,11 +13,7 @@ import { fetchNoteConnections } from "@/lib/read-api/documents";
  * @example const connections = useNoteConnections(note.id);
  */
 export function useNoteConnections(noteId: string) {
-  return useQuery({
-    queryKey: ["note-connections", noteId],
-    queryFn: () => fetchNoteConnections(noteId),
-    staleTime: 0,
-  });
+  return useQuery(noteConnectionsQuery(noteId));
 }
 
 interface NoteLinkedFromProps {

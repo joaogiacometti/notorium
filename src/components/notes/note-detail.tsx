@@ -38,6 +38,7 @@ import {
 import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { type EditNoteForm, editNoteSchema } from "@/features/notes/validation";
+import { invalidateDocumentViews } from "@/lib/client-cache/invalidation";
 import {
   copyNoteContentToClipboard,
   type NoteCopyFormat,
@@ -45,10 +46,8 @@ import {
 import { documentsEqual, emptyDocument } from "@/lib/editor/document";
 import { useDocumentAutosave } from "@/lib/editor/use-document-autosave";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
-
 import type { NoteEntity } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
-import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
 import { cn } from "@/lib/utils";
 
 interface NoteDetailProps {
@@ -143,12 +142,7 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
       }
       if (form.getValues("id") === values.id)
         lastSavedValuesRef.current = values;
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["search-data"] }),
-        queryClient.invalidateQueries({
-          queryKey: ["note-connections", values.id],
-        }),
-      ]);
+      await invalidateDocumentViews(queryClient, [note.subjectId]);
       return true;
     },
     onError: () => toast.error("Couldn't save the note"),
@@ -353,7 +347,6 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
           onOpenChange={setDeleteOpen}
           onSuccess={() => {
             setDeleteOpen(false);
-            notifySubjectDocumentsChanged(note.subjectId);
             startNavTransition(() => router.push("/"));
           }}
         />

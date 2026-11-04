@@ -1,7 +1,6 @@
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/navbar/theme-provider";
-import { QueryProvider } from "@/components/shared/query-provider";
 import { ServiceWorkerRegister } from "@/components/shared/service-worker-register";
 import { Toaster } from "@/components/ui/sonner";
 import { getUserPreferredTheme } from "@/features/user/queries";
@@ -56,12 +55,10 @@ export default async function RootLayout({
           storageKey={themeStorageKey}
           themes={validThemes.filter((theme) => theme !== "system")}
         >
-          <QueryProvider>
-            {children}
-            <Toaster />
-            <SpeedInsights />
-            <ServiceWorkerRegister />
-          </QueryProvider>
+          {children}
+          <Toaster />
+          <SpeedInsights />
+          <ServiceWorkerRegister />
         </ThemeProvider>
       </body>
     </html>

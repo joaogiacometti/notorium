@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { useForm } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
+import { QueryProvider } from "@/components/shared/query-provider";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 import { testDocument, testDocumentHtml } from "@/test/document";
@@ -44,7 +45,7 @@ interface HarnessProps {
   ) => FlashcardFormValues;
 }
 
-function TestHarness({
+function DialogProbe({
   mode = "create",
   open,
   values,
@@ -112,6 +113,14 @@ function TestHarness({
         onClick={() => dialog.setKeepBackAfterSubmit(true)}
       />
     </div>
+  );
+}
+
+function TestHarness(props: Readonly<HarnessProps>) {
+  return (
+    <QueryProvider>
+      <DialogProbe {...props} />
+    </QueryProvider>
   );
 }
 

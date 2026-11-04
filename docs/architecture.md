@@ -59,6 +59,13 @@ verification gaps live in [Behavior Contracts](./behavior-contracts.md).
   [read-route wrapper](../src/lib/server/read-route.ts). GETs do not create or repair
   records. Server Actions serialize per client and use POST, so routing reads through
   them would queue independent reads behind writes.
+- **Client server data shares one cache.** The authenticated layout owns a
+  QueryClient keyed by user identity. Resource keys and reusable query options
+  live in `src/lib/client-cache/`; successful subject, document, and flashcard
+  writes use its shared invalidation policies. Sidebar folders and subject
+  pickers observe that cache instead of maintaining separate fetched copies or
+  broadcasting refetch events. Expansion, selection, and editor drafts stay local.
+  Client invalidation and server view revalidation are separate responsibilities.
 - **Writes share one domain layer.** Actions authenticate, validate, delegate, and
   return typed results. Revalidation goes through [one view adapter](../src/lib/server/revalidate-views.ts).
   Review grades and undo defer shell refresh until exit: refreshing per grade adds

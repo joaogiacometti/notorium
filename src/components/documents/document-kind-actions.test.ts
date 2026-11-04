@@ -1,5 +1,6 @@
-import type { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
+import { libraryKeys } from "@/lib/client-cache/queries";
 
 vi.mock("@/app/actions/notes", () => ({
   editNote: vi.fn(),
@@ -12,44 +13,51 @@ vi.mock("@/app/actions/pdfs", () => ({
 
 import { runDocumentAction } from "@/components/documents/document-kind-actions";
 
-class FakeQueryClient {
-  readonly invalidated: unknown[] = [];
-
-  async invalidateQueries(filters: unknown) {
-    this.invalidated.push(filters);
-  }
-
-  asQueryClient(): QueryClient {
-    return this as unknown as QueryClient;
-  }
+function seededClient() {
+  const client = new QueryClient();
+  client.setQueryData(libraryKeys.searchResults("owner", "title"), {
+    notes: [],
+  });
+  client.setQueryData(libraryKeys.subjectDocuments("subject-1"), []);
+  return client;
 }
 
 describe("runDocumentAction", () => {
-  it("reloads cached search titles after a document change succeeds", async () => {
-    const client = new FakeQueryClient();
-
+  it("refreshes document lists and search after a successful rename or deletion", async () => {
+    const client = seededClient();
     const result = await runDocumentAction(
-      client.asQueryClient(),
-      async () => ({
-        success: true,
-      }),
+      client,
+      async () => ({ success: true }),
+      "subject-1",
     );
-
     expect(result).toEqual({ success: true });
-    expect(client.invalidated).toEqual([{ queryKey: ["search-data"] }]);
+    expect(
+      client.getQueryState(libraryKeys.searchResults("owner", "title"))
+        ?.isInvalidated,
+    ).toBe(true);
+    expect(
+      client.getQueryState(libraryKeys.subjectDocuments("subject-1"))
+        ?.isInvalidated,
+    ).toBe(true);
+    client.clear();
   });
 
-  it("returns a failure without touching search data", async () => {
-    const client = new FakeQueryClient();
-
+  it("keeps existing views fresh when the write fails", async () => {
+    const client = seededClient();
     const result = await runDocumentAction(
-      client.asQueryClient(),
-      async () => ({
-        errorCode: "notes.notFound",
-      }),
+      client,
+      async () => ({ errorCode: "notes.notFound" }),
+      "subject-1",
     );
-
     expect(result).toEqual({ errorCode: "notes.notFound" });
-    expect(client.invalidated).toEqual([]);
+    expect(
+      client.getQueryState(libraryKeys.searchResults("owner", "title"))
+        ?.isInvalidated,
+    ).toBe(false);
+    expect(
+      client.getQueryState(libraryKeys.subjectDocuments("subject-1"))
+        ?.isInvalidated,
+    ).toBe(false);
+    client.clear();
   });
 });

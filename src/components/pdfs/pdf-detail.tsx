@@ -25,7 +25,6 @@ import {
 import { getAttachmentReadUrl } from "@/features/attachments/pathname";
 import type { PdfDocumentEntity } from "@/features/pdfs/types";
 import { useZenMode } from "@/lib/editor/use-zen-mode";
-import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
 import { cn } from "@/lib/utils";
 
 type PdfDetailRecord = Pick<
@@ -100,11 +99,13 @@ export function PdfDetail({ pdf, subjectName }: Readonly<PdfDetailProps>) {
         open={renameOpen}
         onOpenChange={setRenameOpen}
         onRename={(title) =>
-          runDocumentAction(queryClient, () =>
-            DOCUMENT_KIND_ACTIONS.pdf.rename(pdf.id, title),
+          runDocumentAction(
+            queryClient,
+            () => DOCUMENT_KIND_ACTIONS.pdf.rename(pdf.id, title),
+            pdf.subjectId,
           )
         }
-        onSuccess={() => notifySubjectDocumentsChanged(pdf.subjectId)}
+        onSuccess={() => setRenameOpen(false)}
       />
       <DeleteDocumentDialog
         kindLabel={DOCUMENT_KIND_ACTIONS.pdf.label}
@@ -112,13 +113,14 @@ export function PdfDetail({ pdf, subjectName }: Readonly<PdfDetailProps>) {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onDelete={() =>
-          runDocumentAction(queryClient, () =>
-            DOCUMENT_KIND_ACTIONS.pdf.remove(pdf.id),
+          runDocumentAction(
+            queryClient,
+            () => DOCUMENT_KIND_ACTIONS.pdf.remove(pdf.id),
+            pdf.subjectId,
           )
         }
         onSuccess={() => {
           setDeleteOpen(false);
-          notifySubjectDocumentsChanged(pdf.subjectId);
           startNavTransition(() => router.push("/"));
         }}
       />

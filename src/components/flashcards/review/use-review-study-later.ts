@@ -1,9 +1,11 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { setFlashcardStudyLater } from "@/app/actions/flashcards";
 import { setFlashcardStudyLaterInState } from "@/features/flashcard-review/state";
+import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
 import type {
   FlashcardReviewEntity,
   FlashcardReviewState,
@@ -28,6 +30,7 @@ export function useReviewStudyLater({
   readReviewState,
   commitReturnedReviewState,
 }: UseReviewStudyLaterParams) {
+  const queryClient = useQueryClient();
   const [pendingStudyLaterCount, setPendingStudyLaterCount] = useState(0);
 
   // Only the marked/unmarked side matters: a save that confirms the side the
@@ -59,6 +62,7 @@ export function useReviewStudyLater({
     try {
       const result = await setFlashcardStudyLater({ id: card.id, studyLater });
       if (result.success) {
+        await invalidateFlashcardViews(queryClient);
         applyStudyLater(card.id, result.studyLaterAt);
         return;
       }

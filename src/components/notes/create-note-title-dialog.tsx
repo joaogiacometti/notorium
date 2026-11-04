@@ -29,10 +29,10 @@ import {
   type CreateNoteForm,
   createNoteSchema,
 } from "@/features/notes/validation";
+import { invalidateDocumentViews } from "@/lib/client-cache/invalidation";
 import { emptyDocument } from "@/lib/editor/document";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
-import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
 
 interface CreateNoteTitleDialogProps {
   subjectId?: string;
@@ -63,6 +63,7 @@ export function CreateNoteTitleDialog({
   });
   const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
     initialSubjects,
+    open,
     onSubjectCreated: (createdSubjectId) =>
       form.setValue("subjectId", createdSubjectId, {
         shouldDirty: true,
@@ -99,8 +100,7 @@ export function CreateNoteTitleDialog({
         return;
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-      notifySubjectDocumentsChanged(result.subjectId);
+      await invalidateDocumentViews(queryClient, [result.subjectId]);
       form.reset({
         subjectId: subjectId ?? "",
         title: "",

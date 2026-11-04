@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { deleteSubject } from "@/app/actions/subjects";
 import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 import { SubjectText } from "@/components/shared/subject-text";
+import { invalidateSubjectViews } from "@/lib/client-cache/invalidation";
 import { t } from "@/lib/server/server-action-errors";
 
 interface DeleteSubjectDialogProps {
@@ -30,7 +31,7 @@ export function DeleteSubjectDialog({
     startTransition(async () => {
       const result = await deleteSubject({ id: subjectId });
       if (result.success) {
-        await queryClient.invalidateQueries({ queryKey: ["search-data"] });
+        await invalidateSubjectViews(queryClient);
         if (onSuccess) {
           onSuccess();
         } else {

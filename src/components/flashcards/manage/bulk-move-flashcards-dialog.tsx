@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ import {
   type BulkMoveFlashcardsForm,
   bulkMoveFlashcardsSchema,
 } from "@/features/flashcards/validation";
+import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
 import { t } from "@/lib/server/server-action-errors";
 
 interface BulkMoveFlashcardsDialogProps {
@@ -37,6 +39,7 @@ export function BulkMoveFlashcardsDialog({
   onMoved,
   onOpenChange,
 }: Readonly<BulkMoveFlashcardsDialogProps>) {
+  const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
   const form = useForm<BulkMoveFlashcardsForm>({
     resolver: zodResolver(bulkMoveFlashcardsSchema),
@@ -73,6 +76,7 @@ export function BulkMoveFlashcardsDialog({
       const result = await bulkMoveFlashcards(values);
 
       if (result.success) {
+        await invalidateFlashcardViews(queryClient);
         onMoved(result.ids);
         onOpenChange(false);
         form.reset({ ids: [], subjectId: "" });

@@ -1,5 +1,7 @@
+import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { setFlashcardStudyLater } from "@/app/actions/flashcards";
+import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 import {
   actionError,
@@ -11,9 +13,10 @@ import {
  * mark to the caller; failures surface as a toast and skip `onSaved`.
  *
  * @example
- * void toggleStudyLater(row, () => refreshManagePage());
+ * void toggleStudyLater(queryClient, row, onSaved);
  */
 export async function toggleStudyLater(
+  queryClient: QueryClient,
   card: Pick<FlashcardEntity, "id" | "studyLaterAt">,
   onSaved: (studyLaterAt: Date | null) => void,
 ): Promise<void> {
@@ -26,6 +29,7 @@ export async function toggleStudyLater(
       toast.error(resolveActionErrorMessage(result));
       return;
     }
+    await invalidateFlashcardViews(queryClient);
     onSaved(result.studyLaterAt);
   } catch {
     toast.error(resolveActionErrorMessage(actionError("common.generic")));

@@ -2,12 +2,8 @@
 
 import { Plus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useDocumentRowDialogs } from "@/components/documents/use-document-row-dialogs";
-import {
-  loadSubjectDocuments,
-  shouldLoadSubjectDocuments,
-} from "@/components/subjects/tree/load-subject-documents";
 import {
   getActiveDocumentSubjectId,
   getActiveSubjectId,
@@ -19,7 +15,6 @@ import { SubjectTreeRootDropZone } from "@/components/subjects/tree/subject-tree
 import type {
   DocumentCreateTarget,
   SubjectDeleteTarget,
-  SubjectDocumentsState,
   SubjectEditTarget,
 } from "@/components/subjects/tree/subject-tree-types";
 import {
@@ -30,9 +25,7 @@ import { Button } from "@/components/ui/button";
 import { getSubjectDeleteRedirectHref } from "@/lib/navigation/delete-redirects";
 import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
 import type { SubjectTreeNode } from "@/lib/server/api-contracts";
-import { SUBJECT_DOCUMENTS_CHANGED_EVENT } from "@/lib/trees/subject-documents-events";
 import {
-  findSubjectTreeNode,
   getSubjectAncestorIds,
   moveSubjectTreeNode,
 } from "@/lib/trees/subject-tree";
@@ -49,10 +42,6 @@ export function SubjectTreeSidebar({
   const [, startTransition] = useTransition();
   const [localTree, setLocalTree] = useState<SubjectTreeNode[]>(tree);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
-  const [documentsBySubject, setDocumentsBySubject] =
-    useState<SubjectDocumentsState>(() => new Map());
-  const documentRequestIdsRef = useRef<Map<string, number>>(new Map());
-  const previousDocumentSubjectIdRef = useRef<string | undefined>(undefined);
   const [createParentId, setCreateParentId] = useState<string | undefined>(
     undefined,
   );
@@ -67,13 +56,8 @@ export function SubjectTreeSidebar({
     string | null
   >(null);
 
-  // Document kebab actions (edit/delete/copy) reuse the shared
-  // dialog host; reload the affected subject's documents so the tree reflects
-  // renames and deletes without waiting for a manual re-expand.
   const { handlers: documentActions, dialogs: documentDialogs } =
-    useDocumentRowDialogs({
-      onChanged: (item) => void loadDocuments(item.subjectId),
-    });
+    useDocumentRowDialogs();
 
   const activeSubjectId = getActiveSubjectId(pathname);
   const activeDocumentSubjectId = getActiveDocumentSubjectId(pathname);
@@ -109,20 +93,7 @@ export function SubjectTreeSidebar({
       refreshTree();
     },
     onDocumentMoved: (document, newSubjectId) => {
-      // Drop the moved document from its origin's cached list, then reveal and
-      // reload the destination so both branches reflect the move immediately.
-      setDocumentsBySubject((current) => {
-        const source = current.get(document.sourceSubjectId);
-        if (!Array.isArray(source)) {
-          return current;
-        }
-        return new Map(current).set(
-          document.sourceSubjectId,
-          source.filter((item) => item.id !== document.id),
-        );
-      });
       setExpandedIds((current) => new Set(current).add(newSubjectId));
-      void loadDocuments(newSubjectId);
 
       // If the moved document is the one currently open, its old URL no longer
       // matches its subject and the page would server-redirect mid-refresh.
@@ -151,33 +122,6 @@ export function SubjectTreeSidebar({
     setLocalTree(tree);
   }, [tree]);
 
-  useEffect(() => {
-    const onDocumentsChanged = (event: Event) => {
-      const subjectId = (event as CustomEvent<{ subjectId?: string }>).detail
-        ?.subjectId;
-      if (!subjectId) {
-        return;
-      }
-      setExpandedIds((current) => new Set(current).add(subjectId));
-      void loadSubjectDocuments(
-        { setDocumentsBySubject, requestIdsRef: documentRequestIdsRef },
-        subjectId,
-      );
-      startTransition(() => {
-        router.refresh();
-      });
-    };
-    window.addEventListener(
-      SUBJECT_DOCUMENTS_CHANGED_EVENT,
-      onDocumentsChanged,
-    );
-    return () =>
-      window.removeEventListener(
-        SUBJECT_DOCUMENTS_CHANGED_EVENT,
-        onDocumentsChanged,
-      );
-  }, [router]);
-
   // Reveal the active location by expanding the active subject's ancestor
   // chain. When a note is open, also expand its containing subject so
   // the document row itself is visible (ancestors alone leave it collapsed).
@@ -201,61 +145,13 @@ export function SubjectTreeSidebar({
     });
   }, [localTree, activeSubjectId, activeDocumentSubjectId]);
 
-  // Load the open note's subject rows on first paint so it appears in the tree.
-  useEffect(() => {
-    if (
-      !activeDocumentSubjectId ||
-      documentsBySubject.has(activeDocumentSubjectId)
-    ) {
-      return;
-    }
-    const node = findSubjectTreeNode(localTree, activeDocumentSubjectId);
-    if (!node || node.documentCount === 0) {
-      return;
-    }
-    // Calls the module-level loader rather than loadDocuments so the effect
-    // depends only on stable values (the setter and the ref), not a
-    // render-local fn.
-    void loadSubjectDocuments(
-      { setDocumentsBySubject, requestIdsRef: documentRequestIdsRef },
-      activeDocumentSubjectId,
-    );
-  }, [localTree, activeDocumentSubjectId, documentsBySubject]);
-
-  useEffect(() => {
-    const previousDocumentSubjectId = previousDocumentSubjectIdRef.current;
-    previousDocumentSubjectIdRef.current = activeDocumentSubjectId;
-
-    if (
-      !activeSubjectId ||
-      activeDocumentSubjectId ||
-      previousDocumentSubjectId !== activeSubjectId ||
-      !documentsBySubject.has(activeSubjectId)
-    ) {
-      return;
-    }
-
-    void loadSubjectDocuments(
-      { setDocumentsBySubject, requestIdsRef: documentRequestIdsRef },
-      activeSubjectId,
-    );
-  }, [activeSubjectId, activeDocumentSubjectId, documentsBySubject]);
-
   function refreshTree() {
     startTransition(() => {
       router.refresh();
     });
   }
 
-  function loadDocuments(subjectId: string): Promise<void> {
-    return loadSubjectDocuments(
-      { setDocumentsBySubject, requestIdsRef: documentRequestIdsRef },
-      subjectId,
-    );
-  }
-
   function handleToggle(subjectId: string) {
-    const willExpand = !expandedIds.has(subjectId);
     setExpandedIds((current) => {
       const next = new Set(current);
       if (next.has(subjectId)) {
@@ -265,17 +161,6 @@ export function SubjectTreeSidebar({
       }
       return next;
     });
-
-    if (
-      !willExpand ||
-      !shouldLoadSubjectDocuments(documentsBySubject, subjectId)
-    ) {
-      return;
-    }
-    const node = findSubjectTreeNode(localTree, subjectId);
-    if (node && node.documentCount > 0) {
-      void loadDocuments(subjectId);
-    }
   }
 
   function openCreateChild(parentSubjectId: string) {
@@ -292,7 +177,6 @@ export function SubjectTreeSidebar({
     const target = createDocumentTarget;
     setCreateDocumentTarget(null);
     if (target) {
-      void loadDocuments(target.subjectId);
       router.push(getDocumentDetailHref({ ...target, id: documentId }));
     }
     refreshTree();
@@ -362,14 +246,12 @@ export function SubjectTreeSidebar({
                 expandedIds={expandedIds}
                 activeSubjectId={selectedSubjectId}
                 activeHref={pathname}
-                documentsBySubject={documentsBySubject}
                 documentActions={documentActions}
                 draggedSubjectId={draggedSubjectId}
                 draggedDocumentId={draggedDocument?.id ?? null}
                 dropTargetId={dropTargetId}
                 pendingMoveId={pendingMoveId}
                 onToggle={handleToggle}
-                onRetryDocuments={(subjectId) => void loadDocuments(subjectId)}
                 onCreateChild={openCreateChild}
                 onCreateNote={(subjectId) =>
                   setCreateDocumentTarget({ kind: "note", subjectId })

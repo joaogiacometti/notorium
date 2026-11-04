@@ -1,10 +1,11 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { createSubject } from "@/app/actions/subjects";
-import { loadSubjectOptions } from "@/components/shared/load-subject-options";
+import { invalidateSubjectViews } from "@/lib/client-cache/invalidation";
+import { subjectOptionsQuery } from "@/lib/client-cache/queries";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
@@ -28,21 +29,15 @@ export function useCreateInlineSubjectPicker({
   onSubjectCreated,
 }: Readonly<UseCreateInlineSubjectPickerOptions>) {
   const queryClient = useQueryClient();
-  const [subjects, setSubjects] = useState(initialSubjects ?? []);
-
+  const query = useQuery({
+    ...subjectOptionsQuery(),
+    initialData: initialSubjects,
+    initialDataUpdatedAt: 0,
+    enabled: open && (loadSubjectsOnOpen || initialSubjects !== undefined),
+  });
   useEffect(() => {
-    setSubjects(initialSubjects ?? []);
-  }, [initialSubjects]);
-
-  useEffect(() => {
-    if (open && loadSubjectsOnOpen) {
-      void loadSubjectOptions().then((loaded) => {
-        if (loaded) {
-          setSubjects(loaded);
-        }
-      });
-    }
-  }, [loadSubjectsOnOpen, open]);
+    if (query.isError) toast.error("Could not load subjects.");
+  }, [query.isError]);
 
   async function handleCreateSubject(name: string): Promise<boolean> {
     const result = await createSubject({ name });
@@ -51,17 +46,13 @@ export function useCreateInlineSubjectPicker({
       return false;
     }
 
-    // The subject exists even if the list refresh fails; still select it.
-    const refreshed = await loadSubjectOptions();
-    if (refreshed) {
-      setSubjects(refreshed);
-    }
-    await queryClient.invalidateQueries({
-      queryKey: ["create-dialog-subjects"],
-    });
+    await invalidateSubjectViews(queryClient);
+    // A picker without an active query still needs the newly created option.
+    // Creation remains successful even when refreshing the list fails.
+    await queryClient.fetchQuery(subjectOptionsQuery()).catch(() => null);
     onSubjectCreated(result.subjectId ?? "");
     return true;
   }
 
-  return { subjects, handleCreateSubject };
+  return { subjects: query.data ?? [], handleCreateSubject };
 }

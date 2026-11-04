@@ -31,10 +31,10 @@ import {
   PDF_MIME_TYPE,
 } from "@/features/pdfs/validation";
 import { uploadPdfDocument } from "@/lib/attachments/upload-pdf-document";
+import { invalidateDocumentViews } from "@/lib/client-cache/invalidation";
 import { LIMITS } from "@/lib/config/limits";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
-import { notifySubjectDocumentsChanged } from "@/lib/trees/subject-documents-events";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 interface CreatePdfDialogProps {
@@ -71,6 +71,7 @@ export function CreatePdfDialog({
   });
   const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
     initialSubjects,
+    open,
     onSubjectCreated: (createdSubjectId) =>
       form.setValue("subjectId", createdSubjectId, {
         shouldDirty: true,
@@ -114,8 +115,7 @@ export function CreatePdfDialog({
         toast.error(t(result.errorCode, result.errorParams));
         return;
       }
-      await queryClient.invalidateQueries({ queryKey: ["search-data"] });
-      notifySubjectDocumentsChanged(result.subjectId);
+      await invalidateDocumentViews(queryClient, [result.subjectId]);
       onOpenChange(false);
       onSuccess(result.pdfId, result.subjectId);
     } finally {

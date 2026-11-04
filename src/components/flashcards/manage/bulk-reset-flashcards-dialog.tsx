@@ -1,9 +1,11 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { bulkResetFlashcards } from "@/app/actions/flashcards";
 import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
+import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
 import { t } from "@/lib/server/server-action-errors";
 
 interface BulkResetFlashcardsDialogProps {
@@ -19,6 +21,7 @@ export function BulkResetFlashcardsDialog({
   onReset,
   onOpenChange,
 }: Readonly<BulkResetFlashcardsDialogProps>) {
+  const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
 
   function handleReset() {
@@ -26,6 +29,7 @@ export function BulkResetFlashcardsDialog({
       const result = await bulkResetFlashcards({ ids });
 
       if (result.success) {
+        await invalidateFlashcardViews(queryClient);
         onReset(result.ids);
         onOpenChange(false);
         return;

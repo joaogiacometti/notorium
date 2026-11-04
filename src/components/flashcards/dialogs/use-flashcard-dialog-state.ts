@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { type UseFormReturn, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import {
   documentHasContent,
   type FlashcardFormValues as FlashcardFormSchemaValues,
 } from "@/features/flashcards/validation";
+import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
 import { documentsEqual, type RichTextDocument } from "@/lib/editor/document";
 import { useBeforeUnload } from "@/lib/editor/use-before-unload";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
@@ -54,6 +56,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
   getSuccessValues,
   closeOnSuccess,
 }: Readonly<UseFlashcardDialogStateOptions<TValues>>) {
+  const queryClient = useQueryClient();
   const workspace = useAssistantWorkspace();
   const hasPendingEdits = Boolean(workspace?.pending);
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
@@ -190,6 +193,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
         return;
       }
 
+      await invalidateFlashcardViews(queryClient);
       const successValues = getSuccessValues(data, {
         keepFrontAfterSubmit,
         keepBackAfterSubmit,

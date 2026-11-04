@@ -1,9 +1,11 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { resetFlashcard } from "@/app/actions/flashcards";
 import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
+import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
 import type { RichTextDocument } from "@/lib/editor/document";
 import { documentExcerpt } from "@/lib/editor/document-content";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
@@ -24,6 +26,7 @@ export function ResetFlashcardDialog({
   onOpenChange,
   onReset,
 }: Readonly<ResetFlashcardDialogProps>) {
+  const queryClient = useQueryClient();
   const [isPending, startTransition] = useTransition();
   const flashcardFrontPreview = documentExcerpt(flashcardFront, 120);
 
@@ -31,6 +34,7 @@ export function ResetFlashcardDialog({
     startTransition(async () => {
       const result = await resetFlashcard({ id: flashcardId });
       if (result.success) {
+        await invalidateFlashcardViews(queryClient);
         onReset?.(result.flashcard);
         onOpenChange(false);
       } else {

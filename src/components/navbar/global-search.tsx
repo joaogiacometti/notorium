@@ -28,8 +28,8 @@ import {
   CommandInput,
   CommandList,
 } from "@/components/ui/command";
+import { subjectOptionsQuery } from "@/lib/client-cache/queries";
 import { LIMITS } from "@/lib/config/limits";
-import { fetchSubjectOptions } from "@/lib/read-api/subjects";
 
 interface GlobalSearchProps {
   userId: string;
@@ -58,11 +58,8 @@ export function GlobalSearch({
   const [createSubjectId, setCreateSubjectId] = useState<string | null>(null);
 
   const { data: subjects = [] } = useQuery({
-    queryKey: ["create-dialog-subjects", userId],
-    queryFn: () => fetchSubjectOptions(),
+    ...subjectOptionsQuery(),
     enabled: (open || activeDialog !== null) && userId.length > 0,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 15,
   });
   const results = useSearchResults(query, userId, open);
 

@@ -3,6 +3,7 @@ import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useCreateInlineSubjectPicker } from "@/components/shared/use-create-inline-subject-picker";
+import { libraryKeys } from "@/lib/client-cache/queries";
 import type { SubjectOption } from "@/lib/server/api-contracts";
 
 const createSubjectMock = vi.fn();
@@ -86,7 +87,8 @@ describe("useCreateInlineSubjectPicker", () => {
       root.unmount();
     });
     container.remove();
-    vi.clearAllMocks();
+    queryClient.clear();
+    vi.resetAllMocks();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = false;
   });
 
@@ -100,7 +102,6 @@ describe("useCreateInlineSubjectPicker", () => {
       success: true,
       subjectId: "subject-2",
     });
-    const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     await act(async () => {
       root.render(
@@ -110,7 +111,7 @@ describe("useCreateInlineSubjectPicker", () => {
       );
     });
     await act(async () => {
-      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     expect(
@@ -130,9 +131,38 @@ describe("useCreateInlineSubjectPicker", () => {
     expect(
       container.querySelector('[data-testid="selected"]')?.textContent,
     ).toBe("subject-2");
-    expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-      queryKey: ["create-dialog-subjects"],
+    expect(queryClient.getQueryData(libraryKeys.subjectOptions)).toEqual([
+      { id: "subject-2", name: "Biology", path: "Biology" },
+    ]);
+  });
+
+  it("updates every mounted subject picker after inline creation", async () => {
+    let options = [{ id: "subject-1", name: "Math", path: "Math" }];
+    getSubjectOptionsMock.mockImplementation(async () => options);
+    createSubjectMock.mockImplementation(async () => {
+      options = [
+        ...options,
+        { id: "subject-2", name: "Biology", path: "Biology" },
+      ];
+      return { success: true, subjectId: "subject-2" };
     });
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <Probe loadSubjectsOnOpen queryClient={queryClient} />
+          <Probe loadSubjectsOnOpen queryClient={queryClient} />
+        </QueryClientProvider>,
+      );
+    });
+    await act(async () => {
+      container.querySelector("button")?.click();
+    });
+    expect(
+      Array.from(
+        container.querySelectorAll('[data-testid="subjects"]'),
+        (element) => element.textContent,
+      ),
+    ).toEqual(["Math,Biology", "Math,Biology"]);
   });
 
   it("keeps the initial subjects and reports a failed load on open", async () => {
@@ -158,7 +188,7 @@ describe("useCreateInlineSubjectPicker", () => {
       );
     });
     await act(async () => {
-      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     expect(

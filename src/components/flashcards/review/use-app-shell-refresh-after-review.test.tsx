@@ -1,7 +1,9 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAppShellRefreshAfterReview } from "@/components/flashcards/review/use-app-shell-refresh-after-review";
+import { libraryKeys } from "@/lib/client-cache/queries";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -37,13 +39,22 @@ function RefreshProbe({
 describe("useAppShellRefreshAfterReview", () => {
   let root: Root;
   let router: FakeAppRouter;
+  let queryClient: QueryClient;
 
   function renderProbe(props: RefreshProbeProps) {
-    act(() => root.render(<RefreshProbe {...props} />));
+    act(() =>
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <RefreshProbe {...props} />
+        </QueryClientProvider>,
+      ),
+    );
   }
 
   beforeEach(() => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
+    queryClient = new QueryClient();
+    queryClient.setQueryData(libraryKeys.flashcards, []);
     router = new FakeAppRouter();
     fakeRouter.current = router;
     root = createRoot(document.createElement("div"));
@@ -54,16 +65,22 @@ describe("useAppShellRefreshAfterReview", () => {
     renderProbe({ pendingReviewWriteCount: 0 });
 
     expect(router.refreshCount).toBe(0);
+    expect(
+      queryClient.getQueryState(libraryKeys.flashcards)?.isInvalidated,
+    ).toBe(false);
     act(() => root.unmount());
   });
 
-  it("refreshes once on unmount after a review write", () => {
+  it("refreshes once and expires client flashcard caches on exit after a review write", async () => {
     renderProbe({ pendingReviewWriteCount: 1 });
     renderProbe({ pendingReviewWriteCount: 0 });
 
-    act(() => root.unmount());
+    await act(async () => root.unmount());
 
     expect(router.refreshCount).toBe(1);
+    expect(
+      queryClient.getQueryState(libraryKeys.flashcards)?.isInvalidated,
+    ).toBe(true);
   });
 
   it("does not refresh on unmount when nothing was graded", () => {

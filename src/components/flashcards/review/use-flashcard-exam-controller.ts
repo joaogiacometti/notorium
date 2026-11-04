@@ -1,5 +1,7 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
+
 import { useState } from "react";
 import { toggleStudyLater } from "@/components/flashcards/shared/toggle-study-later";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
@@ -29,6 +31,7 @@ export function useFlashcardExamController({
   resetCardViewState,
   onExit,
 }: UseFlashcardExamControllerParams) {
+  const queryClient = useQueryClient();
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
   const examSession = useExamSession(initialCards);
 
@@ -85,7 +88,7 @@ export function useFlashcardExamController({
       return;
     }
 
-    void toggleStudyLater(card, (studyLaterAt) =>
+    void toggleStudyLater(queryClient, card, (studyLaterAt) =>
       examSession.updateCard({ id: card.id, studyLaterAt }),
     );
   }
