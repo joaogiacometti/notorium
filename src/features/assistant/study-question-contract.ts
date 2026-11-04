@@ -9,7 +9,7 @@ export const studyQuestionSchema = z
       .min(1)
       .max(1000)
       .describe(
-        "One application question in the user's language. Use dollar-delimited LaTeX for math.",
+        "One application question. Use dollar-delimited LaTeX for math.",
       ),
     options: z
       .array(z.string().trim().min(1).max(300))

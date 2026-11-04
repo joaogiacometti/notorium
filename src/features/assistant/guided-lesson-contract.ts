@@ -10,9 +10,7 @@ const lessonTopicSchema = z.string().trim().min(1).max(LESSON_TOPIC_MAX_CHARS);
  * @example guidedLessonInputSchema.parse({ topic: "Derivatives" });
  */
 export const guidedLessonInputSchema = z.object({
-  topic: lessonTopicSchema.describe(
-    "Short lesson topic in the user's language.",
-  ),
+  topic: lessonTopicSchema.describe("Short lesson topic."),
 });
 
 export const endGuidedLessonInputSchema = z.object({});

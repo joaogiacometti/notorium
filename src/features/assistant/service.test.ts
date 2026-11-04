@@ -8,7 +8,7 @@ import {
   FLASHCARD_ANSWER_RULES,
   FLASHCARD_EXAMPLE_RULES,
 } from "@/features/flashcards/ai-prompts";
-import { USER_REQUEST_LANGUAGE_RULE } from "@/lib/ai/prompt-rules";
+import { OUTPUT_LANGUAGE_RULE } from "@/lib/ai/prompt-rules";
 import { FakeDailyRateLimiter } from "@/test/fake-daily-rate-limiter";
 import {
   createFakeStreamingModel,
@@ -374,7 +374,7 @@ describe("streamAssistantReplyForUser", () => {
 
     const call = model.doStreamCalls[0];
     for (const rule of [
-      USER_REQUEST_LANGUAGE_RULE,
+      OUTPUT_LANGUAGE_RULE,
       FLASHCARD_ANSWER_RULES,
       FLASHCARD_EXAMPLE_RULES,
     ]) {

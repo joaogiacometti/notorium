@@ -10,6 +10,7 @@ See [package.json](../../package.json) for the complete command list.
 | --- | --- |
 | `npm run test` | Vitest suite |
 | `npm run test:coverage` | Tests with coverage thresholds |
+| `npm run eval` | Assistant checks against the real model in `.env`; paid, so run manually after prompt, tool, or model changes. Transcripts and cost go to `test-results/evals/` |
 | `npm run lint` | Biome and architecture boundaries |
 | `npm run typecheck` | TypeScript checks |
 | `npm run check:size` | Source and test size guard |

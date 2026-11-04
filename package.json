@@ -25,7 +25,8 @@
     "test:e2e:start": "dotenv -e .env.test -- next start",
     "test:e2e": "dotenv -e .env.test -- playwright test",
     "test:e2e:ui": "dotenv -e .env.test -- playwright test --ui",
-    "test:e2e:headed": "dotenv -e .env.test -- playwright test --headed"
+    "test:e2e:headed": "dotenv -e .env.test -- playwright test --headed",
+    "eval": "dotenv -e .env -- vitest run --config vitest.eval.config.mts"
   },
   "dependencies": {
     "@ai-sdk/react": "4.0.141",

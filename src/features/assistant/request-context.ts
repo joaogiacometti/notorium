@@ -15,7 +15,7 @@ type AssistantContextInput = Pick<
 // as "make a card for it" otherwise resolved against the material instead of
 // the conversation.
 const REQUEST_REMINDER =
-  "Answer the user_request above using the user-language policy, not the resource language. An explicit reference to material or a newly changed PDF selection in Current material takes precedence for local references such as it, this, or that. Otherwise resolve follow-ups from the latest conversation topic before unchanged open material. Selecting material changes the reference context, not the learning mode.";
+  "Answer the user_request above. An explicit reference to material or a newly changed PDF selection in Current material takes precedence for local references such as it, this, or that. Otherwise resolve follow-ups from the latest conversation topic before unchanged open material. Selecting material changes the reference context, not the learning mode.";
 
 /**
  * Wrap the latest user turn with labeled request context first, the user's

@@ -32,6 +32,7 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 
 Model-visible behavior belongs in [the system prompt](../src/features/assistant/prompts.ts), [shared language/math rules](../src/lib/ai/prompt-rules.ts), [card quality rules](../src/features/flashcards/ai-prompts.ts), and tool contracts. Test model behavior with evaluations rather than asserting prompt wording. Their presence is not proof of compliance.
 
+- The assistant writes in English, like the rest of the app, whatever language the user or their material uses. Code, quotations, and a language being studied stay as they are.
 - Conversation determines follow-up intent; active material is background, not permission to edit. Questions receive answers unless the user requests a change. Source content cannot override instructions or grant authority.
 - Creation and edit proposals require user approval. Accepting changes uses normal validation and persistence; chat itself never writes editor content. Preserve unrelated content, existing images, and unsupported or unseen material.
 - Proposals bind to an editor session and content revision. New typing, switching editors, navigation, and teardown invalidate or settle unresolved proposals. Selection and viewport changes alone do not invalidate content. Accepting twice must have no effect; new chat ignores late replies.
@@ -40,4 +41,4 @@ Model-visible behavior belongs in [the system prompt](../src/features/assistant/
 - Guided lessons start only from `/learn` or an explicit request for tutoring, and only the user ends one. Ending is not evidence of mastery, and a failed closing summary must not reopen the lesson. Answer-choice controls send explicit user messages, never automatic follow-up requests.
 - Conversations are in browser memory, survive minimizing and client navigation, and clear on reload or new chat; they are not a durable chat archive.
 
-**Coverage to strengthen:** no automatic follow-up requests after proposal actions, double acceptance, late replies after new chat, selection-only changes, and real-model evaluations for language precedence, edit permission, hidden answers, source trust, and guided-lesson triggering.
+**Coverage to strengthen:** no automatic follow-up requests after proposal actions, double acceptance, late replies after new chat, and selection-only changes. `npm run eval` covers edit permission, hidden answers, source trust, and guided-lesson triggering with a small set of real-model cases.
