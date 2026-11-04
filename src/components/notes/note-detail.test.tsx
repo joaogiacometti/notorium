@@ -231,7 +231,7 @@ describe("NoteDetail", () => {
       titleInput?.parentElement?.parentElement?.parentElement?.className,
     ).not.toContain("overflow-hidden");
     expect(getContentInput(container)?.value).toBe(
-      testDocumentHtml(note.content ?? testDocument("")),
+      testDocumentHtml(note.content),
     );
     expect(
       container.querySelector('button[aria-label="Open note actions"]'),

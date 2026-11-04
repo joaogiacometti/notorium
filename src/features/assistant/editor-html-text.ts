@@ -17,7 +17,7 @@ const MATH_TOKEN_SENTINEL = "\uE000";
  * decoded LaTeX. Decoding the LaTeX inline before `transform` would let its
  * `<`/`>` characters be eaten by the `/<[^>]*>/g` tag strip — e.g. the equation
  * `f(x) < g(x) > 0` would collapse to `f(x)  0`. Tokenizing keeps the LaTeX out
- * of the strip's reach. See rich-text.test.ts for the regression.
+ * of the strip's reach.
  */
 function transformAroundMath(
   value: string,

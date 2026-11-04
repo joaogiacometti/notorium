@@ -91,7 +91,7 @@ export async function getNoteConnectionsForUser(
   const current = await getNoteByIdForUser(userId, noteId);
   if (!current) return null;
 
-  const linkedIds = current.content ? extractNoteLinkIds(current.content) : [];
+  const linkedIds = extractNoteLinkIds(current.content);
   const [backlinks, outgoing] = await Promise.all([
     selectNoteLinkTargets(
       userId,

@@ -60,7 +60,7 @@ function getEditValues(note: NoteEntity): EditNoteForm {
   return {
     id: note.id,
     title: note.title,
-    content: note.content ?? emptyDocument(),
+    content: note.content,
   };
 }
 

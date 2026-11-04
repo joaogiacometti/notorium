@@ -31,7 +31,7 @@ describe("collectAllReferencedPathnames", () => {
       }
       switch (table) {
         case "note_table":
-          return Promise.resolve([{ content: "note-a" }, { content: null }]);
+          return Promise.resolve([{ content: "note-a" }]);
         case "flashcard_table":
           return Promise.resolve([
             { front: "front-a", back: "back-a" },
