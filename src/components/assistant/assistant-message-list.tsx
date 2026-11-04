@@ -169,7 +169,7 @@ function awaitsNextStep(message: AssistantUIMessage): boolean {
   const last = message.parts.at(-1);
   if (!last) return true;
   if (last.type === "step-start") return true;
-  if (last.type === "text") return last.text === "";
+  if (last.type === "text") return last.text.trim() === "";
   return (
     last.type === "tool-searchLibrary" && last.state === "output-available"
   );
@@ -194,9 +194,12 @@ function hasVisibleContent(
 }
 
 // A reply that searched first may hold text from both steps; a blank line
-// keeps the two from running together.
+// keeps the two from running together. Models may send only whitespace before
+// a tool call, which has nothing to show.
 function readMessageText(message: AssistantUIMessage): string {
   return message.parts
-    .flatMap((part) => (part.type === "text" && part.text ? [part.text] : []))
+    .flatMap((part) =>
+      part.type === "text" && part.text.trim() ? [part.text] : [],
+    )
     .join("\n\n");
 }

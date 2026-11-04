@@ -285,6 +285,14 @@ describe("study assistant", () => {
     expect(container.textContent).not.toContain("Thinking…");
   });
 
+  it("shows no empty bubble for a whitespace-only reply", async () => {
+    await renderPanel(new FakeAssistantChatTransport().replyWith("\n\n"));
+
+    await sendMessage("What is ATP?");
+
+    expect(container.querySelector('[data-testid="rich-reply"]')).toBeNull();
+  });
+
   it("keeps showing Thinking… after a finished search until the reply text arrives", async () => {
     await renderPanel(new FakeAssistantChatTransport().searchThenWait());
 
