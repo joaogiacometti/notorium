@@ -125,58 +125,24 @@ describe("assistant tool availability", () => {
     expect(selectAssistantActiveTools(context)).toEqual([
       "proposeFlashcards",
       "searchLibrary",
-      "startGuidedLesson",
-      "askStudyQuestion",
+      "showAnswerChoices",
       ...(editor ? [editor] : []),
     ]);
   });
-  it("hides the lesson start marker while a lesson is active", () => {
-    expect(selectAssistantActiveTools({ lessonActive: true })).toEqual([
+  it("hides answer choices while learning support is off", () => {
+    expect(selectAssistantActiveTools({ bypassLearning: true })).toEqual([
       "proposeFlashcards",
       "searchLibrary",
-      "endGuidedLesson",
-      "askStudyQuestion",
     ]);
-  });
-  it("does not expose either mode transition while evaluating a study answer", () => {
-    for (const lessonActive of [false, true]) {
-      const active = selectAssistantActiveTools({
-        lessonActive,
-        studyAnswer: true,
-      });
-      expect(active).not.toContain("startGuidedLesson");
-      expect(active).not.toContain("endGuidedLesson");
-    }
-  });
-  it("rejects repeated lesson starts even if a model calls a hidden tool", () => {
-    const options = { toolCallId: "start", messages: [], context: {} };
-    const tools = buildAssistantTools(new EmptyToolLibrary().search);
-    expect(
-      tools.startGuidedLesson.execute?.({ topic: "Topic" }, options),
-    ).toEqual({ topic: "Topic" });
-    expect(() =>
-      tools.startGuidedLesson.execute?.({ topic: "Another topic" }, options),
-    ).toThrow("already active");
-    const active = buildAssistantTools(new EmptyToolLibrary().search, {
-      lessonTopic: "Topic",
-    });
-    expect(() =>
-      active.startGuidedLesson.execute?.({ topic: "Another topic" }, options),
-    ).toThrow("already active");
   });
   it("retains every tool definition for history without executing write proposals", () => {
     const tools = buildAssistantTools(new EmptyToolLibrary().search);
-    expect(Object.keys(tools)).toHaveLength(7);
+    expect(Object.keys(tools)).toHaveLength(5);
     expect(
       Object.entries(tools)
         .filter(([, value]) => value.execute)
         .map(([name]) => name),
-    ).toEqual([
-      "searchLibrary",
-      "startGuidedLesson",
-      "endGuidedLesson",
-      "askStudyQuestion",
-    ]);
+    ).toEqual(["searchLibrary", "showAnswerChoices"]);
     for (const definition of Object.values(tools)) {
       expect(
         JSON.stringify(z.toJSONSchema(definition.inputSchema as z.ZodType)),

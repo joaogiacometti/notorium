@@ -7,8 +7,12 @@ import { AssistantComposer } from "@/components/assistant/assistant-composer";
 class FakeMessageSubmission {
   readonly messages: string[] = [];
   resets = 0;
+  bypasses = 0;
   reset = (): void => {
     this.resets += 1;
+  };
+  bypass = (): void => {
+    this.bypasses += 1;
   };
   constructor(private readonly accepted: boolean) {}
   send = async (message: string): Promise<boolean> => {
@@ -54,6 +58,7 @@ describe("assistant composer", () => {
   async function renderComposer(
     busy = false,
     accepted = true,
+    chat: { chatEmpty?: boolean; bypassActive?: boolean } = {},
   ): Promise<FakeMessageSubmission> {
     const submission = new FakeMessageSubmission(accepted);
     await act(async () =>
@@ -63,6 +68,9 @@ describe("assistant composer", () => {
           onSend={submission.send}
           onStop={() => {}}
           onNewChat={submission.reset}
+          onBypass={submission.bypass}
+          chatEmpty={chat.chatEmpty}
+          bypassActive={chat.bypassActive}
           focusRequested
         />,
       ),
@@ -138,10 +146,10 @@ describe("assistant composer", () => {
       container.querySelector('[role="option"][aria-selected="true"]');
     expect(optionTexts()).toEqual([
       expect.stringContaining("New chat"),
-      expect.stringContaining("Learn a topic"),
+      expect.stringContaining("Skip learning support"),
     ]);
     await pressKey("ArrowDown");
-    expect(selected()?.textContent).toContain("Learn a topic");
+    expect(selected()?.textContent).toContain("Skip learning support");
     expect(
       container
         .querySelector("textarea")
@@ -150,40 +158,94 @@ describe("assistant composer", () => {
     await pressKey("ArrowDown");
     expect(selected()?.textContent).toContain("New chat");
     await pressKey("ArrowUp");
-    expect(selected()?.textContent).toContain("Learn a topic");
+    expect(selected()?.textContent).toContain("Skip learning support");
   });
 
-  it.each(["/l", "/learn"])(
-    "fills %s as a lesson prefix with Enter and sends the topic as a message",
+  it.each(["/b", "/bypass"])(
+    "turns learning support off with %s and Enter, sending nothing in an empty chat",
     async (draft) => {
       const submission = await renderComposer();
       await typeDraft(draft);
       const options = container.querySelectorAll('[role="option"]');
       expect(options).toHaveLength(1);
-      expect(options[0]?.textContent).toContain("Learn a topic");
+      expect(options[0]?.textContent).toContain("Skip learning support");
       await pressKey("Enter");
       const textarea = container.querySelector("textarea");
-      expect(textarea?.value).toBe("/learn ");
-      expect(document.activeElement).toBe(textarea);
-      expect(container.querySelector('[role="listbox"]')).toBeNull();
+      expect(submission.bypasses).toBe(1);
       expect(submission.messages).toEqual([]);
-      await typeDraft("/learn binary search");
-      await pressKey("Enter");
-      expect(submission.resets).toBe(0);
-      expect(submission.messages).toEqual(["/learn binary search"]);
+      expect(textarea?.value).toBe("");
+      expect(document.activeElement).toBe(textarea);
     },
   );
 
-  it("fills the lesson prefix when Learn a topic is clicked", async () => {
+  it("turns learning support off when the command is clicked", async () => {
     const submission = await renderComposer();
     await typeDraft("/");
     await act(async () => {
       [...container.querySelectorAll<HTMLElement>('[role="option"]')]
-        .find((option) => option.textContent?.includes("Learn a topic"))
+        .find((option) => option.textContent?.includes("Skip learning support"))
         ?.click();
     });
-    expect(container.querySelector("textarea")?.value).toBe("/learn ");
+    expect(submission.bypasses).toBe(1);
     expect(submission.messages).toEqual([]);
+  });
+
+  it("sends the request following /bypass without the command", async () => {
+    const submission = await renderComposer();
+    await typeDraft("/bypass make 3 cards");
+    expect(container.querySelector('[role="listbox"]')).toBeNull();
+    await pressKey("Enter");
+    expect(submission.bypasses).toBe(1);
+    expect(submission.messages).toEqual(["make 3 cards"]);
+    expect(container.querySelector("textarea")?.value).toBe("");
+  });
+
+  it("asks for the earlier request to be carried out by a bare /bypass mid-chat", async () => {
+    const submission = await renderComposer(false, true, { chatEmpty: false });
+    await typeDraft("/bypass");
+    await pressKey("Enter");
+    expect(submission.bypasses).toBe(1);
+    expect(submission.messages).toEqual(["/bypass"]);
+  });
+
+  it("does not spend a reply on /bypass when it is already on", async () => {
+    const submission = await renderComposer(false, true, {
+      chatEmpty: false,
+      bypassActive: true,
+    });
+    await typeDraft("/bypass");
+    await pressKey("Enter");
+    expect(submission.messages).toEqual([]);
+    expect(container.querySelector("textarea")?.value).toBe("");
+  });
+
+  it("keeps a /bypass request in the composer while a reply is running", async () => {
+    const submission = await renderComposer(true, true, { chatEmpty: false });
+    await typeDraft("/bypass make 3 cards");
+    await pressKey("Enter");
+    expect(submission.bypasses).toBe(0);
+    expect(submission.messages).toEqual([]);
+    expect(container.querySelector("textarea")?.value).toBe(
+      "/bypass make 3 cards",
+    );
+  });
+
+  it("turns learning support off without sending while a reply is running", async () => {
+    const submission = await renderComposer(true, true, { chatEmpty: false });
+    await typeDraft("/bypass");
+    await pressKey("Enter");
+    expect(submission.bypasses).toBe(1);
+    expect(submission.messages).toEqual([]);
+  });
+
+  it("keeps a /bypass request when preflight declines it", async () => {
+    const submission = await renderComposer(false, false);
+    await typeDraft("/bypass make 3 cards");
+    await pressKey("Enter");
+    expect(submission.messages).toEqual(["make 3 cards"]);
+    expect(container.querySelector("textarea")?.value).toBe(
+      "/bypass make 3 cards",
+    );
   });
 
   it.each([false, true])(

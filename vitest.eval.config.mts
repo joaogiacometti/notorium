@@ -7,8 +7,10 @@ export default defineConfig({
     environment: "node",
     include: ["evals/**/*.eval.ts"],
     setupFiles: ["./evals/setup.ts"],
+    globalSetup: ["./evals/report-run.ts"],
     testTimeout: 90_000,
-    // A retry pays for another reply and hides intermittent failures.
+    // A retry pays for another reply and hides intermittent failures; trials
+    // (EVAL_TRIALS) measure them instead.
     retry: 0,
     // Usage is attributed to a case by running one at a time within each file.
     sequence: { concurrent: false },

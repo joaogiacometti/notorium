@@ -30,6 +30,7 @@ export async function POST(request: Request): Promise<Response> {
       draft: parsed.data.draft,
       documentDraft: parsed.data.documentDraft,
       context: parsed.data.context,
+      bypassLearning: parsed.data.bypassLearning,
       historyTruncated: parsed.data.historyTruncated,
       abortSignal: request.signal,
     });

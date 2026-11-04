@@ -2,13 +2,11 @@
  * Real-model checks of behavior only the prompt and tool contracts enforce.
  * Each case is one paid assistant reply, so add a case only for a behavior worth
  * paying to recheck. Prefer code checks to judging replies with a model, check
- * what a good reply contains as well as what it must avoid, and read the
- * transcripts in test-results/evals/, not only the pass count.
+ * what a good reply contains as well as what it must avoid, and read a sample
+ * of the transcripts in evals/transcripts/, not only the pass count.
  */
 
 import { execFileSync } from "node:child_process";
-import { appendFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
 import type { UIMessageChunk } from "ai";
 import { describe, it } from "vitest";
 import type { z } from "zod";
@@ -16,9 +14,8 @@ import type { LibrarySearchOutput } from "@/features/assistant/library-search-co
 import { streamAssistantReplyForUser } from "@/features/assistant/service";
 import { assistantChatRequestSchema } from "@/features/assistant/validation";
 import { readStreamedChunks } from "@/test/fake-streaming-model";
+import { appendTranscript, readTrialCount } from "../transcripts";
 import { takeModelUsage } from "./usage-recorder";
-
-const TRANSCRIPT_DIR = "test-results/evals";
 
 type ChatRequestInput = z.input<typeof assistantChatRequestSchema>;
 
@@ -38,12 +35,18 @@ export interface AssistantEvalCase {
   request?: Omit<ChatRequestInput, "messages" | "chatId">;
   /** What `searchLibrary` finds in this case; nothing by default. */
   searchHits?: LibrarySearchOutput["hits"];
+  /**
+   * A behavior still being worked toward, scored in the run summary without failing
+   * the run. Cases without it are regressions, expected to pass nearly always.
+   */
+  capability?: boolean;
   check: (reply: Reply) => void;
 }
 
 /**
- * Declare one test per case and append each outcome to the area's transcript.
- * @example runAssistantEvals("lessons", [{ name, messages, check }]);
+ * Declare one test per case and trial, since replies vary between runs, and
+ * append each outcome to the area's transcript.
+ * @example runAssistantEvals("learning", [{ name, messages, check }]);
  */
 export function runAssistantEvals(
   area: string,
@@ -51,31 +54,42 @@ export function runAssistantEvals(
 ): void {
   const model = process.env.OPENROUTER_MODEL;
   const code = readCodeVersion();
+  const trials = Array.from({ length: readTrialCount() }, (_, index) => index);
+  const runs = cases.flatMap((evalCase) =>
+    trials.map((trial) => ({ evalCase, trial: trial + 1 })),
+  );
 
   describe(`${area} on ${model}`, () => {
-    it.each(cases)("$name", async (evalCase) => {
-      let reply: Reply | null = null;
-      let failure: unknown = null;
-      try {
-        reply = await askAssistant(evalCase);
-        evalCase.check(reply);
-      } catch (error) {
-        failure = error;
-      }
-      appendTranscript(area, {
-        at: new Date().toISOString(),
-        model,
-        ...code,
-        case: evalCase.name,
-        passed: failure === null,
-        failure: failure === null ? null : String(failure),
-        usage: takeModelUsage(),
-        reply,
-      });
-      if (failure instanceof Error)
-        failure.message += `\nReply: ${JSON.stringify(reply)}`;
-      if (failure !== null) throw failure;
-    });
+    it.each(runs)(
+      "$evalCase.name (trial $trial)",
+      async ({ evalCase, trial }) => {
+        let reply: Reply | null = null;
+        let failure: unknown = null;
+        try {
+          reply = await askAssistant(evalCase);
+          evalCase.check(reply);
+        } catch (error) {
+          failure = error;
+        }
+        appendTranscript(area, {
+          runId: process.env.EVAL_RUN_ID ?? "",
+          at: new Date().toISOString(),
+          model: model ?? "",
+          ...code,
+          area,
+          case: evalCase.name,
+          trial,
+          capability: evalCase.capability === true,
+          passed: failure === null,
+          failure: failure === null ? null : String(failure),
+          usage: takeModelUsage(),
+          reply,
+        });
+        if (failure instanceof Error)
+          failure.message += `\nReply: ${JSON.stringify(reply)}`;
+        if (failure !== null && !evalCase.capability) throw failure;
+      },
+    );
   });
 }
 
@@ -152,12 +166,4 @@ function readCodeVersion(): { commit: string; dirty: boolean } {
     commit: git("rev-parse", "--short", "HEAD"),
     dirty: git("status", "--porcelain") !== "",
   };
-}
-
-function appendTranscript(area: string, entry: unknown): void {
-  mkdirSync(TRANSCRIPT_DIR, { recursive: true });
-  appendFileSync(
-    join(TRANSCRIPT_DIR, `assistant-${area}.jsonl`),
-    `${JSON.stringify(entry)}\n`,
-  );
 }

@@ -15,39 +15,6 @@ export function conversation(
 }
 
 /**
- * A lesson already under way: its start marker, one question, and the user's reply.
- * @example activeLesson("Fractions", "What is half of 4?", "2");
- */
-export function activeLesson(
-  topic: string,
-  question: string,
-  userReply: string,
-): AssistantEvalCase["messages"] {
-  return [
-    {
-      id: "m0",
-      role: "user",
-      parts: [{ type: "text", text: `/learn ${topic}` }],
-    },
-    {
-      id: "m1",
-      role: "assistant",
-      parts: [
-        {
-          type: "tool-startGuidedLesson",
-          toolCallId: "lesson",
-          state: "output-available",
-          input: { topic },
-          output: { topic },
-        },
-        { type: "text", text: question },
-      ],
-    },
-    { id: "m2", role: "user", parts: [{ type: "text", text: userReply }] },
-  ];
-}
-
-/**
  * Request fields for one open note holding `content` as its only block.
  * @example openNote("Mitochondria produce ATP.");
  */

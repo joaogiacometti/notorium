@@ -15,22 +15,15 @@ function replyMessage(id: string, text: string) {
 }
 
 describe("assistantChatRequestSchema", () => {
-  it("keeps questions and conversational exits in subsequent requests", () => {
-    const question = { question: "Quanto é 2 + 3?", options: ["4", "5", "6"] };
+  it("keeps answered choices in subsequent requests", () => {
+    const question = { question: "What is 2 + 3?", options: ["4", "5", "6"] };
     const parts = [
       {
-        type: "tool-askStudyQuestion",
+        type: "tool-showAnswerChoices",
         toolCallId: "question",
         state: "output-available",
         input: question,
         output: question,
-      },
-      {
-        type: "tool-endGuidedLesson",
-        toolCallId: "end",
-        state: "output-available",
-        input: {},
-        output: { topic: "Aritmética", endedByUser: true },
       },
     ];
     const parsed = assistantChatRequestSchema.parse({
@@ -72,34 +65,40 @@ describe("assistantChatRequestSchema", () => {
     ).toBeUndefined();
   });
 
-  it("keeps a lesson marker the user ended so the model sees it", () => {
-    const marker = {
-      type: "tool-startGuidedLesson",
-      toolCallId: "lesson-1",
-      state: "output-available",
-      input: { topic: "Derivatives" },
-      output: { topic: "Derivatives", endedByUser: true },
-    };
-    const parsed = assistantChatRequestSchema.parse({
+  it("keeps whether learning support is off", () => {
+    const messages = [userMessage("m1", "What is ATP?")];
+
+    expect(
+      assistantChatRequestSchema.parse({ messages, bypassLearning: true })
+        .bypassLearning,
+    ).toBe(true);
+    expect(
+      assistantChatRequestSchema.parse({ messages }).bypassLearning,
+    ).toBeUndefined();
+  });
+
+  it("rejects parts from tools that no longer exist", () => {
+    const result = assistantChatRequestSchema.safeParse({
       messages: [
-        userMessage("m1", "/learn derivatives"),
-        { id: "m2", role: "assistant", parts: [marker] },
-        userMessage("m3", "Just tell me"),
+        userMessage("m1", "Teach me derivatives"),
+        {
+          id: "m2",
+          role: "assistant",
+          parts: [
+            {
+              type: "tool-startGuidedLesson",
+              toolCallId: "lesson-1",
+              state: "output-available",
+              input: { topic: "Derivatives" },
+              output: { topic: "Derivatives" },
+            },
+          ],
+        },
+        userMessage("m3", "Go on"),
       ],
     });
 
-    expect(parsed.messages[1]?.parts).toEqual([marker]);
-  });
-
-  it("ignores the retired tutoring field sent by tabs loaded before /learn", () => {
-    const messages = [userMessage("m1", "Solve x + 2 = 5")];
-    const parsed = assistantChatRequestSchema.parse({
-      messages,
-      tutoring: "hints",
-    });
-
-    expect(parsed).not.toHaveProperty("tutoring");
-    expect(parsed.messages).toHaveLength(1);
+    expect(result.success).toBe(false);
   });
 
   it("rejects an empty or oversized chat id", () => {

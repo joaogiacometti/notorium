@@ -7,6 +7,7 @@ import {
   type AssistantCommandMenuIds,
   type AssistantCommandName,
   matchAssistantCommands,
+  readBypassRequest,
 } from "@/components/assistant/assistant-command-menu";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +18,9 @@ interface AssistantComposerProps {
   onSend: (text: string) => Promise<boolean>;
   onStop: () => void;
   onNewChat: () => void;
+  chatEmpty?: boolean;
+  bypassActive?: boolean;
+  onBypass?: () => void;
   value?: string;
   onValueChange?: (value: string) => void;
   focusRequested?: boolean;
@@ -27,6 +31,9 @@ export function AssistantComposer({
   onSend,
   onStop,
   onNewChat,
+  chatEmpty = true,
+  bypassActive = false,
+  onBypass,
   value,
   onValueChange,
   focusRequested = false,
@@ -58,16 +65,31 @@ export function AssistantComposer({
     textareaRef.current?.focus();
   }
 
-  // `/learn` only fills the composer; the topic the user types after it is
-  // sent as an ordinary message, so the lesson request stays in the history.
+  // Turning learning support off costs nothing unless there is a request to
+  // carry out: text after the command, or the earlier request a bare `/bypass`
+  // refers to. The request stays in the composer if it could not be sent.
+  async function runBypass(request: string): Promise<void> {
+    if (!request && (chatEmpty || bypassActive || busy)) {
+      onBypass?.();
+      setDraft("");
+      setChosenCommand(null);
+      textareaRef.current?.focus();
+      return;
+    }
+    if (busy) return;
+    onBypass?.();
+    const sent = await onSend(request || "/bypass");
+    if (sent !== false) setDraft("");
+    setChosenCommand(null);
+    textareaRef.current?.focus();
+  }
+
   function runCommand(command: AssistantCommandName): void {
     if (command === "/new") {
       startNewChat();
       return;
     }
-    setDraft(`${command} `);
-    setChosenCommand(null);
-    textareaRef.current?.focus();
+    void runBypass("");
   }
 
   function moveActiveCommand(step: 1 | -1): void {
@@ -78,6 +100,8 @@ export function AssistantComposer({
 
   async function submitDraft(): Promise<void> {
     if (commandText === "/new") return startNewChat();
+    const bypassRequest = readBypassRequest(commandText);
+    if (bypassRequest !== null) return runBypass(bypassRequest);
     if (!canSend) return;
     const sent = await onSend(commandText);
     if (sent !== false) setDraft("");
@@ -137,7 +161,7 @@ export function AssistantComposer({
           aria-activedescendant={menuOpen ? menuIds?.option : undefined}
           aria-haspopup="listbox"
           maxLength={LIMITS.assistantMessageMaxChars}
-          placeholder="Ask a question, or /learn a topic…"
+          placeholder="Ask a question…"
           aria-label="Message the assistant"
           rows={1}
           className="field-sizing-content max-h-32 min-h-8 resize-none border-0 bg-transparent px-2 py-1.5 shadow-none focus-visible:ring-0 dark:bg-transparent"

@@ -1,6 +1,6 @@
 "use client";
 
-import { GraduationCap, type LucideIcon, SquarePen } from "lucide-react";
+import { FastForward, type LucideIcon, SquarePen } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 import {
   Command,
@@ -9,7 +9,7 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 
-export type AssistantCommandName = "/new" | "/learn";
+export type AssistantCommandName = "/new" | "/bypass";
 
 interface AssistantCommand {
   name: AssistantCommandName;
@@ -26,18 +26,18 @@ const ASSISTANT_COMMANDS: readonly AssistantCommand[] = [
     icon: SquarePen,
   },
   {
-    name: "/learn",
-    label: "Learn a topic",
-    description: "Guided lesson with questions along the way",
-    icon: GraduationCap,
+    name: "/bypass",
+    label: "Skip learning support",
+    description: "Just do what I ask until a new chat",
+    icon: FastForward,
   },
 ];
 
 /**
  * Commands offered for a draft that is a single slash-prefixed word, such as
- * `/` or `/le`. Anything after a space is ordinary text, so the menu closes
- * once the user starts typing a topic.
- * @example matchAssistantCommands("/l"); // ["/learn"]
+ * `/` or `/by`. Anything after a space is ordinary text, so the menu closes
+ * once the user starts typing a request.
+ * @example matchAssistantCommands("/b"); // ["/bypass"]
  */
 export function matchAssistantCommands(draft: string): AssistantCommandName[] {
   const token = draft.trimStart();
@@ -45,6 +45,15 @@ export function matchAssistantCommands(draft: string): AssistantCommandName[] {
   return ASSISTANT_COMMANDS.filter((command) =>
     command.name.startsWith(token),
   ).map((command) => command.name);
+}
+
+/**
+ * The request following a typed `/bypass`: empty when bare, null for other text.
+ * @example readBypassRequest("/bypass make 3 cards"); // "make 3 cards"
+ */
+export function readBypassRequest(text: string): string | null {
+  const match = /^\/bypass(?:\s+([\s\S]*))?$/.exec(text.trim());
+  return match ? (match[1] ?? "") : null;
 }
 
 export interface AssistantCommandMenuIds {

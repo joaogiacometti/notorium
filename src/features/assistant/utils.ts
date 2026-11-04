@@ -12,7 +12,6 @@ import type {
 } from "@/features/assistant/tools";
 import type {
   AssistantFlashcardProposalPart,
-  AssistantGuidedLessonPart,
   AssistantLibrarySearchPart,
   AssistantUIMessage,
 } from "@/features/assistant/types";
@@ -150,94 +149,6 @@ export function readFlashcardProposalParts(
     (part): part is AssistantFlashcardProposalPart =>
       part.type === "tool-proposeFlashcards",
   );
-}
-
-/** The finished `startGuidedLesson` markers in one chat message, in order.
- * @example readGuidedLessonParts(message).map((part) => part.output.topic);
- */
-export function readGuidedLessonParts(
-  message: AssistantUIMessage,
-): Array<Extract<AssistantGuidedLessonPart, { state: "output-available" }>> {
-  return message.parts.filter(
-    (
-      part,
-    ): part is Extract<
-      AssistantGuidedLessonPart,
-      { state: "output-available" }
-    > =>
-      (part.type === "tool-startGuidedLesson" ||
-        part.type === "tool-endGuidedLesson") &&
-      part.state === "output-available",
-  );
-}
-
-/**
- * Markers that start a lesson, by tool call id. A start sent while a lesson
- * is already active is not a new lesson, so the chat does not show it as one.
- * @example readGuidedLessonTransitions(chat.messages).has(part.toolCallId);
- */
-export function readGuidedLessonTransitions(
-  messages: AssistantUIMessage[],
-): Set<string> {
-  return walkGuidedLessons(messages).transitions;
-}
-
-/** The lesson the latest marker left active, or null when none is.
- * @example readActiveGuidedLesson(chat.messages)?.topic;
- */
-export function readActiveGuidedLesson(
-  messages: AssistantUIMessage[],
-): ActiveGuidedLesson | null {
-  return walkGuidedLessons(messages).active;
-}
-
-interface ActiveGuidedLesson {
-  toolCallId: string;
-  topic: string;
-}
-
-function walkGuidedLessons(messages: AssistantUIMessage[]): {
-  transitions: Set<string>;
-  active: ActiveGuidedLesson | null;
-} {
-  const transitions = new Set<string>();
-  let active = null as ActiveGuidedLesson | null;
-  for (const part of messages.flatMap(readGuidedLessonParts)) {
-    if (active === null && part.type === "tool-startGuidedLesson")
-      transitions.add(part.toolCallId);
-    // The started topic stays; a later marker only becomes the one to end.
-    active = part.output.endedByUser
-      ? null
-      : {
-          toolCallId: part.toolCallId,
-          topic: active?.topic ?? part.output.topic,
-        };
-  }
-  return { transitions, active };
-}
-
-/**
- * Record that the user ended a lesson on its marker, so the model learns it
- * with the next request without spending a reply.
- * @example chat.setMessages(endGuidedLesson(chat.messages, lesson.toolCallId));
- */
-export function endGuidedLesson(
-  messages: AssistantUIMessage[],
-  toolCallId: string,
-): AssistantUIMessage[] {
-  return messages.map((message) => ({
-    ...message,
-    parts: message.parts.map((part) =>
-      part.type === "tool-startGuidedLesson" &&
-      part.state === "output-available" &&
-      part.toolCallId === toolCallId
-        ? {
-            ...part,
-            output: { ...part.output, endedByUser: true },
-          }
-        : part,
-    ),
-  }));
 }
 
 /** The `searchLibrary` calls in one chat message, in order.

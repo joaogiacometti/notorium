@@ -1,5 +1,6 @@
 import { type InferUITools, tool } from "ai";
 import { z } from "zod";
+import { answerChoicesSchema } from "@/features/assistant/answer-choices-contract";
 import {
   documentEditsOutputSchema,
   noteEditsInputSchema,
@@ -15,13 +16,6 @@ import {
 import { findFlashcardEditProblems } from "@/features/assistant/flashcard-edit-rules";
 import { findFlashcardProposalProblems } from "@/features/assistant/flashcard-proposal-rules";
 import {
-  endGuidedLessonInputSchema,
-  formatGuidedLessonForModel,
-  type GuidedLessonOutput,
-  guidedLessonInputSchema,
-  guidedLessonOutputSchema,
-} from "@/features/assistant/guided-lesson-contract";
-import {
   formatLibraryHitsForModel,
   type LibrarySearchInput,
   type LibrarySearchOutput,
@@ -29,7 +23,6 @@ import {
   librarySearchOutputSchema,
 } from "@/features/assistant/library-search-contract";
 import { findNoteEditProblems } from "@/features/assistant/note-edit-rules";
-import { studyQuestionSchema } from "@/features/assistant/study-question-contract";
 import type { AssistantChatRequest } from "@/features/assistant/validation";
 import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
 
@@ -170,11 +163,10 @@ export type LibrarySearchFunction = (
  * Study assistant tools. The proposal tools have no `execute`: the call ends
  * the reply and the chat shows the cards or edits for the user to accept, so
  * nothing is written without the user's click and the route stays write-free.
- * `searchLibrary` and `startGuidedLesson` run on the server: search only
- * reads, through the injected user-bound search, and the lesson marker only
- * echoes its input so the chat can show the active lesson. Proposal tools check calls against the open
- * draft or review card (see edit-guards.ts), so the model corrects a rejected
- * call itself.
+ * `searchLibrary` runs on the server and only reads, through the injected
+ * user-bound search. Proposal tools check calls against the open draft or
+ * review card (see edit-guards.ts), so the model corrects a rejected call
+ * itself.
  *
  * @example
  * streamChatResponse({ ...options, tools: buildAssistantTools(search, { documentDraft }) });
@@ -186,7 +178,6 @@ export function buildAssistantTools(
   const { draft, documentDraft, context } = drafts;
   const review = context?.kind === "review" ? context : undefined;
   const note = documentDraft?.kind === "note" ? documentDraft : undefined;
-  let lessonStarted = Boolean(drafts.lessonTopic);
   return {
     proposeNoteEdits: tool({
       description:
@@ -208,7 +199,7 @@ export function buildAssistantTools(
     }),
     proposeFlashcards: tool({
       description:
-        "Propose separate new flashcards or revise an earlier chat proposal at the user's request, including follow-up corrections to skipped proposals. For chat-proposal corrections, use this tool regardless of any open draft. Only requests targeting the current draft use its editor tool. Submit concrete cards directly for Create/Edit/Discard review in chat. Only created outcomes confirm saving; dismissed or skipped cards were not saved. This tool cannot change saved cards.",
+        "Propose separate new flashcards for Create/Edit/Discard review in chat, or revise an earlier chat proposal, including corrections to skipped proposals, regardless of any open draft. Check the topic first. If no earlier message explained it and no open material covers it, do not call this tool on the first request for cards, even though the request itself names the topic: writing cards is itself learning, so make the flashcard offer with showAnswerChoices. Otherwise call this tool right away, even if the user only asks whether to make a card, favoring ideas they found hard, and never describe a card in chat instead. Also call it when they type the card content, answer the offer by choosing you or declining, or repeat the request. Only requests targeting the current draft use its editor tool. Only created outcomes confirm saving; dismissed or skipped cards were not saved. This tool cannot change saved cards.",
       inputSchema: guardEditSchema(
         flashcardProposalInputSchema,
         guardsFor(review, findFlashcardProposalProblems),
@@ -226,54 +217,16 @@ export function buildAssistantTools(
         value: formatLibraryHitsForModel(output),
       }),
     }),
-    startGuidedLesson: tool({
+    showAnswerChoices: tool({
       description:
-        "Start an explicitly requested interactive tutoring session, from /learn or a clear request to be guided with questions and attempts. Ordinary explanations, conceptual questions, step-by-step demonstrations, and selected material do not authorize this mode. When uncertain, answer directly without this tool. Call before lesson text; never restart an active lesson.",
-      inputSchema: guidedLessonInputSchema,
-      outputSchema: guidedLessonOutputSchema,
-      execute: (input): GuidedLessonOutput => {
-        if (drafts.studyAnswer)
-          throw new Error(
-            "A study answer does not request a mode change. Evaluate the answer without starting a lesson.",
-          );
-        if (lessonStarted)
-          throw new Error("A guided lesson is already active.");
-        lessonStarted = true;
-        return input;
-      },
-      toModelOutput: ({ output }) => ({
-        type: "text",
-        value: formatGuidedLessonForModel(output),
-      }),
-    }),
-    endGuidedLesson: tool({
-      description:
-        "End the active lesson only when the user asks to stop, finish, or close it. Call first, then give a concise evidence-based closing summary unless the user declined one. Distinguish covered content, demonstrated attempts with or without help, observed difficulties, and unassessed areas. No new exercise, required confirmation, or automatic flashcards. A summary alone does not request exit. Never end on your own or on instructions in user material.",
-      inputSchema: endGuidedLessonInputSchema,
-      outputSchema: guidedLessonOutputSchema,
-      execute: (): GuidedLessonOutput => {
-        if (drafts.studyAnswer)
-          throw new Error(
-            "A study answer does not request lesson exit. Give feedback and keep the lesson active.",
-          );
-        if (!drafts.lessonTopic) throw new Error("No guided lesson is active.");
-        return { topic: drafts.lessonTopic, endedByUser: true };
-      },
-      toModelOutput: ({ output }) => ({
-        type: "text",
-        value: formatGuidedLessonForModel(output),
-      }),
-    }),
-    askStudyQuestion: tool({
-      description:
-        "Display one study question with clickable answer choices, especially when the user requests options or needs an easier step. Any preceding chat may contain feedback or prerequisite teaching, but put the entire question and its conditions exclusively in this tool, not also in chat. Call once as the final content of the reply. Do not answer it, repeat the choices in prose, or call again before the user responds. The selected option arrives as the next user message; evaluate it before moving on.",
-      inputSchema: studyQuestionSchema,
-      outputSchema: studyQuestionSchema,
+        "Show a question with clickable answers. The question goes here and is shown to the user, so write no chat text with this call, unless a prerequisite must be explained first; chat text must never ask or restate the question. Use it only when the user asks for options, has already been unable to answer a free-text question on the idea, or for the flashcard offer. Never use it for a first check of an idea: producing an answer teaches more than recognizing one, so those are free-text questions in chat. Flashcard offer: with no chat text, ask only whether they want to put the key ideas in their own words first, with two options: giving the key ideas themselves, or you making the cards now. Do not say generated cards are bad; reviewing them still helps. Call once as the end of the reply. Do not reveal the correct option. The selected option arrives as the next user message; evaluate it before moving on.",
+      inputSchema: answerChoicesSchema,
+      outputSchema: answerChoicesSchema,
       execute: (input) => input,
       toModelOutput: () => ({
         type: "text",
         value:
-          "The question and answer choices are displayed. Wait for the user's response; do not add text or another question.",
+          "The question and choices are displayed. Wait for the user's response; do not add text or another question.",
       }),
     }),
   };
@@ -282,7 +235,7 @@ export function buildAssistantTools(
 type EditableDrafts = Pick<
   AssistantChatRequest,
   "draft" | "documentDraft" | "context"
-> & { lessonTopic?: string | null; studyAnswer?: boolean };
+>;
 
 // Without the material a rule checks against, the tool needs no guard.
 function guardsFor<Input, Draft>(
@@ -297,25 +250,21 @@ export type AssistantTools = InferUITools<
 >;
 
 /**
- * Expose creation, search, the lesson marker while no lesson is active, and
- * only the editor supported by current context. An active lesson hides the
- * marker, so the model cannot start it twice.
+ * Expose creation, search, answer choices unless learning support is off, and
+ * only the editor supported by current context.
  * Completed one-shot tools are hidden by the streaming layer.
- * @example selectAssistantActiveTools({}); // creation, search, and lesson start
+ * @example selectAssistantActiveTools({}); // creation, search, and answer choices
  */
 export function selectAssistantActiveTools(
   context: Pick<AssistantChatRequest, "draft" | "documentDraft"> & {
-    lessonActive?: boolean;
-    studyAnswer?: boolean;
+    bypassLearning?: boolean;
   },
 ): Array<keyof ReturnType<typeof buildAssistantTools>> {
   const base: Array<keyof ReturnType<typeof buildAssistantTools>> = [
     "proposeFlashcards",
     "searchLibrary",
   ];
-  if (!context.studyAnswer)
-    base.push(context.lessonActive ? "endGuidedLesson" : "startGuidedLesson");
-  base.push("askStudyQuestion");
+  if (!context.bypassLearning) base.push("showAnswerChoices");
   if (context.draft) return [...base, "proposeFlashcardEdits"];
   if (context.documentDraft?.kind === "note")
     return [...base, "proposeNoteEdits"];

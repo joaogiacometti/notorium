@@ -115,7 +115,7 @@ describe("shortcutRegistry", () => {
     expect(getShortcutsByCategory(ShortcutCategory.StudyAssistant)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ kind: "typed", keys: ["/new"] }),
-        expect.objectContaining({ kind: "typed", keys: ["/learn"] }),
+        expect.objectContaining({ kind: "typed", keys: ["/bypass"] }),
         expect.objectContaining({ kind: "keys", keys: ["enter"] }),
         expect.objectContaining({
           kind: "keys",

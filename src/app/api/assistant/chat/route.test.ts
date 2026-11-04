@@ -65,6 +65,14 @@ describe("POST /api/assistant/chat", () => {
     expect(streamAssistantReplyForUserMock).not.toHaveBeenCalled();
   });
 
+  it("forwards whether learning support is off", async () => {
+    await postChat({ ...validBody, bypassLearning: true });
+
+    expect(streamAssistantReplyForUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({ bypassLearning: true }),
+    );
+  });
+
   it("streams the reply for the session user", async () => {
     const response = await postChat(validBody);
 

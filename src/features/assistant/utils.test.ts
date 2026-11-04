@@ -1,15 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { AssistantUIMessage } from "@/features/assistant/types";
 import {
   composeProposedFlashcardBack,
-  endGuidedLesson,
   findProposedSubjectId,
   formatFlashcardExample,
   getLibraryHitHref,
   isAssistantReplyInFlight,
-  readActiveGuidedLesson,
   readFlashcardProposalParts,
-  readGuidedLessonTransitions,
   readLibrarySearchParts,
   readProposalSource,
   readStudyContextSource,
@@ -217,66 +213,5 @@ describe("stampLastUserMetadata", () => {
       { source },
       undefined,
     ]);
-  });
-});
-
-describe("guided lesson markers", () => {
-  function reply(id: string, topic: string): AssistantUIMessage {
-    return {
-      id,
-      role: "assistant",
-      parts: [
-        {
-          type: "tool-startGuidedLesson",
-          toolCallId: id,
-          state: "output-available",
-          input: { topic },
-          output: { topic },
-        },
-      ],
-    };
-  }
-
-  it("ignores a repeated start and keeps the started topic", () => {
-    const messages = [
-      reply("a", "Linear regression"),
-      reply("b", "Linear regression for college"),
-    ];
-
-    expect([...readGuidedLessonTransitions(messages)]).toEqual(["a"]);
-    expect(readActiveGuidedLesson(messages)).toEqual({
-      toolCallId: "b",
-      topic: "Linear regression",
-    });
-  });
-
-  it("ends the lesson only when the user ends it, then allows a new one", () => {
-    const ended = endGuidedLesson([reply("a", "Linear regression")], "a");
-
-    expect(readActiveGuidedLesson(ended)).toBeNull();
-    const restarted = [...ended, reply("c", "Derivatives")];
-    expect([...readGuidedLessonTransitions(restarted)]).toEqual(["a", "c"]);
-    expect(readActiveGuidedLesson(restarted)?.topic).toBe("Derivatives");
-  });
-
-  it("recognizes a conversational exit without showing it as a new start", () => {
-    const messages: AssistantUIMessage[] = [
-      reply("a", "Derivatives"),
-      {
-        id: "exit",
-        role: "assistant",
-        parts: [
-          {
-            type: "tool-endGuidedLesson",
-            toolCallId: "exit",
-            state: "output-available",
-            input: {},
-            output: { topic: "Derivatives", endedByUser: true },
-          },
-        ],
-      },
-    ];
-    expect(readActiveGuidedLesson(messages)).toBeNull();
-    expect([...readGuidedLessonTransitions(messages)]).toEqual(["a"]);
   });
 });

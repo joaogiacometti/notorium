@@ -124,10 +124,8 @@ Dialogs and review sessions host the same assistant inside their own focus/scrol
 boundary. Nested hosts restore the previous host on close. Do not expose chat by
 raising its layer. The slash-command menu stays in flow above the composer field,
 using the shared Command primitives; keyboard focus stays in the textarea.
-Commands that need text, such as `/learn`, fill the composer instead of sending.
-The lesson indicator is a mode control, separate from the material-context label.
-Ending a lesson stops tutoring before requesting a closing summary; it must not
-require another answer or reopen the lesson if summary generation fails.
+`/new` and `/bypass` run from the menu. While learning support is off, an indicator
+separate from the material-context label says so and offers to turn it back on.
 
 Proposals are reviewed where they change content, not in another overlay:
 

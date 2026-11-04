@@ -7,6 +7,7 @@ runAssistantEvals("flashcards", [
   {
     name: "a requested count of one proposes exactly one card",
     messages: conversation("Make 1 flashcard about what ATP does"),
+    request: { bypassLearning: true },
     check: (reply) => {
       expect(reply.toolNames).toEqual(["proposeFlashcards"]);
       const { cards } = flashcardProposalInputSchema.parse(

@@ -2,6 +2,7 @@
 
 import type { ChatStatus } from "ai";
 import { useEffect, useRef } from "react";
+import { AssistantAnswerChoices } from "@/components/assistant/assistant-answer-choices";
 import {
   AssistantDocumentProposal,
   readDocumentProposalParts,
@@ -13,14 +14,11 @@ import {
   AssistantRichReply,
   preloadAssistantRichReply,
 } from "@/components/assistant/assistant-rich-reply";
-import { AssistantStudyQuestion } from "@/components/assistant/assistant-study-question";
 import type { FlashcardProposalControls } from "@/components/assistant/use-flashcard-proposal-outcomes";
 import type { AssistantUIMessage } from "@/features/assistant/types";
 import {
   isAssistantReplyInFlight,
   readFlashcardProposalParts,
-  readGuidedLessonParts,
-  readGuidedLessonTransitions,
   readLibrarySearchParts,
   readProposalSource,
 } from "@/features/assistant/utils";
@@ -45,10 +43,9 @@ export function AssistantMessageList({
   const endRef = useRef<HTMLDivElement>(null);
   const lastMessage = messages.at(-1);
   const busy = isAssistantReplyInFlight(status);
-  const lessonTransitions = readGuidedLessonTransitions(messages);
-  // The reply exists before its first token arrives, and a finished search or
-  // lesson marker is followed by another model step; until text streams in,
-  // it reads as "Thinking…" rather than a stalled chat.
+  // The reply exists before its first token arrives, and a finished search is
+  // followed by another model step; until text streams in, it reads as
+  // "Thinking…" rather than a stalled chat.
   const awaitingFirstToken =
     status === "submitted" ||
     (status === "streaming" &&
@@ -66,7 +63,8 @@ export function AssistantMessageList({
   if (messages.length === 0) {
     return (
       <p className="flex flex-1 items-center px-6 text-center text-sm text-muted-foreground">
-        Ask about your material, request a worked example, or ask to be quizzed.
+        Ask about anything you want to learn. Type /bypass to skip learning
+        support.
       </p>
     );
   }
@@ -82,13 +80,6 @@ export function AssistantMessageList({
         )
         .map((message) => (
           <div key={message.id} className="space-y-2">
-            {readGuidedLessonParts(message).map((part) => (
-              <GuidedLessonMarker
-                key={part.toolCallId}
-                part={part}
-                changesState={lessonTransitions.has(part.toolCallId)}
-              />
-            ))}
             {readMessageText(message) === "" ? null : (
               <AssistantMessageBubble
                 message={message}
@@ -103,12 +94,13 @@ export function AssistantMessageList({
               />
             ))}
             {message.parts.flatMap((part) =>
-              part.type === "tool-askStudyQuestion" &&
+              part.type === "tool-showAnswerChoices" &&
               part.state === "output-available"
                 ? [
-                    <AssistantStudyQuestion
+                    <AssistantAnswerChoices
                       key={part.toolCallId}
-                      question={part.output}
+                      question={part.output.question}
+                      options={part.output.options}
                       disabled={busy || message !== lastMessage || !onAnswer}
                       onAnswer={onAnswer}
                     />,
@@ -143,35 +135,12 @@ export function AssistantMessageList({
   );
 }
 
-// A start repeated during a lesson shows nothing; one the user ended from the
-// indicator also shows where the lesson stopped.
-function GuidedLessonMarker({
-  part,
-  changesState,
-}: Readonly<{
-  part: ReturnType<typeof readGuidedLessonParts>[number];
-  changesState: boolean;
-}>) {
-  const lines = [
-    changesState ? `Guided lesson started · ${part.output.topic}` : null,
-    part.output.endedByUser ? "Guided lesson ended" : null,
-  ].filter((line) => line !== null);
-  return lines.map((line) => (
-    <p key={line} className="text-xs text-muted-foreground">
-      {line}
-    </p>
-  ));
-}
-
 function AssistantMessageBubble({
   message,
   streaming,
 }: Readonly<{ message: AssistantUIMessage; streaming: boolean }>) {
   const fromUser = message.role === "user";
-  const text =
-    fromUser && message.metadata?.lessonSummary
-      ? "End lesson · Summary"
-      : readMessageText(message);
+  const text = readMessageText(message);
   const userHasMath =
     fromUser && splitDollarMath(text).some((part) => part.kind === "math");
 
@@ -202,10 +171,7 @@ function awaitsNextStep(message: AssistantUIMessage): boolean {
   if (last.type === "step-start") return true;
   if (last.type === "text") return last.text === "";
   return (
-    (last.type === "tool-startGuidedLesson" ||
-      last.type === "tool-endGuidedLesson" ||
-      last.type === "tool-searchLibrary") &&
-    last.state === "output-available"
+    last.type === "tool-searchLibrary" && last.state === "output-available"
   );
 }
 
@@ -216,13 +182,12 @@ function hasVisibleContent(
 ): boolean {
   return (
     readMessageText(message) !== "" ||
-    readGuidedLessonParts(message).length > 0 ||
     readFlashcardProposalParts(message).length > 0 ||
     readLibrarySearchParts(message).length > 0 ||
     readDocumentProposalParts(message, replyInFlight).length > 0 ||
     message.parts.some(
       (part) =>
-        part.type === "tool-askStudyQuestion" &&
+        part.type === "tool-showAnswerChoices" &&
         part.state === "output-available",
     )
   );

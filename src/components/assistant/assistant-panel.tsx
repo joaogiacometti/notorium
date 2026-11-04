@@ -1,9 +1,9 @@
 "use client";
 
 import { PanelRightClose, RotateCcw, SquarePen } from "lucide-react";
+import { AssistantBypassIndicator } from "@/components/assistant/assistant-bypass-indicator";
 import { readAssistantErrorMessage } from "@/components/assistant/assistant-chat-transport";
 import { AssistantComposer } from "@/components/assistant/assistant-composer";
-import { AssistantLessonIndicator } from "@/components/assistant/assistant-lesson-indicator";
 import { AssistantMessageList } from "@/components/assistant/assistant-message-list";
 import { AssistantPanelFrame } from "@/components/assistant/assistant-panel-frame";
 import {
@@ -76,7 +76,11 @@ function AssistantConversationPanel({
         </div>
       }
     >
-      <AssistantLessonIndicator chat={chat} onEnd={workspace.finishLesson} />
+      {workspace.bypassLearning ? (
+        <AssistantBypassIndicator
+          onTurnOn={() => workspace.setBypassLearning(false)}
+        />
+      ) : null}
       {workspace.editor ? (
         <p className="border-b px-4 py-2 text-xs text-muted-foreground">
           Using current flashcard draft
@@ -112,7 +116,7 @@ function AssistantConversationPanel({
         messages={chat.messages}
         status={chat.status}
         proposals={proposals}
-        onAnswer={(text) => workspace.send(text, { studyAnswer: true })}
+        onAnswer={(text) => workspace.send(text)}
         onOpenLibraryHit={() => minimizeOnCompactLayout(onMinimize)}
       />
       {chat.error ? (
@@ -140,6 +144,9 @@ function AssistantConversationPanel({
         focusRequested={workspace.open}
         onStop={() => void chat.stop()}
         onNewChat={workspace.reset}
+        chatEmpty={chat.messages.length === 0}
+        bypassActive={workspace.bypassLearning}
+        onBypass={() => workspace.setBypassLearning(true)}
       />
     </AssistantPanelFrame>
   );

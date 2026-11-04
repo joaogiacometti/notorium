@@ -28,8 +28,6 @@ interface StreamChatResponseOptions {
   maxModelSteps?: number;
   /** Successful display-only tool results that finish the turn. */
   stopAfterTools?: string[];
-  /** Permit final prose but no further actions after one of these results. */
-  disableToolsAfter?: string[];
   /** Hide these tools after a successful result in this reply. */
   singleUseTools?: string[];
   abortSignal?: AbortSignal;
@@ -68,7 +66,6 @@ export async function streamChatResponse({
   activeTools,
   maxModelSteps = 1,
   stopAfterTools = [],
-  disableToolsAfter = [],
   singleUseTools = [],
   abortSignal,
   sessionId,
@@ -86,8 +83,6 @@ export async function streamChatResponse({
           step.toolResults.map((result) => result.toolName),
         ),
       );
-      if (disableToolsAfter.some((name) => completed.has(name)))
-        return { activeTools: [] };
       return {
         activeTools: (activeTools ?? Object.keys(tools ?? {})).filter(
           (name) => !singleUseTools.includes(name) || !completed.has(name),

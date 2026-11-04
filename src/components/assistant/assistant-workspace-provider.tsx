@@ -24,10 +24,8 @@ import {
 } from "@/features/assistant/study-context";
 import type { AssistantUIMessage } from "@/features/assistant/types";
 import {
-  endGuidedLesson,
   isAssistantReplyInFlight,
   prepareDraftForAssistant,
-  readActiveGuidedLesson,
   readStudyContextSource,
   stampLastUserMetadata,
 } from "@/features/assistant/utils";
@@ -68,6 +66,9 @@ export function AssistantWorkspaceProvider({
   }).current;
   const chat = useChat<AssistantUIMessage>({ transport });
   const [composerDraft, setComposerDraft] = useState("");
+  const [bypassLearning, setBypassLearningState] = useState(false);
+  // Read when sending: `/bypass <request>` turns it on and sends in one event.
+  const bypassLearningRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [host, setHost] = useState<HTMLElement | null>(null);
   const hosts = useRef<HTMLElement[]>([]);
@@ -92,7 +93,6 @@ export function AssistantWorkspaceProvider({
   const requestRef = useRef<NativeFlashcardDraft | null>(null);
   const handled = useRef(new Set<string>());
   const chatGeneration = useRef(0);
-  const closingLesson = useRef(false);
   const preparingMessage = useRef(false);
   const lastPdfSelection = useRef<string | null>(null);
   const editors = useRef<ActiveFlashcardEditor[]>([]);
@@ -219,30 +219,15 @@ export function AssistantWorkspaceProvider({
     setPending(null);
   }
 
-  async function send(
-    text?: string,
-    sendOptions?: { studyAnswer?: boolean },
-  ): Promise<boolean> {
-    if (
-      isAssistantReplyInFlight(chat.status) ||
-      closingLesson.current ||
-      preparingMessage.current
-    )
+  function setBypassLearning(bypass: boolean) {
+    bypassLearningRef.current = bypass;
+    setBypassLearningState(bypass);
+  }
+
+  async function send(text?: string): Promise<boolean> {
+    if (isAssistantReplyInFlight(chat.status) || preparingMessage.current)
       return false;
     const generation = chatGeneration.current;
-    const lastUser = chat.messages.findLast(
-      (message) => message.role === "user",
-    );
-    if (text === undefined && lastUser?.metadata?.lessonSummary) {
-      setNotice(null);
-      void chat.regenerate({ body: {} }).catch(() => {
-        if (generation === chatGeneration.current)
-          setNotice(
-            "The lesson has ended, but its summary could not be generated. You can retry.",
-          );
-      });
-      return true;
-    }
     if (editorRef.current && !editorRef.current.available()) {
       setNotice("Wait for saving or image uploads to finish, then try again.");
       return false;
@@ -293,6 +278,7 @@ export function AssistantWorkspaceProvider({
           : studyContext;
       const options = {
         body: {
+          ...(bypassLearningRef.current ? { bypassLearning: true } : {}),
           ...(draft
             ? { draft: modelDraft }
             : documentDraft
@@ -301,10 +287,6 @@ export function AssistantWorkspaceProvider({
         },
       };
       const metadata = {
-        ...(sendOptions?.studyAnswer ||
-        (text === undefined && lastUser?.metadata?.studyAnswer)
-          ? { studyAnswer: true }
-          : {}),
         source: readStudyContextSource(
           draft ? undefined : (contexts.current.at(-1)?.() ?? undefined),
         ),
@@ -330,41 +312,6 @@ export function AssistantWorkspaceProvider({
       return false;
     } finally {
       preparingMessage.current = false;
-    }
-  }
-
-  async function finishLesson() {
-    const lesson = readActiveGuidedLesson(chat.messages);
-    if (!lesson || closingLesson.current) return;
-    closingLesson.current = true;
-    chatGeneration.current += 1;
-    const generation = chatGeneration.current;
-    try {
-      await chat.stop();
-      if (generation !== chatGeneration.current) return;
-      chat.setMessages((messages) =>
-        endGuidedLesson(messages, lesson.toolCallId),
-      );
-      await settlePending();
-      await documents.settle();
-      await proposals.skipOpenCards();
-      if (generation !== chatGeneration.current) return;
-      setNotice(null);
-      // Exit is already recorded. Summary failure must never reopen the lesson.
-      await chat.sendMessage(
-        {
-          text: "Summarize the lesson we just ended, in the language used during that lesson.",
-          metadata: { lessonSummary: lesson.toolCallId },
-        },
-        { body: {} },
-      );
-    } catch {
-      if (generation === chatGeneration.current)
-        setNotice(
-          "The lesson has ended, but its summary could not be generated. You can retry.",
-        );
-    } finally {
-      closingLesson.current = false;
     }
   }
 
@@ -461,6 +408,7 @@ export function AssistantWorkspaceProvider({
     proposals.reset();
     setNotice(null);
     setComposerDraft("");
+    setBypassLearning(false);
   }
 
   return (
@@ -486,7 +434,8 @@ export function AssistantWorkspaceProvider({
         pending,
         decide,
         send,
-        finishLesson,
+        bypassLearning,
+        setBypassLearning,
         reset,
         notice: notice ?? documents.notice,
       }}

@@ -1,14 +1,11 @@
 import "server-only";
 
-import { readActiveLessonTopic } from "@/features/assistant/guided-lesson-contract";
-import { readRequestedLessonSummary } from "@/features/assistant/lesson-summary";
 import type {
   LibrarySearchInput,
   LibrarySearchOutput,
 } from "@/features/assistant/library-search-contract";
 import { buildAssistantSystemPrompt } from "@/features/assistant/prompts";
 import { assembleAssistantMessages } from "@/features/assistant/request-context";
-import { isStudyAnswerTurn } from "@/features/assistant/study-question-contract";
 import {
   buildAssistantTools,
   type LibrarySearchFunction,
@@ -27,13 +24,11 @@ type UserLibrarySearch = (
   input: LibrarySearchInput,
 ) => Promise<LibrarySearchOutput>;
 
-// One step to search, one to mark a guided lesson's start, one to answer,
-// and one to correct an edit proposal the draft guards rejected (a valid
-// proposal ends the reply, so that step runs only after a rejection). Keep
-// tool definitions stable for history; completed one-shot actions are hidden,
-// and after an exit only the closing prose remains available.
-const ASSISTANT_MAX_MODEL_STEPS = 4;
-const LESSON_SUMMARY_MAX_OUTPUT_TOKENS = 900;
+// One step to search, one to answer, and one to correct an edit proposal the
+// draft guards rejected (a valid proposal ends the reply, so that step runs only
+// after a rejection). Keep tool definitions stable for history; completed
+// one-shot actions are hidden.
+const ASSISTANT_MAX_MODEL_STEPS = 3;
 
 interface StreamAssistantReplyForUserInput {
   userId: string;
@@ -43,6 +38,7 @@ interface StreamAssistantReplyForUserInput {
   draft?: AssistantChatRequest["draft"];
   context?: AssistantChatRequest["context"];
   documentDraft?: AssistantChatRequest["documentDraft"];
+  bypassLearning?: boolean;
   historyTruncated?: boolean;
   abortSignal?: AbortSignal;
   /** Injected by tests; defaults to the user's subject paths from the DB. */
@@ -75,6 +71,7 @@ export async function streamAssistantReplyForUser({
   draft,
   context,
   documentDraft,
+  bypassLearning,
   historyTruncated,
   abortSignal,
   loadSubjectPaths = readSubjectPathsForUser,
@@ -93,52 +90,35 @@ export async function streamAssistantReplyForUser({
     };
   }
 
-  const summary = readRequestedLessonSummary(messages);
-  const studyAnswer = isStudyAnswerTurn(messages);
-  const lessonTopic = summary ? null : readActiveLessonTopic(messages);
   const response = await streamChatResponse({
     settings: access.settings,
     logScope: "assistant.chat",
     instructions: buildAssistantSystemPrompt(),
     messages: assembleAssistantMessages(
-      summary
-        ? {
-            messages: summary.messages,
-            lessonSummaryTopic: summary.topic,
-            historyTruncated,
-          }
-        : {
-            messages,
-            draft,
-            context,
-            documentDraft,
-            lessonTopic,
-            historyTruncated,
-          },
-      summary ? [] : await loadSubjectPaths(userId),
+      {
+        messages,
+        draft,
+        context,
+        documentDraft,
+        bypassLearning,
+        historyTruncated,
+      },
+      await loadSubjectPaths(userId),
     ),
-    maxOutputTokens: summary
-      ? LESSON_SUMMARY_MAX_OUTPUT_TOKENS
-      : AI_LIMITS.assistantMaxOutputTokens,
+    maxOutputTokens: AI_LIMITS.assistantMaxOutputTokens,
     tools: buildAssistantTools(bindLibrarySearchToUser(searchLibrary, userId), {
       draft,
       documentDraft,
       context,
-      lessonTopic,
-      studyAnswer,
     }),
-    activeTools: summary
-      ? []
-      : selectAssistantActiveTools({
-          draft,
-          documentDraft,
-          lessonActive: lessonTopic !== null,
-          studyAnswer,
-        }),
-    maxModelSteps: summary ? 1 : ASSISTANT_MAX_MODEL_STEPS,
-    stopAfterTools: ["askStudyQuestion"],
-    disableToolsAfter: ["endGuidedLesson"],
-    singleUseTools: ["startGuidedLesson", "searchLibrary"],
+    activeTools: selectAssistantActiveTools({
+      draft,
+      documentDraft,
+      bypassLearning,
+    }),
+    maxModelSteps: ASSISTANT_MAX_MODEL_STEPS,
+    stopAfterTools: ["showAnswerChoices"],
+    singleUseTools: ["searchLibrary"],
     abortSignal,
     sessionId: chatId,
   });

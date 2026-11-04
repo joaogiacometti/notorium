@@ -47,10 +47,10 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.StudyAssistant,
   },
   {
-    id: "assistant-learn",
+    id: "assistant-bypass",
     kind: "typed",
-    keys: ["/learn"],
-    description: "Start a guided lesson on a topic",
+    keys: ["/bypass"],
+    description: "Skip learning support until a new chat",
     category: ShortcutCategory.StudyAssistant,
   },
   {

@@ -59,11 +59,10 @@ export interface AssistantWorkspace {
   register: (editor: ActiveFlashcardEditor) => () => void;
   pending: PendingFlashcardEdits | null;
   decide: (field: FlashcardEditField, accept: boolean) => void;
-  send: (
-    text?: string,
-    options?: { studyAnswer?: boolean },
-  ) => Promise<boolean>;
-  finishLesson: () => Promise<void>;
+  send: (text?: string) => Promise<boolean>;
+  /** Learning support is off until new chat, reload, or `setBypassLearning(false)`. */
+  bypassLearning: boolean;
+  setBypassLearning: (bypass: boolean) => void;
   reset: () => void;
   notice: string | null;
 }

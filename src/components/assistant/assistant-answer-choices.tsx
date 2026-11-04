@@ -4,15 +4,17 @@ import { useRef, useState } from "react";
 import type { z } from "zod";
 import { AssistantRichReply } from "@/components/assistant/assistant-rich-reply";
 import { Button } from "@/components/ui/button";
-import type { studyQuestionSchema } from "@/features/assistant/study-question-contract";
+import type { answerChoicesSchema } from "@/features/assistant/answer-choices-contract";
 
 /** Choices use the same send path as typing, including proposal and error handling. */
-export function AssistantStudyQuestion({
+export function AssistantAnswerChoices({
   question,
+  options,
   disabled,
   onAnswer,
 }: Readonly<{
-  question: z.infer<typeof studyQuestionSchema>;
+  question: string;
+  options: z.infer<typeof answerChoicesSchema>["options"];
   disabled: boolean;
   onAnswer?: (text: string) => Promise<boolean>;
 }>) {
@@ -26,7 +28,7 @@ export function AssistantStudyQuestion({
     try {
       if (
         !(await onAnswer(
-          `${String.fromCharCode(65 + index)}) ${question.options[index]}`,
+          `${String.fromCharCode(65 + index)}) ${options[index]}`,
         ))
       )
         setSelected(null);
@@ -37,9 +39,11 @@ export function AssistantStudyQuestion({
 
   return (
     <fieldset className="min-w-0 space-y-2 text-sm">
-      <legend className="sr-only">Answer choices</legend>
-      <AssistantRichReply text={question.question} />
-      {question.options.map((option, index) => (
+      <legend className="sr-only">{question}</legend>
+      <div aria-hidden="true">
+        <AssistantRichReply text={question} />
+      </div>
+      {options.map((option, index) => (
         <div key={option} className="relative">
           <Button
             type="button"

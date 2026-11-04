@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { answerChoicesSchema } from "@/features/assistant/answer-choices-contract";
 import {
   documentDraftSchema,
   documentEditsOutputSchema,
@@ -10,16 +11,10 @@ import {
   flashcardEditsOutputSchema,
 } from "@/features/assistant/edit-contract";
 import {
-  endGuidedLessonInputSchema,
-  guidedLessonInputSchema,
-  guidedLessonOutputSchema,
-} from "@/features/assistant/guided-lesson-contract";
-import {
   librarySearchInputSchema,
   librarySearchOutputSchema,
 } from "@/features/assistant/library-search-contract";
 import { studyContextSchema } from "@/features/assistant/study-context";
-import { studyQuestionSchema } from "@/features/assistant/study-question-contract";
 import {
   flashcardProposalInputSchema,
   flashcardProposalOutputSchema,
@@ -97,9 +92,7 @@ const unansweredToolPartSchema = z.object({
     "tool-proposeFlashcardEdits",
     "tool-proposeNoteEdits",
     "tool-searchLibrary",
-    "tool-startGuidedLesson",
-    "tool-endGuidedLesson",
-    "tool-askStudyQuestion",
+    "tool-showAnswerChoices",
   ]),
   state: z.enum(["input-streaming", "input-available", "output-error"]),
 });
@@ -111,19 +104,9 @@ const replyPartSchema = z.union([
   answeredEditsPartSchema,
   answeredLibrarySearchPartSchema,
   answeredToolPartSchema(
-    "tool-startGuidedLesson",
-    guidedLessonInputSchema,
-    guidedLessonOutputSchema,
-  ),
-  answeredToolPartSchema(
-    "tool-endGuidedLesson",
-    endGuidedLessonInputSchema,
-    guidedLessonOutputSchema,
-  ),
-  answeredToolPartSchema(
-    "tool-askStudyQuestion",
-    studyQuestionSchema,
-    studyQuestionSchema,
+    "tool-showAnswerChoices",
+    answerChoicesSchema,
+    answerChoicesSchema,
   ),
   answeredToolPartSchema(
     "tool-proposeNoteEdits",
@@ -141,7 +124,7 @@ function isModelVisiblePart(
   return (
     part.type === "text" ||
     part.type === "step-start" ||
-    ("state" in part && part.state === "output-available")
+    part.state === "output-available"
   );
 }
 
@@ -149,12 +132,6 @@ const userMessageSchema = z.object({
   id: z.string().min(1).max(100),
   role: z.literal("user"),
   parts: z.array(userTextPartSchema).min(1).max(1),
-  metadata: z
-    .object({
-      lessonSummary: z.string().min(1).max(100).optional(),
-      studyAnswer: z.boolean().optional(),
-    })
-    .optional(),
 });
 
 const replyMessageSchema = z.object({
@@ -198,6 +175,7 @@ function dropEmptyReplies(messages: ChatMessage[]): ChatMessage[] {
 export const assistantChatRequestSchema = z
   .object({
     historyTruncated: z.boolean().optional(),
+    bypassLearning: z.boolean().optional(),
     draft: flashcardDraftSchema.optional(),
     documentDraft: documentDraftSchema.optional(),
     context: studyContextSchema.optional(),
