@@ -81,7 +81,9 @@ verification gaps live in [Behavior Contracts](./behavior-contracts.md).
 - **Assistant state belongs to the app shell.** Editors and study surfaces register
   context with one workspace; moving its presentation into a dialog does not create
   another conversation. Draft session/revision checks prevent late proposals from
-  overwriting newer edits. Material is untrusted context, not system instructions.
+  overwriting newer edits. Note and flashcard edits share session ownership,
+  ordered proposal delivery, and settlement; their editor-specific hooks own
+  validation and acceptance. Material is untrusted context, not system instructions.
 
 Import restrictions in [biome.json](../biome.json) enforce the read/write boundaries.
 Detailed contributor rules belong in [AGENTS.md](../AGENTS.md), not here.

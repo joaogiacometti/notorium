@@ -1,7 +1,6 @@
 "use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import {
   type ActiveDocumentEditor,
@@ -10,12 +9,12 @@ import {
   documentSnapshotSignature,
   type PendingDocumentEdit,
 } from "@/components/assistant/document-editor-types";
+import { useEditProposalLifecycle } from "@/components/assistant/use-edit-proposal-lifecycle";
 import {
   type DocumentEditOutcome,
   documentDraftSchema,
 } from "@/features/assistant/document-edit-contract";
 import type { AssistantUIMessage } from "@/features/assistant/types";
-import { isAssistantReplyInFlight } from "@/features/assistant/utils";
 
 /** Own document proposals independently of the page and chat presentation.
  * @example const documents = useDocumentEditWorkspace(chat);
@@ -24,15 +23,16 @@ export function useDocumentEditWorkspace(
   chat: UseChatHelpers<AssistantUIMessage>,
   enabled = true,
 ): DocumentEditControls {
-  const editors = useRef<ActiveDocumentEditor[]>([]);
-  const baseline = useRef<DocumentSnapshot | null>(null);
-  const pendingRef = useRef<PendingDocumentEdit | null>(null);
-  const [pending, setPending] = useState<PendingDocumentEdit | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const handled = useRef(new Set<string>());
-  const generation = useRef(0);
-  const active = () => (enabled ? editors.current.at(-1) : undefined);
-  const receiveQueue = useRef(Promise.resolve());
+  const edits = useEditProposalLifecycle<
+    DocumentSnapshot,
+    ActiveDocumentEditor,
+    PendingDocumentEdit
+  >(chat, "proposeNoteEdits", {
+    enabled,
+    skip: (current) => record(current.tool, current.toolCallId, "skipped"),
+    prepare,
+    describeError: describePreparationError,
+  });
 
   async function record(
     tool: PendingDocumentEdit["tool"],
@@ -41,62 +41,37 @@ export function useDocumentEditWorkspace(
   ): Promise<void> {
     await chat.addToolOutput({ tool, toolCallId, output: { outcome } });
   }
-  function clearPending(): void {
-    pendingRef.current = null;
-    setPending(null);
-  }
-  async function settle(): Promise<void> {
-    const current = pendingRef.current;
-    clearPending();
-    if (current) await record(current.tool, current.toolCallId, "skipped");
-  }
-  function register(editor: ActiveDocumentEditor): () => void {
-    void settle();
-    editors.current.push(editor);
-    return () => {
-      if (active() === editor) {
-        void settle();
-        baseline.current = null;
-        generation.current += 1;
-      }
-      editors.current = editors.current.filter(
-        (candidate) => candidate !== editor,
-      );
-    };
-  }
   function capture() {
-    generation.current += 1;
-    const editor = active();
+    const editor = edits.active();
     if (editor && !editor.available())
       throw new Error(
         "Document editor unavailable; expected completed image uploads",
       );
-    baseline.current = editor?.snapshot() ?? null;
-    setNotice(null);
-    return baseline.current
-      ? documentDraftSchema.parse(baseline.current.draft)
-      : undefined;
+    const snapshot = edits.capture();
+    return snapshot ? documentDraftSchema.parse(snapshot.draft) : undefined;
   }
   function decide(accept: boolean): void {
-    const current = pendingRef.current;
+    const current = edits.current();
     if (!current) return;
     if (!accept) {
-      clearPending();
+      edits.replace(null);
       void record(current.tool, current.toolCallId, "discarded");
       return;
     }
-    const editor = active();
+    const editor = edits.active();
     if (!editor?.available()) {
-      setNotice("Wait for image uploads to finish, then apply again.");
+      edits.setNotice("Wait for image uploads to finish, then apply again.");
       return;
     }
     const stale =
       documentSnapshotSignature(editor.snapshot()) !==
       documentSnapshotSignature(current.baseline);
-    clearPending();
+    edits.replace(null);
     if (stale) {
       void record(current.tool, current.toolCallId, "stale");
-      setNotice("The document changed. Ask again to use the current version.");
+      edits.setNotice(
+        "The document changed. Ask again to use the current version.",
+      );
       return;
     }
     try {
@@ -104,22 +79,23 @@ export function useDocumentEditWorkspace(
       void record(current.tool, current.toolCallId, "accepted");
     } catch {
       void record(current.tool, current.toolCallId, "stale");
-      setNotice("These changes could not be applied. Ask again to retry.");
+      edits.setNotice(
+        "These changes could not be applied. Ask again to retry.",
+      );
     }
   }
-  async function receive(
-    tool: PendingDocumentEdit["tool"],
+  async function prepare(
     toolCallId: string,
     input: unknown,
-    captured: DocumentSnapshot | null,
-    requestGeneration: number,
-  ): Promise<void> {
-    if (requestGeneration !== generation.current) return;
+    isCurrent: () => boolean,
+  ): Promise<PendingDocumentEdit | null> {
     const { prepareDocumentEdit } = await import(
       "@/components/assistant/prepare-document-edit"
     );
-    if (requestGeneration !== generation.current) return;
-    const editor = active();
+    if (!isCurrent()) return null;
+    const captured = edits.baseline();
+    const tool = "proposeNoteEdits";
+    const editor = edits.active();
     const identity = input as {
       sessionId?: unknown;
       revision?: unknown;
@@ -133,82 +109,24 @@ export function useDocumentEditWorkspace(
       documentSnapshotSignature(editor.snapshot()) !==
         documentSnapshotSignature(captured);
     if (stale) {
-      await record(tool, toolCallId, "stale");
-      setNotice(
+      void record(tool, toolCallId, "stale");
+      edits.setNotice(
         "The document changed before this suggestion arrived. Ask again.",
       );
-      return;
+      return null;
     }
     const prepared = prepareDocumentEdit(captured, input);
-    await settle();
-    if (requestGeneration !== generation.current) return;
-    const next = { tool, toolCallId, baseline: captured, prepared };
-    pendingRef.current = next;
-    setPending(next);
-  }
-  useEffect(() => {
-    if (isAssistantReplyInFlight(chat.status)) return;
-    for (const message of chat.messages)
-      for (const part of message.parts) {
-        if (
-          part.type !== "tool-proposeNoteEdits" ||
-          part.state !== "input-available" ||
-          handled.current.has(part.toolCallId)
-        )
-          continue;
-        handled.current.add(part.toolCallId);
-        const tool = "proposeNoteEdits";
-        const captured = baseline.current;
-        const requestGeneration = generation.current;
-        receiveQueue.current = receiveQueue.current
-          .then(() =>
-            receive(
-              tool,
-              part.toolCallId,
-              part.input,
-              captured,
-              requestGeneration,
-            ),
-          )
-          .catch((error: unknown) => {
-            if (requestGeneration !== generation.current) return;
-            void chat.addToolOutput({
-              tool,
-              toolCallId: part.toolCallId,
-              state: "output-error",
-              errorText: describePreparationError(error),
-            });
-            setNotice(
-              "These changes could not be prepared. Ask again to retry.",
-            );
-          });
-      }
-  });
-  const controlsRef = useRef({ settle });
-  controlsRef.current = { settle };
-  useEffect(() => {
-    if (!enabled) {
-      generation.current += 1;
-      baseline.current = null;
-      void controlsRef.current.settle();
-    }
-  }, [enabled]);
-  function reset(): void {
-    generation.current += 1;
-    baseline.current = null;
-    handled.current.clear();
-    clearPending();
-    setNotice(null);
+    return { tool, toolCallId, baseline: captured, prepared };
   }
   return {
-    pending,
-    notice,
-    register,
+    pending: edits.pending,
+    notice: edits.notice,
+    register: edits.register,
     capture,
-    settle,
+    settle: edits.settle,
     decide,
-    reset,
-    available: !active() || Boolean(active()?.available()),
+    reset: edits.reset,
+    available: !edits.editor || edits.editor.available(),
   };
 }
 

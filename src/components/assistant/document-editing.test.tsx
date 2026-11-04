@@ -58,6 +58,9 @@ function NoteSurface({ editor }: { editor: Editor }) {
       >
         Type
       </button>
+      <button type="button" onClick={() => editor.commands.setTextSelection(5)}>
+        Move selection
+      </button>
       <button type="button" onClick={() => editor.commands.undo()}>
         Undo
       </button>
@@ -90,6 +93,15 @@ function WorkspaceHarness({ editor }: { editor: Editor }) {
       </button>
       <button type="button" onClick={() => workspace?.reset()}>
         Reset
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          workspace?.documents.decide(true);
+          workspace?.documents.decide(true);
+        }}
+      >
+        Accept twice
       </button>
       <output data-testid="notice">{workspace?.notice}</output>
       <output data-testid="messages">
@@ -222,6 +234,33 @@ describe("document proposal lifecycle", () => {
     await click("Upload");
     await click("Accept changes");
     expect(read("values")).toContain("Improved explanation");
+  });
+  it("keeps pending suggestions when uploads prevent sending", async () => {
+    await click("Send");
+    await click("Upload");
+    await click("Send");
+    expect(transport.requests).toHaveLength(1);
+    expect(container.textContent).toContain("Accept changes");
+    await click("Upload");
+    await click("Accept changes");
+    expect(read("values")).toContain("Improved explanation");
+  });
+  it("accepts changes only once without generating another request", async () => {
+    await click("Send");
+    await click("Accept twice");
+    expect(read("values")).toContain("Improved explanation");
+    expect(read("messages").match(/"outcome":"accepted"/g)).toHaveLength(1);
+    expect(transport.requests).toHaveLength(1);
+  });
+  it("keeps proposals valid when only the selection changes", async () => {
+    transport.delayed = true;
+    await click("Send");
+    await click("Move selection");
+    await act(async () => transport.finishReply());
+    await click("Move selection");
+    await click("Accept changes");
+    expect(read("values")).toContain("Improved explanation");
+    expect(read("messages")).toContain('"outcome":"accepted"');
   });
   it("rejects invalid operations without changing the editor", async () => {
     transport.invalid = true;

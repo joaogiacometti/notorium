@@ -2,22 +2,13 @@
 
 import { useChat } from "@ai-sdk/react";
 import type { ChatTransport } from "ai";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { createAssistantChatTransport } from "@/components/assistant/assistant-chat-transport";
-import {
-  type ActiveFlashcardEditor,
-  AssistantWorkspaceContext,
-  type PendingFlashcardEdits,
-} from "@/components/assistant/assistant-workspace-context";
+import { AssistantWorkspaceContext } from "@/components/assistant/assistant-workspace-context";
 import { useDocumentEditWorkspace } from "@/components/assistant/use-document-edit-workspace";
+import { useFlashcardEditWorkspace } from "@/components/assistant/use-flashcard-edit-workspace";
 import { useFlashcardProposalOutcomes } from "@/components/assistant/use-flashcard-proposal-outcomes";
-import type { NativeFlashcardDraft } from "@/features/assistant/edit-contract";
-import {
-  type FlashcardEditField,
-  type FlashcardEditsOutput,
-  flashcardDraftSchema,
-  flashcardEditsInputSchema,
-} from "@/features/assistant/edit-contract";
+import { flashcardDraftSchema } from "@/features/assistant/edit-contract";
 import {
   type StudyContext,
   studyContextSchema,
@@ -31,7 +22,6 @@ import {
 } from "@/features/assistant/utils";
 
 const sharedTransport = createAssistantChatTransport();
-const EDIT_FIELDS = ["front", "back"] as const;
 
 interface AssistantWorkspaceProviderProps {
   children: ReactNode;
@@ -81,22 +71,15 @@ export function AssistantWorkspaceProvider({
     fallback: HTMLElement;
   } | null>(null);
   const proposals = useFlashcardProposalOutcomes(chat);
-  const [editor, setEditor] = useState<ActiveFlashcardEditor | null>(null);
+  const flashcards = useFlashcardEditWorkspace(chat);
   const documents = useDocumentEditWorkspace(
     chat,
-    !editor && context?.kind !== "review",
+    !flashcards.editor && context?.kind !== "review",
   );
-  const editorRef = useRef(editor);
-  const [pending, setPending] = useState<PendingFlashcardEdits | null>(null);
-  const pendingRef = useRef(pending);
   const [notice, setNotice] = useState<string | null>(null);
-  const requestRef = useRef<NativeFlashcardDraft | null>(null);
-  const handled = useRef(new Set<string>());
   const chatGeneration = useRef(0);
   const preparingMessage = useRef(false);
   const lastPdfSelection = useRef<string | null>(null);
-  const editors = useRef<ActiveFlashcardEditor[]>([]);
-  pendingRef.current = pending;
 
   function movePortalToActiveHost() {
     const nodes = portalNodes.current;
@@ -138,87 +121,6 @@ export function AssistantWorkspaceProvider({
     };
   }
 
-  function record(toolCallId: string, output: FlashcardEditsOutput) {
-    return chat.addToolOutput({
-      tool: "proposeFlashcardEdits",
-      toolCallId,
-      output,
-    });
-  }
-
-  function reject(toolCallId: string, errorText: string) {
-    void chat.addToolOutput({
-      tool: "proposeFlashcardEdits",
-      toolCallId,
-      state: "output-error",
-      errorText,
-    });
-  }
-
-  async function settlePending() {
-    const current = pendingRef.current;
-    if (!current) return;
-    const output = { ...current.outcomes };
-    for (const field of EDIT_FIELDS) {
-      if (current.fields[field]) output[field] = "skipped";
-    }
-    pendingRef.current = null;
-    setPending(null);
-    await record(current.toolCallId, output);
-  }
-
-  function register(active: ActiveFlashcardEditor) {
-    void settlePending();
-    editors.current.push(active);
-    editorRef.current = active;
-    setEditor(active);
-    setNotice(null);
-    return () => {
-      editors.current = editors.current.filter(
-        (candidate) => candidate !== active,
-      );
-      if (editorRef.current !== active) return;
-      void settlePending();
-      const previous = editors.current.at(-1) ?? null;
-      editorRef.current = previous;
-      setEditor(previous);
-    };
-  }
-
-  function decide(field: FlashcardEditField, accept: boolean) {
-    const current = pendingRef.current;
-    const proposal = current?.fields[field];
-    const active = editorRef.current;
-    if (!current || !proposal || !active?.available()) return;
-    const snapshot = active.snapshot();
-    const stale =
-      snapshot.sessionId !== current.sessionId ||
-      snapshot[field] !== proposal.original;
-    if (accept && !stale) active.apply(field, proposal.replacement);
-    const fields = { ...current.fields };
-    delete fields[field];
-    const outcomes = {
-      ...current.outcomes,
-      [field]: stale
-        ? ("stale" as const)
-        : accept
-          ? ("accepted" as const)
-          : ("discarded" as const),
-    };
-    updatePending({ ...current, fields, outcomes });
-  }
-
-  function updatePending(next: PendingFlashcardEdits) {
-    if (Object.keys(next.fields).length) {
-      pendingRef.current = next;
-      setPending(next);
-      return;
-    }
-    record(next.toolCallId, next.outcomes);
-    pendingRef.current = null;
-    setPending(null);
-  }
-
   function setBypassLearning(bypass: boolean) {
     bypassLearningRef.current = bypass;
     setBypassLearningState(bypass);
@@ -228,13 +130,13 @@ export function AssistantWorkspaceProvider({
     if (isAssistantReplyInFlight(chat.status) || preparingMessage.current)
       return false;
     const generation = chatGeneration.current;
-    if (editorRef.current && !editorRef.current.available()) {
+    if (flashcards.active() && !flashcards.active()?.available()) {
       setNotice("Wait for saving or image uploads to finish, then try again.");
       return false;
     }
     preparingMessage.current = true;
     try {
-      const draft = editorRef.current?.snapshot();
+      const draft = flashcards.active()?.snapshot();
       const documentDraft = documents.capture();
       const studyContext =
         draft || documentDraft
@@ -251,11 +153,11 @@ export function AssistantWorkspaceProvider({
         );
         return false;
       }
-      await settlePending();
+      flashcards.capture(draft ?? null);
+      await flashcards.settle();
       await documents.settle();
       await proposals.skipOpenCards();
       if (generation !== chatGeneration.current) return false;
-      requestRef.current = draft ?? null;
       if (studyContext?.kind === "review" && studyContext.hiddenBack) {
         setAssistedRecallFront(studyContext.front);
       }
@@ -315,93 +217,11 @@ export function AssistantWorkspaceProvider({
     }
   }
 
-  async function receive(toolCallId: string, input: unknown) {
-    const generation = chatGeneration.current;
-    const baseline = requestRef.current;
-    const { restoreDraftReplacement } = await import(
-      "@/components/assistant/flashcard-draft-content"
-    );
-    if (
-      generation !== chatGeneration.current ||
-      baseline !== requestRef.current
-    )
-      return;
-    const parsed = flashcardEditsInputSchema.safeParse(input);
-    const active = editorRef.current;
-    const snapshot = active?.snapshot();
-    if (!parsed.success) {
-      reject(toolCallId, "Expected valid flashcard field replacements");
-      return;
-    }
-    const proposal = parsed.data;
-    const stale =
-      !baseline ||
-      !snapshot ||
-      !active?.available() ||
-      proposal.sessionId !== baseline.sessionId ||
-      proposal.revision !== baseline.revision ||
-      snapshot.sessionId !== baseline.sessionId ||
-      snapshot.revision !== baseline.revision;
-    if (stale) {
-      record(
-        toolCallId,
-        Object.fromEntries(
-          EDIT_FIELDS.filter((field) => proposal[field] !== undefined).map(
-            (field) => [field, "stale"],
-          ),
-        ),
-      );
-      setNotice(
-        "The draft changed before this suggestion arrived. Ask again to use the current draft.",
-      );
-      return;
-    }
-    // Clear synchronously so multiple tool calls cannot overwrite unresolved outcomes.
-    void settlePending();
-    const fields: PendingFlashcardEdits["fields"] = {};
-    for (const field of EDIT_FIELDS) {
-      if (proposal[field] === undefined) continue;
-      fields[field] = {
-        original: baseline[field],
-        replacement: restoreDraftReplacement(proposal[field], baseline[field]),
-      };
-    }
-    const next = {
-      toolCallId,
-      sessionId: baseline.sessionId,
-      fields,
-      outcomes: {},
-    };
-    pendingRef.current = next;
-    setPending(next);
-  }
-
-  useEffect(() => {
-    if (isAssistantReplyInFlight(chat.status)) return;
-    for (const message of chat.messages) {
-      for (const part of message.parts) {
-        if (
-          part.type !== "tool-proposeFlashcardEdits" ||
-          part.state !== "input-available" ||
-          handled.current.has(part.toolCallId)
-        )
-          continue;
-        handled.current.add(part.toolCallId);
-        void receive(part.toolCallId, part.input).catch(() => {
-          reject(part.toolCallId, "Expected supported flashcard rich text");
-          setNotice("These changes could not be prepared. Ask again to retry.");
-        });
-      }
-    }
-  });
-
   function reset() {
     chatGeneration.current += 1;
     chat.stop();
     documents.reset();
-    void settlePending();
-    requestRef.current = null;
-    handled.current.clear();
+    flashcards.reset();
     lastPdfSelection.current = null;
     chat.clearError();
     chat.setMessages([]);
@@ -429,15 +249,15 @@ export function AssistantWorkspaceProvider({
         context,
         assistedRecallFront,
         ...contextCallbacks,
-        editor,
-        register,
-        pending,
-        decide,
+        editor: flashcards.editor,
+        register: flashcards.register,
+        pending: flashcards.pending,
+        decide: flashcards.decide,
         send,
         bypassLearning,
         setBypassLearning,
         reset,
-        notice: notice ?? documents.notice,
+        notice: notice ?? flashcards.notice ?? documents.notice,
       }}
     >
       {children}

@@ -43,4 +43,4 @@ Model-visible behavior belongs in [the system prompt](../src/features/assistant/
 - Correct answers and summaries are not evidence of mastery. Answer-choice controls send explicit user messages, never automatic follow-up requests.
 - Conversations are in browser memory, survive minimizing and client navigation, and clear on reload or new chat; they are not a durable chat archive.
 
-**Coverage to strengthen:** no automatic follow-up requests after proposal actions, double acceptance, late replies after new chat, and selection-only changes. `npm run eval` covers edit permission, hidden answers, source trust, and learning behavior with a small set of real-model cases.
+**Coverage to strengthen:** no automatic follow-up requests after proposal actions and late replies after new chat. `npm run eval` covers edit permission, hidden answers, source trust, and learning behavior with a small set of real-model cases.

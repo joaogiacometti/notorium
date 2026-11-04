@@ -11,6 +11,18 @@ import { testDocument } from "@/test/document";
 import { FakeFlashcardEditChat } from "@/test/fake-flashcard-edit-chat";
 import "@/components/assistant/flashcard-draft-content";
 
+function NestedCardEditor() {
+  const form = useForm<FlashcardFormValues>({
+    defaultValues: {
+      front: testDocument("Other front"),
+      back: testDocument("Other back"),
+      subjectId: "s1",
+    },
+  });
+  useActiveFlashcardEditor({ form, enabled: true, blocked: false });
+  return null;
+}
+
 function DraftHarness() {
   const workspace = useAssistantWorkspace();
   const [documentId, setDocumentId] = useState("underlying-note");
@@ -35,6 +47,7 @@ function DraftHarness() {
         },
   );
   const [open, setOpen] = useState(true);
+  const [nested, setNested] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [generation, setGeneration] = useState(0);
   const form = useForm<FlashcardFormValues>({
@@ -53,6 +66,7 @@ function DraftHarness() {
   const values = form.watch();
   return (
     <div>
+      {nested ? <NestedCardEditor /> : null}
       <output data-testid="values">{JSON.stringify(values)}</output>
       <output data-testid="pending">
         {JSON.stringify(review.pending?.fields ?? {})}
@@ -73,6 +87,15 @@ function DraftHarness() {
       </button>
       <button type="button" onClick={() => review.decide?.("back", true)}>
         Accept back
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          review.decide?.("back", true);
+          review.decide?.("back", true);
+        }}
+      >
+        Accept back twice
       </button>
       <button type="button" onClick={() => review.decide?.("back", false)}>
         Discard back
@@ -101,6 +124,9 @@ function DraftHarness() {
       </button>
       <button type="button" onClick={() => setOpen(false)}>
         Close
+      </button>
+      <button type="button" onClick={() => setNested(!nested)}>
+        Toggle nested editor
       </button>
       <button type="button" onClick={() => setBlocked(true)}>
         Block editor
@@ -314,6 +340,31 @@ describe("shared assistant flashcard editing", () => {
     expect(JSON.stringify(transport.requests[1].messages)).toContain(
       '"back":"skipped"',
     );
+  });
+
+  it("invalidates a late reply even after returning to the original editor", async () => {
+    transport.delayed = true;
+    transport.replacements = { back: "<p>Suggestion</p>" };
+    await click("Send");
+    await click("Toggle nested editor");
+    await click("Toggle nested editor");
+    await act(async () => {
+      transport.finishReply();
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(read("pending")).toBe("{}");
+    expect(read("messages")).toContain('"back":"stale"');
+    expect(read("values")).toContain("Original back");
+  });
+
+  it("accepts a field only once without generating another request", async () => {
+    transport.replacements = { back: "<p>Suggestion</p>" };
+    await click("Send");
+    await click("Accept back twice");
+    expect(read("values")).toContain("Suggestion");
+    expect(read("pending")).toBe("{}");
+    expect(read("messages").match(/"back":"accepted"/g)).toHaveLength(1);
+    expect(transport.requests).toHaveLength(1);
   });
 
   it("records superseded proposals when a reply contains multiple edit calls", async () => {
