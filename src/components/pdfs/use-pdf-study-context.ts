@@ -6,7 +6,9 @@ import {
   type PdfStudyText,
 } from "@/components/assistant/study-context-content";
 import { useStudyContext } from "@/components/assistant/use-study-context";
-import { joinPdfTextItems, normalizePdfText } from "@/components/pdfs/pdf-text";
+import { PDF_RENDER_WINDOW_PAGES } from "@/components/pdfs/pdf-page-layout";
+import { readPdfTextSelection } from "@/components/pdfs/pdf-selection";
+import { joinPdfTextItems } from "@/components/pdfs/pdf-text";
 
 // Styled by `::highlight(pdf-kept-selection)` in globals.css.
 const PDF_KEPT_SELECTION_HIGHLIGHT = "pdf-kept-selection";
@@ -38,26 +40,31 @@ export function usePdfStudyContext({
   currentPage,
   pagesRef,
 }: UsePdfStudyContextOptions): void {
-  const selection = usePdfSelection(pagesRef);
+  const selection = usePdfSelection(pagesRef, currentPage);
   const pageText = useVisiblePageText(pdfDocument, currentPage);
-  const source = selection ?? pageText;
-  useStudyContext(source ? buildPdfContext(pdf, subjectPath, source) : null);
+  const source = selection.source ?? pageText;
+  useStudyContext(
+    source ? buildPdfContext(pdf, subjectPath, source) : null,
+    selection.clear,
+  );
 }
 
 interface KeptPdfSelection {
   source: PdfStudyText;
+  lastPage: number;
   range: Range;
 }
 
 function usePdfSelection(
   pagesRef: RefObject<HTMLElement | null>,
-): PdfStudyText | null {
+  currentPage: number,
+): { source: PdfStudyText | null; clear: () => void } {
   const [kept, setKept] = useState<KeptPdfSelection | null>(null);
   const [nativeInPages, setNativeInPages] = useState(false);
   useEffect(() => {
     const pages = pagesRef.current;
     if (!pages) return;
-    // Only pressing on the pages clears the selection. A selection can also
+    // Pressing on the pages clears the selection. A selection can also
     // collapse when the text layer re-renders (opening the assistant resizes
     // the column) or focus moves to the chat composer; both keep it.
     const clearSelection = () => setKept(null);
@@ -66,8 +73,8 @@ function usePdfSelection(
       const anchor = current?.anchorNode;
       const inPages = Boolean(anchor && pages?.contains(anchor));
       setNativeInPages(inPages && !current?.isCollapsed);
-      if (!current || !anchor || !inPages) return;
-      const selected = readPdfSelection(current, anchor);
+      if (!current || !pages) return;
+      const selected = readKeptSelection(current, pages);
       if (selected) setKept(selected);
     }
     pages.addEventListener("pointerdown", clearSelection);
@@ -77,21 +84,43 @@ function usePdfSelection(
       document.removeEventListener("selectionchange", readSelection);
     };
   }, [pagesRef]);
+  // Once its pages stop rendering, the selection is nowhere on screen and the
+  // user is reading something else, so the visible page becomes the context.
+  const outOfView =
+    kept !== null &&
+    (currentPage < kept.source.page - PDF_RENDER_WINDOW_PAGES ||
+      currentPage > kept.lastPage + PDF_RENDER_WINDOW_PAGES);
+  useEffect(() => {
+    if (outOfView) setKept(null);
+  }, [outOfView]);
   useKeptSelectionHighlight(nativeInPages ? null : (kept?.range ?? null));
-  return kept?.source ?? null;
+  return {
+    source: kept?.source ?? null,
+    clear: () => {
+      const native = window.getSelection();
+      const anchor = native?.anchorNode;
+      if (anchor && pagesRef.current?.contains(anchor))
+        native?.removeAllRanges();
+      setKept(null);
+    },
+  };
 }
 
-function readPdfSelection(
-  selection: Selection,
-  anchor: Node,
+function readKeptSelection(
+  native: Selection,
+  pages: HTMLElement,
 ): KeptPdfSelection | null {
-  const element = anchor instanceof Element ? anchor : anchor.parentElement;
-  const pageElement = element?.closest<HTMLElement>("[data-page-number]");
-  const page = Number(pageElement?.dataset.pageNumber);
-  const text = normalizePdfText(selection.toString());
-  if (!text || !Number.isInteger(page) || page < 1) return null;
-  const range = selection.getRangeAt(0).cloneRange();
-  return { source: { page, scope: "selection", text }, range };
+  const selected = readPdfTextSelection(native, pages);
+  if (!selected) return null;
+  const page = Number(selected.startPage.dataset.pageNumber);
+  const lastPage = Number(selected.endPage.dataset.pageNumber);
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(lastPage))
+    return null;
+  return {
+    source: { page, scope: "selection", text: selected.text },
+    lastPage,
+    range: selected.range.cloneRange(),
+  };
 }
 
 // Browsers show one selection per page, so focusing the chat composer hides

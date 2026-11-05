@@ -89,4 +89,7 @@ export const SUBJECT_PATH_MAX_CHARS =
 
 export const AI_LIMITS = {
   assistantMaxOutputTokens: 4000,
+  // Well above the reply's 80 words: thinking counts against this budget, and a
+  // cut-off explanation is shown as a failure rather than as partial text.
+  selectionExplanationMaxOutputTokens: 1000,
 } as const;

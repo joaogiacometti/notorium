@@ -39,6 +39,9 @@ export interface AssistantWorkspace {
   setComposerDraft: (draft: string) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
+  /** Open the panel if needed and move focus to the composer. */
+  openComposer: () => void;
+  composerFocusRequest: number;
   host: HTMLElement | null;
   registerHost: (host: HTMLElement) => () => void;
   /** Most recently mounted header launcher; focus returns to it on minimize. */
@@ -53,7 +56,12 @@ export interface AssistantWorkspace {
   /** Front assisted during the current review or exam attempt before reveal. */
   assistedRecallFront: string | null;
   clearAssistedRecall: () => void;
-  registerContext: (snapshot: () => StudyContext | null) => () => void;
+  registerContext: (
+    snapshot: () => StudyContext | null,
+    clearSelection?: () => void,
+  ) => () => void;
+  /** Drop the active surface's selection, falling back to its wider context. */
+  clearContextSelection: () => void;
   refreshContext: () => void;
   editor: ActiveFlashcardEditor | null;
   register: (editor: ActiveFlashcardEditor) => () => void;

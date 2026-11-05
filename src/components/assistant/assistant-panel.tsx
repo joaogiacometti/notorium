@@ -1,8 +1,7 @@
 "use client";
 
-import { PanelRightClose, RotateCcw, SquarePen } from "lucide-react";
+import { PanelRightClose, RotateCcw, SquarePen, X } from "lucide-react";
 import { AssistantBypassIndicator } from "@/components/assistant/assistant-bypass-indicator";
-import { readAssistantErrorMessage } from "@/components/assistant/assistant-chat-transport";
 import { AssistantComposer } from "@/components/assistant/assistant-composer";
 import { AssistantMessageList } from "@/components/assistant/assistant-message-list";
 import { AssistantPanelFrame } from "@/components/assistant/assistant-panel-frame";
@@ -13,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { describeStudyContext } from "@/features/assistant/study-context";
 import { isAssistantReplyInFlight } from "@/features/assistant/utils";
+import { readAssistantErrorMessage } from "@/lib/ai/chat-error";
 
 interface AssistantPanelProps {
   /** Hides the panel; the launcher keeps it mounted, so the chat survives. */
@@ -87,9 +87,27 @@ function AssistantConversationPanel({
         </p>
       ) : null}
       {!workspace.editor && workspace.context ? (
-        <p className="border-b px-4 py-2 text-xs text-muted-foreground">
-          {describeStudyContext(workspace.context)}
-        </p>
+        <div className="flex items-center gap-2 border-b px-4 py-2 text-xs text-muted-foreground">
+          <p
+            className="min-w-0 flex-1 truncate"
+            title={describeStudyContext(workspace.context)}
+          >
+            {describeStudyContext(workspace.context)}
+          </p>
+          {workspace.context.kind === "pdf" &&
+          workspace.context.scope === "selection" ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              className="-my-1 shrink-0"
+              aria-label="Stop using selection"
+              onClick={workspace.clearContextSelection}
+            >
+              <X />
+            </Button>
+          ) : null}
+        </div>
       ) : null}
       {workspace.notice ? (
         <p role="status" className="px-4 py-2 text-xs text-muted-foreground">
@@ -141,7 +159,7 @@ function AssistantConversationPanel({
         value={workspace.composerDraft}
         onValueChange={workspace.setComposerDraft}
         onSend={(text) => workspace.send(text)}
-        focusRequested={workspace.open}
+        focusRequest={workspace.open ? workspace.composerFocusRequest + 1 : 0}
         onStop={() => void chat.stop()}
         onNewChat={workspace.reset}
         chatEmpty={chat.messages.length === 0}

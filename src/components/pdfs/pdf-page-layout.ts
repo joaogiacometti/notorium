@@ -1,4 +1,6 @@
 export const PDF_PAGE_GAP_PX = 12;
+/** Pages this far from the current one stay rendered, with their text layers. */
+export const PDF_RENDER_WINDOW_PAGES = 2;
 export const PDF_ZOOM_MIN = 0.25;
 export const PDF_ZOOM_MAX = 4;
 // Columns narrower than Tailwind's `sm` breakpoint are phones.

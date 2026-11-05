@@ -19,6 +19,7 @@ import {
   PDF_NARROW_COLUMN_PX,
   PDF_NO_CROP,
   PDF_PAGE_GAP_PX,
+  PDF_RENDER_WINDOW_PAGES,
   type PdfCrop,
   type PdfPageSize,
   type PdfZoom,
@@ -27,6 +28,7 @@ import {
   resolvePageWidth,
 } from "@/components/pdfs/pdf-page-layout";
 import { PdfReaderToolbar } from "@/components/pdfs/pdf-reader-toolbar";
+import { PdfSelectionActions } from "@/components/pdfs/pdf-selection-actions";
 import { PdfTableOfContents } from "@/components/pdfs/pdf-table-of-contents";
 import { measurePdfTextCrop } from "@/components/pdfs/pdf-text-crop";
 import { usePdfGestureZoom } from "@/components/pdfs/use-pdf-gesture-zoom";
@@ -54,7 +56,6 @@ const PDF_LOAD_OPTIONS = {
   rangeChunkSize: 512 * 1024,
 };
 const A4_POINTS: PdfPageSize = { width: 595, height: 842 };
-const RENDER_WINDOW_PAGES = 2;
 
 interface PdfReaderProps {
   pdfId: string;
@@ -242,6 +243,7 @@ function PdfPageColumn({
         canTrimMargins={textCrop !== null}
         onTrimMarginsChange={setTrimMargins}
       />
+      <PdfSelectionActions pagesRef={contentRef} />
       <div className="flex min-h-0 flex-1 flex-col gap-2 sm:flex-row">
         {contentsOpen && (
           <aside
@@ -275,7 +277,7 @@ function PdfPageColumn({
                   height={height}
                   rendered={
                     Math.abs(pageNumber - layout.currentPage) <=
-                    RENDER_WINDOW_PAGES
+                    PDF_RENDER_WINDOW_PAGES
                   }
                   onAspect={recordPageAspect}
                 />

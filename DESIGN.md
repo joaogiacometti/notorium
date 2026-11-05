@@ -105,6 +105,8 @@ this table, and the layer test together.
   and mobile-header height so only the reading region scrolls. Keep page navigation
   visible with `size-10` targets; contents use a separate tray capped at half the
   reading region. At `sm` and above, use the top toolbar and left contents sidebar.
+  Selected text gets one floating bar: Explain answers in place, Ask moves to the
+  assistant. The assistant's context line names the selection and can clear it.
 - **Flashcards:** reuse `FlashcardCardEditor` everywhere. One toolbar follows the
   focused face; Front and muted Back form one panel matching the review card.
   Faces grow with content, never scroll independently, and only empty create

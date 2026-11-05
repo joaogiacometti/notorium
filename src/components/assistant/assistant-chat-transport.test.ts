@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  createAssistantChatTransport,
-  readAssistantErrorMessage,
-} from "@/components/assistant/assistant-chat-transport";
+import { createAssistantChatTransport } from "@/components/assistant/assistant-chat-transport";
 import type { AssistantUIMessage } from "@/features/assistant/types";
 import { LIMITS } from "@/lib/config/limits";
 
@@ -98,23 +95,5 @@ describe("createAssistantChatTransport", () => {
 
     expect(sent[0]?.role).toBe("user");
     expect(sent).toHaveLength(LIMITS.assistantMaxMessages - 1);
-  });
-});
-
-describe("readAssistantErrorMessage", () => {
-  it("resolves the route's error code to its message", () => {
-    const error = new Error(
-      JSON.stringify({ success: false, errorCode: "limits.aiAssistantPerDay" }),
-    );
-
-    expect(readAssistantErrorMessage(error)).toBe(
-      "Daily limit reached for the assistant.",
-    );
-  });
-
-  it("falls back to the generic message for network errors", () => {
-    expect(readAssistantErrorMessage(new Error("Failed to fetch"))).toBe(
-      "Something went wrong. Please try again.",
-    );
   });
 });

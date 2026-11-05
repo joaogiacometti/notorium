@@ -67,6 +67,8 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "attachments.mimeTypeNotAllowed": "File type is not allowed.",
   "assistant.invalidData": "Invalid assistant message.",
   "assistant.unavailable": "The assistant is temporarily unavailable.",
+  "assistant.explanationUnavailable":
+    "Couldn't explain this selection. Please try again.",
   "flashcards.invalidData": "Invalid flashcard data.",
   "flashcards.notFound": "Flashcard not found.",
   "flashcards.duplicateFront": "A flashcard with this front already exists.",

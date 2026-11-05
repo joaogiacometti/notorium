@@ -1,12 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ChatTransport, UIMessageChunk } from "ai";
-import { act, type ReactNode } from "react";
+import { act, type ReactNode, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AssistantLauncherButton } from "@/components/assistant/assistant-launcher-button";
 import { AssistantPanel } from "@/components/assistant/assistant-panel";
 import { AssistantWorkspaceProvider } from "@/components/assistant/assistant-workspace-provider";
 import { StudyAssistant } from "@/components/assistant/study-assistant";
+import { useStudyContext } from "@/components/assistant/use-study-context";
 import type { ProposedFlashcard } from "@/features/assistant/tools";
 import type { AssistantUIMessage } from "@/features/assistant/types";
 import type { RichTextDocument } from "@/lib/editor/document";
@@ -460,6 +461,48 @@ describe("study assistant", () => {
 
     expect(transport.requests).toHaveLength(2);
     expect(sentBypass(transport, 1)).toBe(true);
+  });
+
+  it("shows the attached PDF selection and lets the user remove it", async () => {
+    function PdfSurface() {
+      const [selected, setSelected] = useState(true);
+      useStudyContext(
+        {
+          kind: "pdf",
+          title: "Cell biology",
+          content: selected ? "Mitochondria make ATP." : "The whole page",
+          partial: false,
+          page: 3,
+          scope: selected ? "selection" : "page",
+        },
+        () => setSelected(false),
+      );
+      return null;
+    }
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={new QueryClient()}>
+          <AssistantWorkspaceProvider
+            transport={new FakeAssistantChatTransport()}
+          >
+            <PdfSurface />
+            <AssistantPanel onMinimize={() => {}} />
+          </AssistantWorkspaceProvider>
+        </QueryClientProvider>,
+      );
+    });
+    expect(container.textContent).toContain(
+      "Using selection · p. 3 · “Mitochondria make ATP.”",
+    );
+
+    await act(async () => {
+      getByLabel<HTMLButtonElement>("Stop using selection").click();
+    });
+
+    expect(container.textContent).toContain("Using PDF: Cell biology · p. 3");
+    expect(
+      container.querySelector('[aria-label="Stop using selection"]'),
+    ).toBeNull();
   });
 
   it("clears the conversation on New chat", async () => {

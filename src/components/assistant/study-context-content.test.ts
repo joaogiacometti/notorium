@@ -136,7 +136,7 @@ describe("PDF study context", () => {
     expect(studyContextSchema.safeParse(page).success).toBe(true);
     expect(describeStudyContext(page)).toBe("Using PDF: Cell biology · p. 42");
     expect(describeStudyContext(selection)).toBe(
-      "Using PDF: Cell biology · p. 42 · selection",
+      "Using selection · p. 42 · “Mitochondria”",
     );
   });
   it("caps long text and flags pages without selectable text", () => {

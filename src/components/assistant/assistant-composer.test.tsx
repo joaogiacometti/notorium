@@ -71,7 +71,7 @@ describe("assistant composer", () => {
           onBypass={submission.bypass}
           chatEmpty={chat.chatEmpty}
           bypassActive={chat.bypassActive}
-          focusRequested
+          focusRequest={1}
         />,
       ),
     );
@@ -104,6 +104,24 @@ describe("assistant composer", () => {
     });
     return event;
   }
+
+  it("takes focus again each time focus is requested", async () => {
+    const composer = (focusRequest: number) => (
+      <AssistantComposer
+        busy={false}
+        onSend={async () => true}
+        onStop={() => {}}
+        onNewChat={() => {}}
+        focusRequest={focusRequest}
+      />
+    );
+    await act(async () => root.render(composer(1)));
+    const textarea = container.querySelector("textarea");
+    expect(document.activeElement).toBe(textarea);
+    await act(async () => textarea?.blur());
+    await act(async () => root.render(composer(2)));
+    expect(document.activeElement).toBe(textarea);
+  });
 
   it.each(["/", "/n", "/ne", "/new"])(
     "offers and executes %s with Enter",

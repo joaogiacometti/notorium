@@ -57,8 +57,14 @@ function ReaderHarness({ pdfDocument, currentPage }: ReaderHarnessProps) {
         <div data-page-number="2">
           <span id="selectable">Mitochondria make ATP.</span>
         </div>
+        <div data-page-number="3">
+          <span id="next-page">Ribosomes build proteins.</span>
+        </div>
       </div>
       <textarea aria-label="Composer" />
+      <button type="button" onClick={workspace?.clearContextSelection}>
+        Clear selection
+      </button>
       <output>{JSON.stringify(workspace?.context ?? null)}</output>
     </>
   );
@@ -147,6 +153,44 @@ describe("usePdfStudyContext", () => {
     expect(readContext()).toMatchObject({
       scope: "selection",
       content: "Mitochondria make ATP.",
+    });
+  });
+
+  it("labels a selection by its first page when dragged backward", async () => {
+    await renderReader(new FakePdfTextDocument({ 1: "Cells" }), 1);
+    const first = container.querySelector("#selectable")?.firstChild as Node;
+    const last = container.querySelector("#next-page")?.firstChild as Node;
+    await act(async () => {
+      window.getSelection()?.setBaseAndExtent(last, 5, first, 2);
+      document.dispatchEvent(new Event("selectionchange"));
+    });
+    expect(readContext()).toMatchObject({ page: 2, scope: "selection" });
+  });
+
+  it("lets the user drop the selection from the assistant", async () => {
+    await renderReader(new FakePdfTextDocument({ 1: "Cells" }), 1);
+    await selectNode(container.querySelector("#selectable") as Node);
+    expect(readContext()).toMatchObject({ scope: "selection" });
+    await act(async () => container.querySelector("button")?.click());
+    expect(readContext()).toMatchObject({ page: 1, scope: "page" });
+    expect(window.getSelection()?.isCollapsed).toBe(true);
+  });
+
+  it("returns to the visible page once the selection stops rendering", async () => {
+    const pdf = new FakePdfTextDocument({
+      1: "Cells",
+      4: "Tissues",
+      5: "Organs",
+    });
+    await renderReader(pdf, 1);
+    await selectNode(container.querySelector("#selectable") as Node);
+    await renderReader(pdf, 4);
+    expect(readContext()).toMatchObject({ page: 2, scope: "selection" });
+    await renderReader(pdf, 5);
+    expect(readContext()).toMatchObject({
+      page: 5,
+      scope: "page",
+      content: "Organs",
     });
   });
 

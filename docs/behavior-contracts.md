@@ -24,7 +24,7 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 - Subject path creation is atomic. Concurrent subject moves must not create cycles or exceed depth limits.
 - A proposed card's note source is captured with its originating request, not inferred from history, library search, or whichever page is open when accepted. Renames and moves resolve current link metadata; deleting a source preserves the card. PDF context does not establish a card source.
 - Failed saves retain the draft for retry. Uploads and unresolved AI suggestions block saving until their content is safe to persist. Preview decorations never become stored content.
-- PDF context is selectable text from a selection or the current page, not the entire book or OCR. Empty or failed extraction must not be presented as successfully read content.
+- PDF context is selectable text from a selection or the current page, not the entire book or OCR. Empty or failed extraction must not be presented as successfully read content. A selection stays the context until the user clears it, presses on the pages, or scrolls far enough that its text is no longer rendered. Explaining a selection is transient: it never enters the conversation.
 
 **Coverage to strengthen:** source preservation through edit/move/reset and deletion, old proposals accepted after navigation, upload-attempt accounting for invalid requests, and actual byte-range loading.
 

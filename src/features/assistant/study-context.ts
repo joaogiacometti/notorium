@@ -52,8 +52,14 @@ export function describeStudyContext(context: StudyContext): string {
 function describePdfContext(
   context: Extract<StudyContext, { kind: "pdf" }>,
 ): string {
+  const partial = context.partial ? " · partial context" : "";
+  if (context.scope === "selection") {
+    const text = context.content.replace(/\s+/g, " ");
+    const preview = text.length > 80 ? `${text.slice(0, 80).trimEnd()}…` : text;
+    return `Using selection · p. ${context.page}${partial} · “${preview}”`;
+  }
   const source = `Using PDF: ${context.title || "Untitled"} · p. ${context.page}`;
-  if (!context.content) return `${source} · no selectable text`;
-  const scope = context.scope === "selection" ? " · selection" : "";
-  return `${source}${scope}${context.partial ? " · partial context" : ""}`;
+  return context.content
+    ? `${source}${partial}`
+    : `${source} · no selectable text`;
 }

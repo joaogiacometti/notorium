@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getOptionalSessionMock = vi.fn();
 const streamAssistantReplyForUserMock = vi.fn();
+const streamSelectionExplanationForUserMock = vi.fn();
 
 vi.mock("@/lib/auth/auth", () => ({
   getOptionalSession: getOptionalSessionMock,
@@ -9,6 +10,10 @@ vi.mock("@/lib/auth/auth", () => ({
 
 vi.mock("@/features/assistant/service", () => ({
   streamAssistantReplyForUser: streamAssistantReplyForUserMock,
+}));
+
+vi.mock("@/features/assistant/selection-explanation", () => ({
+  streamSelectionExplanationForUser: streamSelectionExplanationForUserMock,
 }));
 
 const validBody = {
@@ -40,6 +45,10 @@ describe("POST /api/assistant/chat", () => {
     streamAssistantReplyForUserMock.mockResolvedValue({
       success: true,
       response: new Response("stream"),
+    });
+    streamSelectionExplanationForUserMock.mockResolvedValue({
+      success: true,
+      response: new Response("explanation stream"),
     });
   });
 
@@ -119,5 +128,78 @@ describe("POST /api/assistant/chat", () => {
 
     expect(response.status).toBe(500);
     expect(body).not.toContain("provider secret detail");
+  });
+
+  it("streams an isolated selection lookup for the approved session user", async () => {
+    const selection = { text: "ARPU", context: "ARPU increased this quarter." };
+    const response = await postChat({ intent: "explain-selection", selection });
+
+    expect(await response.text()).toBe("explanation stream");
+    expect(streamSelectionExplanationForUserMock).toHaveBeenCalledWith({
+      userId: "user-1",
+      selection,
+      abortSignal: expect.any(AbortSignal),
+    });
+    expect(streamAssistantReplyForUserMock).not.toHaveBeenCalled();
+  });
+
+  it("requires an approved session for selection lookups", async () => {
+    getOptionalSessionMock.mockResolvedValueOnce(null);
+    const response = await postChat({
+      intent: "explain-selection",
+      selection: { text: "ARPU", context: "" },
+    });
+    expect(response.status).toBe(401);
+    expect(streamSelectionExplanationForUserMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects oversized selections before spending an AI request", async () => {
+    const response = await postChat({
+      intent: "explain-selection",
+      selection: { text: "x".repeat(4001), context: "" },
+    });
+    expect(response.status).toBe(400);
+    expect(streamSelectionExplanationForUserMock).not.toHaveBeenCalled();
+  });
+
+  it("forwards an entire multiline passage without truncating it", async () => {
+    const selection = {
+      text: "A passage describes how a system works and how its components interact.\nAnother line explains the consequences of changing one of those components.",
+      context: "Nearby text",
+    };
+    const response = await postChat({ intent: "explain-selection", selection });
+    expect(response.status).toBe(200);
+    expect(streamSelectionExplanationForUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({ selection }),
+    );
+  });
+
+  it("rejects lookup requests mixed with chat history instead of falling back to chat", async () => {
+    const response = await postChat({
+      ...validBody,
+      intent: "explain-selection",
+      selection: { text: "ARPU", context: "" },
+    });
+    expect(response.status).toBe(400);
+    expect(streamSelectionExplanationForUserMock).not.toHaveBeenCalled();
+    expect(streamAssistantReplyForUserMock).not.toHaveBeenCalled();
+  });
+
+  it("handles selection lookup limits and provider failures safely", async () => {
+    const body = {
+      intent: "explain-selection",
+      selection: { text: "ARPU", context: "" },
+    };
+    streamSelectionExplanationForUserMock.mockResolvedValueOnce({
+      success: false,
+      errorCode: "limits.aiAssistantPerDay",
+    });
+    expect((await postChat(body)).status).toBe(429);
+    streamSelectionExplanationForUserMock.mockRejectedValueOnce(
+      new Error("provider secret"),
+    );
+    const failed = await postChat(body);
+    expect(failed.status).toBe(500);
+    expect(await failed.text()).not.toContain("provider secret");
   });
 });

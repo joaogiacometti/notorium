@@ -1,3 +1,5 @@
+import { streamSelectionExplanationForUser } from "@/features/assistant/selection-explanation";
+import { selectionExplanationRequestSchema } from "@/features/assistant/selection-explanation-contract";
 import { streamAssistantReplyForUser } from "@/features/assistant/service";
 import { assistantChatRequestSchema } from "@/features/assistant/validation";
 import { getOptionalSession } from "@/lib/auth/auth";
@@ -15,25 +17,35 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json(actionError("auth.forbidden"), { status: 401 });
   }
 
-  const parsed = assistantChatRequestSchema.safeParse(
-    await readJsonOrNull(request),
-  );
+  const body = await readJsonOrNull(request);
+  const parsed =
+    typeof body === "object" && body !== null && "intent" in body
+      ? selectionExplanationRequestSchema.safeParse(body)
+      : assistantChatRequestSchema.safeParse(body);
   if (!parsed.success) {
     return Response.json(actionError("assistant.invalidData"), { status: 400 });
   }
 
   try {
-    const result = await streamAssistantReplyForUser({
-      userId: session.user.id,
-      messages: parsed.data.messages,
-      chatId: parsed.data.chatId,
-      draft: parsed.data.draft,
-      documentDraft: parsed.data.documentDraft,
-      context: parsed.data.context,
-      bypassLearning: parsed.data.bypassLearning,
-      historyTruncated: parsed.data.historyTruncated,
-      abortSignal: request.signal,
-    });
+    const input = parsed.data;
+    const result =
+      "intent" in input
+        ? await streamSelectionExplanationForUser({
+            userId: session.user.id,
+            selection: input.selection,
+            abortSignal: request.signal,
+          })
+        : await streamAssistantReplyForUser({
+            userId: session.user.id,
+            messages: input.messages,
+            chatId: input.chatId,
+            draft: input.draft,
+            documentDraft: input.documentDraft,
+            context: input.context,
+            bypassLearning: input.bypassLearning,
+            historyTruncated: input.historyTruncated,
+            abortSignal: request.signal,
+          });
 
     if (!result.success) {
       return Response.json(actionError(result.errorCode), {

@@ -23,7 +23,8 @@ interface AssistantComposerProps {
   onBypass?: () => void;
   value?: string;
   onValueChange?: (value: string) => void;
-  focusRequested?: boolean;
+  /** Focuses the field whenever this changes to a non-zero value. */
+  focusRequest?: number;
 }
 
 export function AssistantComposer({
@@ -36,7 +37,7 @@ export function AssistantComposer({
   onBypass,
   value,
   onValueChange,
-  focusRequested = false,
+  focusRequest = 0,
 }: Readonly<AssistantComposerProps>) {
   const [localDraft, setLocalDraft] = useState("");
   const draft = value ?? localDraft;
@@ -54,8 +55,8 @@ export function AssistantComposer({
       : commands[0];
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
-    if (focusRequested) textareaRef.current?.focus();
-  }, [focusRequested]);
+    if (focusRequest) textareaRef.current?.focus();
+  }, [focusRequest]);
   const canSend = !busy && commandText.length > 0;
 
   function startNewChat(): void {

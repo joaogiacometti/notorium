@@ -23,6 +23,11 @@ import {
 
 const sharedTransport = createAssistantChatTransport();
 
+interface RegisteredContext {
+  snapshot: () => StudyContext | null;
+  clearSelection?: () => void;
+}
+
 interface AssistantWorkspaceProviderProps {
   children: ReactNode;
   transport?: ChatTransport<AssistantUIMessage>;
@@ -35,22 +40,27 @@ export function AssistantWorkspaceProvider({
   children,
   transport = sharedTransport,
 }: Readonly<AssistantWorkspaceProviderProps>) {
-  const contexts = useRef<Array<() => StudyContext | null>>([]);
+  const contexts = useRef<RegisteredContext[]>([]);
   const [context, setContext] = useState<StudyContext | null>(null);
   const [assistedRecallFront, setAssistedRecallFront] = useState<string | null>(
     null,
   );
   const contextCallbacks = useRef({
     clearAssistedRecall: () => setAssistedRecallFront(null),
-    refreshContext: () => setContext(contexts.current.at(-1)?.() ?? null),
-    registerContext: (snapshot: () => StudyContext | null) => {
-      contexts.current.push(snapshot);
+    refreshContext: () =>
+      setContext(contexts.current.at(-1)?.snapshot() ?? null),
+    clearContextSelection: () => contexts.current.at(-1)?.clearSelection?.(),
+    registerContext: (
+      snapshot: () => StudyContext | null,
+      clearSelection?: () => void,
+    ) => {
+      contexts.current.push({ snapshot, clearSelection });
       setContext(snapshot());
       return () => {
         contexts.current = contexts.current.filter(
-          (entry) => entry !== snapshot,
+          (entry) => entry.snapshot !== snapshot,
         );
-        setContext(contexts.current.at(-1)?.() ?? null);
+        setContext(contexts.current.at(-1)?.snapshot() ?? null);
       };
     },
   }).current;
@@ -60,6 +70,7 @@ export function AssistantWorkspaceProvider({
   // Read when sending: `/bypass <request>` turns it on and sends in one event.
   const bypassLearningRef = useRef(false);
   const [open, setOpen] = useState(false);
+  const [composerFocusRequest, setComposerFocusRequest] = useState(0);
   const [host, setHost] = useState<HTMLElement | null>(null);
   const hosts = useRef<HTMLElement[]>([]);
   // A stack, so closing a dialog's launcher hands focus back to the page's.
@@ -121,6 +132,11 @@ export function AssistantWorkspaceProvider({
     };
   }
 
+  function openComposer() {
+    setOpen(true);
+    setComposerFocusRequest((request) => request + 1);
+  }
+
   function setBypassLearning(bypass: boolean) {
     bypassLearningRef.current = bypass;
     setBypassLearningState(bypass);
@@ -141,7 +157,7 @@ export function AssistantWorkspaceProvider({
       const studyContext =
         draft || documentDraft
           ? undefined
-          : (contexts.current.at(-1)?.() ?? undefined);
+          : (contexts.current.at(-1)?.snapshot() ?? undefined);
       const modelDraft = draft ? prepareDraftForAssistant(draft) : undefined;
       if (modelDraft && !flashcardDraftSchema.safeParse(modelDraft).success) {
         setNotice("This draft is too large to send. Shorten it and try again.");
@@ -190,7 +206,9 @@ export function AssistantWorkspaceProvider({
       };
       const metadata = {
         source: readStudyContextSource(
-          draft ? undefined : (contexts.current.at(-1)?.() ?? undefined),
+          draft
+            ? undefined
+            : (contexts.current.at(-1)?.snapshot() ?? undefined),
         ),
       };
       if (text === undefined) {
@@ -238,6 +256,8 @@ export function AssistantWorkspaceProvider({
         documents,
         open,
         setOpen,
+        openComposer,
+        composerFocusRequest,
         host,
         registerHost,
         inlineLauncher: inlineLaunchers.at(-1) ?? null,
