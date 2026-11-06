@@ -30,10 +30,10 @@ vi.mock("@/features/flashcards/struggling-filter", () => ({
   buildStrugglingFlashcardFilter: vi.fn(() => sql`true`),
 }));
 
-vi.mock("@/features/subjects/queries", () => ({
-  getDescendantSubjectIds: async () => [],
-  getSubjectPathForUser: async () => null,
-  getSubjectPathMapForUser: async () => new Map(),
+vi.mock("@/features/folders/queries", () => ({
+  getDescendantFolderIds: async () => [],
+  getFolderPathForUser: async () => null,
+  getFolderPathMapForUser: async () => new Map(),
 }));
 
 describe("getFlashcardsManagePageForUser filter", () => {

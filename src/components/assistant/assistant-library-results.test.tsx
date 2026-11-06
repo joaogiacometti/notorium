@@ -12,9 +12,9 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 const noteHit: LibraryHit = {
   kind: "note",
   id: "note-1",
-  subjectId: "subject-1",
+  folderId: "folder-1",
   title: "Mitose",
-  subjectPath: "Biologia::Células",
+  folderPath: "Biologia::Células",
   snippet: "...a mitose produz duas células...",
 };
 
@@ -58,7 +58,7 @@ describe("AssistantLibraryResults", () => {
     });
   }
 
-  it("links each hit to its page with its subject and excerpt", () => {
+  it("links each hit to its page with its folder and excerpt", () => {
     const onOpenHit = vi.fn();
     render(
       finishedSearch([
@@ -75,7 +75,7 @@ describe("AssistantLibraryResults", () => {
 
     const links = [...container.querySelectorAll("a")];
     expect(links.map((link) => link.getAttribute("href"))).toEqual([
-      "/subjects/subject-1/documents/notes/note-1",
+      "/folders/folder-1/documents/notes/note-1",
       "/flashcards/card-1",
     ]);
     expect(links[0]?.textContent).toContain("Note: Mitose");

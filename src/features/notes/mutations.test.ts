@@ -18,8 +18,8 @@ const deleteMock = vi.fn(() => ({
 }));
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
-const getSubjectRecordForUserMock = vi.fn();
-const countNotesBySubjectForUserMock = vi.fn();
+const getFolderRecordForUserMock = vi.fn();
+const countNotesByFolderForUserMock = vi.fn();
 const getNoteByIdForUserMock = vi.fn();
 const getMediaStorageProviderMock = vi.fn();
 const deleteImagesMock = vi.fn();
@@ -52,12 +52,12 @@ vi.mock("@/db/schema", () => ({
   },
 }));
 
-vi.mock("@/features/subjects/queries", () => ({
-  getSubjectRecordForUser: getSubjectRecordForUserMock,
+vi.mock("@/features/folders/queries", () => ({
+  getFolderRecordForUser: getFolderRecordForUserMock,
 }));
 
 vi.mock("@/features/notes/queries", () => ({
-  countNotesBySubjectForUser: countNotesBySubjectForUserMock,
+  countNotesByFolderForUser: countNotesByFolderForUserMock,
   getNoteByIdForUser: getNoteByIdForUserMock,
 }));
 
@@ -74,27 +74,27 @@ describe("createNoteForUser", () => {
     const randomUUIDSpy = vi
       .spyOn(crypto, "randomUUID")
       .mockReturnValue("note-new");
-    getSubjectRecordForUserMock.mockResolvedValueOnce({
-      id: "subject-1",
+    getFolderRecordForUserMock.mockResolvedValueOnce({
+      id: "folder-1",
     });
-    countNotesBySubjectForUserMock.mockResolvedValueOnce(0);
+    countNotesByFolderForUserMock.mockResolvedValueOnce(0);
 
     const { createNoteForUser } = await import("@/features/notes/mutations");
 
     const result = await createNoteForUser("user-1", {
-      subjectId: "subject-1",
+      folderId: "folder-1",
       title: "New note",
       content: testDocument(""),
     });
 
     expect(result).toEqual({
       success: true,
-      subjectId: "subject-1",
+      folderId: "folder-1",
       noteId: "note-new",
     });
     expect(insertValuesMock).toHaveBeenCalledWith({
       id: "note-new",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       userId: "user-1",
       title: "New note",
       content: testDocument(""),
@@ -117,11 +117,11 @@ describe("editNoteForUser", () => {
     const storage = new SharedImageStorageFake();
     const sharedContent =
       '<p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fshared.png"></p>';
-    getSubjectRecordForUserMock.mockResolvedValueOnce({ id: "subject-1" });
-    countNotesBySubjectForUserMock.mockResolvedValueOnce(1);
+    getFolderRecordForUserMock.mockResolvedValueOnce({ id: "folder-1" });
+    countNotesByFolderForUserMock.mockResolvedValueOnce(1);
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       content: testDocument(sharedContent),
     });
     getMediaStorageProviderMock.mockResolvedValue(storage);
@@ -131,7 +131,7 @@ describe("editNoteForUser", () => {
     const { createNoteSchema } = await import("@/features/notes/validation");
     const copiedNote = createNoteSchema.parse({
       title: "Copy with shared image",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       content: testDocument(sharedContent),
     });
 
@@ -152,7 +152,7 @@ describe("editNoteForUser", () => {
   it("keeps saved content when a rename omits content", async () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       content: testDocument("<p>Keep</p>"),
     });
 
@@ -163,14 +163,14 @@ describe("editNoteForUser", () => {
       title: "Renamed",
     });
 
-    expect(result).toEqual({ success: true, subjectId: "subject-1" });
+    expect(result).toEqual({ success: true, folderId: "folder-1" });
     expect(updateSetMock).toHaveBeenCalledWith({ title: "Renamed" });
   });
 
   it("defers removed attachment deletion to the orphan sweep", async () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       content: testDocument(
         '<p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fold.png"></p><p>Keep</p>',
       ),
@@ -184,14 +184,14 @@ describe("editNoteForUser", () => {
       content: testDocument("<p>Keep</p>"),
     });
 
-    expect(result).toEqual({ success: true, subjectId: "subject-1" });
+    expect(result).toEqual({ success: true, folderId: "folder-1" });
     expect(deleteImagesMock).not.toHaveBeenCalled();
   });
 
   it("does not eagerly delete owned or foreign images when editing", async () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       content: testDocument(
         '<p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fold.png"></p><p><img src="/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-2%2Fforeign.png"></p>',
       ),
@@ -205,7 +205,7 @@ describe("editNoteForUser", () => {
       content: testDocument("<p>Keep</p>"),
     });
 
-    expect(result).toEqual({ success: true, subjectId: "subject-1" });
+    expect(result).toEqual({ success: true, folderId: "folder-1" });
     expect(deleteImagesMock).not.toHaveBeenCalled();
   });
 });
@@ -215,46 +215,46 @@ describe("moveNoteForUser", () => {
     vi.clearAllMocks();
   });
 
-  it("reparents the note to the target subject", async () => {
+  it("reparents the note to the target folder", async () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
     });
-    getSubjectRecordForUserMock.mockResolvedValueOnce({ id: "subject-2" });
-    countNotesBySubjectForUserMock.mockResolvedValueOnce(0);
+    getFolderRecordForUserMock.mockResolvedValueOnce({ id: "folder-2" });
+    countNotesByFolderForUserMock.mockResolvedValueOnce(0);
 
     const { moveNoteForUser } = await import("@/features/notes/mutations");
 
     const result = await moveNoteForUser("user-1", {
       id: "note-1",
-      subjectId: "subject-2",
+      folderId: "folder-2",
     });
 
     expect(result).toEqual({
       success: true,
-      subjectId: "subject-2",
-      previousSubjectId: "subject-1",
+      folderId: "folder-2",
+      previousFolderId: "folder-1",
     });
-    expect(updateSetMock).toHaveBeenCalledWith({ subjectId: "subject-2" });
+    expect(updateSetMock).toHaveBeenCalledWith({ folderId: "folder-2" });
   });
 
-  it("is a no-op when the target subject is unchanged", async () => {
+  it("is a no-op when the target folder is unchanged", async () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
     });
 
     const { moveNoteForUser } = await import("@/features/notes/mutations");
 
     const result = await moveNoteForUser("user-1", {
       id: "note-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
     });
 
     expect(result).toEqual({
       success: true,
-      subjectId: "subject-1",
-      previousSubjectId: "subject-1",
+      folderId: "folder-1",
+      previousFolderId: "folder-1",
     });
     expect(updateMock).not.toHaveBeenCalled();
   });
@@ -266,7 +266,7 @@ describe("moveNoteForUser", () => {
 
     const result = await moveNoteForUser("user-1", {
       id: "missing",
-      subjectId: "subject-2",
+      folderId: "folder-2",
     });
 
     expect(result).toMatchObject({
@@ -276,40 +276,40 @@ describe("moveNoteForUser", () => {
     expect(updateMock).not.toHaveBeenCalled();
   });
 
-  it("rejects a move to a subject the user does not own", async () => {
+  it("rejects a move to a folder the user does not own", async () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
     });
-    getSubjectRecordForUserMock.mockResolvedValueOnce(null);
+    getFolderRecordForUserMock.mockResolvedValueOnce(null);
 
     const { moveNoteForUser } = await import("@/features/notes/mutations");
 
     const result = await moveNoteForUser("user-1", {
       id: "note-1",
-      subjectId: "subject-foreign",
+      folderId: "folder-foreign",
     });
 
     expect(result).toMatchObject({
       success: false,
-      errorCode: "subjects.notFound",
+      errorCode: "folders.notFound",
     });
     expect(updateMock).not.toHaveBeenCalled();
   });
 
-  it("rejects a move when the target subject is at its note limit", async () => {
+  it("rejects a move when the target folder is at its note limit", async () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
     });
-    getSubjectRecordForUserMock.mockResolvedValueOnce({ id: "subject-2" });
-    countNotesBySubjectForUserMock.mockResolvedValueOnce(1000);
+    getFolderRecordForUserMock.mockResolvedValueOnce({ id: "folder-2" });
+    countNotesByFolderForUserMock.mockResolvedValueOnce(1000);
 
     const { moveNoteForUser } = await import("@/features/notes/mutations");
 
     const result = await moveNoteForUser("user-1", {
       id: "note-1",
-      subjectId: "subject-2",
+      folderId: "folder-2",
     });
 
     expect(result).toMatchObject({
@@ -331,7 +331,7 @@ describe("deleteNoteForUser", () => {
   it("preserves attachment files when deleting a note", async () => {
     getNoteByIdForUserMock.mockResolvedValueOnce({
       id: "note-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       content: testDocument(
         "<p>/api/attachments/blob?pathname=notorium%2Fnotes%2Fuser-1%2Fold.png</p>",
       ),
@@ -343,7 +343,7 @@ describe("deleteNoteForUser", () => {
       id: "note-1",
     });
 
-    expect(result).toEqual({ success: true, subjectId: "subject-1" });
+    expect(result).toEqual({ success: true, folderId: "folder-1" });
     expect(deleteImagesMock).not.toHaveBeenCalled();
   });
 });

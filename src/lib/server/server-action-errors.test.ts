@@ -11,9 +11,9 @@ describe("t", () => {
     expect(t("auth.loginFailed")).toBe("Login failed.");
   });
 
-  it("returns the flashcard subject limit message", () => {
+  it("returns the flashcard folder limit message", () => {
     expect(t("limits.flashcardLimit", { max: 3 })).toBe(
-      "System limit reached: you can have up to 3 flashcards per subject.",
+      "System limit reached: you can have up to 3 flashcards per folder.",
     );
   });
 

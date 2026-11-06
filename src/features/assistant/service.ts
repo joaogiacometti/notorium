@@ -12,8 +12,8 @@ import {
   selectAssistantActiveTools,
 } from "@/features/assistant/tools";
 import type { AssistantChatRequest } from "@/features/assistant/validation";
+import { getAllFoldersWithPathsForUser } from "@/features/folders/queries";
 import { searchLibraryForUser } from "@/features/search/library-queries";
-import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
 import { streamChatResponse } from "@/lib/ai/stream-chat";
 import { acquireUserAiSettings } from "@/lib/ai/user-ai-access";
 import { AI_LIMITS, LIMITS } from "@/lib/config/limits";
@@ -41,8 +41,8 @@ interface StreamAssistantReplyForUserInput {
   bypassLearning?: boolean;
   historyTruncated?: boolean;
   abortSignal?: AbortSignal;
-  /** Injected by tests; defaults to the user's subject paths from the DB. */
-  loadSubjectPaths?: (userId: string) => Promise<string[]>;
+  /** Injected by tests; defaults to the user's folder paths from the DB. */
+  loadFolderPaths?: (userId: string) => Promise<string[]>;
   /** Injected by tests; defaults to the DB-backed library search. */
   searchLibrary?: UserLibrarySearch;
 }
@@ -57,7 +57,7 @@ type StreamAssistantReplyForUserResult =
 /**
  * Stream one study-assistant reply for a user's chat, spending one unit of the
  * user's daily assistant limit. The reply may propose flashcards in the user's
- * subjects or search their library; it reads but writes nothing. Provider failures throw before the stream
+ * folders or search their library; it reads but writes nothing. Provider failures throw before the stream
  * starts; the route maps them to `assistant.unavailable`.
  *
  * @example
@@ -74,7 +74,7 @@ export async function streamAssistantReplyForUser({
   bypassLearning,
   historyTruncated,
   abortSignal,
-  loadSubjectPaths = readSubjectPathsForUser,
+  loadFolderPaths = readFolderPathsForUser,
   searchLibrary = searchLibraryForUser,
 }: StreamAssistantReplyForUserInput): Promise<StreamAssistantReplyForUserResult> {
   const access = await acquireUserAiSettings(userId, {
@@ -103,7 +103,7 @@ export async function streamAssistantReplyForUser({
         bypassLearning,
         historyTruncated,
       },
-      await loadSubjectPaths(userId),
+      await loadFolderPaths(userId),
     ),
     maxOutputTokens: AI_LIMITS.assistantMaxOutputTokens,
     tools: buildAssistantTools(bindLibrarySearchToUser(searchLibrary, userId), {
@@ -142,7 +142,7 @@ function bindLibrarySearchToUser(
   };
 }
 
-async function readSubjectPathsForUser(userId: string): Promise<string[]> {
-  const subjects = await getAllSubjectsWithPathsForUser(userId);
-  return subjects.map((subject) => subject.path);
+async function readFolderPathsForUser(userId: string): Promise<string[]> {
+  const folders = await getAllFoldersWithPathsForUser(userId);
+  return folders.map((folder) => folder.path);
 }

@@ -10,8 +10,8 @@ const queries = vi.hoisted(() => ({
   getNoteByIdForUser: vi.fn(),
   getNoteConnectionsForUser: vi.fn(),
   getSearchDataForUser: vi.fn(),
-  getAllSubjectsWithPathsForUser: vi.fn(),
-  getSubjectDocumentsForUser: vi.fn(),
+  getAllFoldersWithPathsForUser: vi.fn(),
+  getFolderDocumentsForUser: vi.fn(),
 }));
 
 const sessionUser = {
@@ -30,7 +30,7 @@ vi.mock("@/features/flashcard-review/queries", () => queries);
 vi.mock("@/features/flashcards/fsrs/settings-mutations", () => queries);
 vi.mock("@/features/notes/queries", () => queries);
 vi.mock("@/features/search/queries", () => queries);
-vi.mock("@/features/subjects/queries", () => queries);
+vi.mock("@/features/folders/queries", () => queries);
 vi.mock("@/features/documents/queries", () => queries);
 
 type RouteGet = (
@@ -78,15 +78,15 @@ describe("read route handlers", () => {
     expect(queries.getAccountSettingsForUser).toHaveBeenCalledWith(sessionUser);
   });
 
-  it("manage page collects repeated subjectIds", async () => {
+  it("manage page collects repeated folderIds", async () => {
     await callRoute(
       import("@/app/api/flashcards/manage-page/route"),
-      "/api/flashcards/manage-page?pageIndex=0&pageSize=25&subjectIds=a&subjectIds=b",
+      "/api/flashcards/manage-page?pageIndex=0&pageSize=25&folderIds=a&folderIds=b",
     );
 
     expect(queries.getFlashcardsManagePageForUser).toHaveBeenCalledWith(
       "user-1",
-      expect.objectContaining({ subjectIds: ["a", "b"] }),
+      expect.objectContaining({ folderIds: ["a", "b"] }),
     );
   });
 
@@ -133,16 +133,13 @@ describe("read route handlers", () => {
       route,
       "/api/flashcards/review-state?limit=1000000",
     );
-    await callRoute(
-      route,
-      "/api/flashcards/review-state?subjectId=s1&limit=20",
-    );
+    await callRoute(route, "/api/flashcards/review-state?folderId=s1&limit=20");
 
     expect(bad.status).toBe(400);
     expect(queries.getFlashcardReviewStateForUser).toHaveBeenCalledTimes(1);
     expect(queries.getFlashcardReviewStateForUser).toHaveBeenCalledWith(
       "user-1",
-      { subjectId: "s1", limit: 20 },
+      { folderId: "s1", limit: 20 },
     );
   });
 
@@ -201,28 +198,28 @@ describe("read route handlers", () => {
     );
   });
 
-  it("subject options read for the user", async () => {
+  it("folder options read for the user", async () => {
     await callRoute(
-      import("@/app/api/subjects/options/route"),
-      "/api/subjects/options",
+      import("@/app/api/folders/options/route"),
+      "/api/folders/options",
     );
 
-    expect(queries.getAllSubjectsWithPathsForUser).toHaveBeenCalledWith(
+    expect(queries.getAllFoldersWithPathsForUser).toHaveBeenCalledWith(
       "user-1",
     );
   });
 
-  it("subject documents reads one owned subject", async () => {
-    queries.getSubjectDocumentsForUser.mockResolvedValue([{ id: "note-1" }]);
+  it("folder documents reads one owned folder", async () => {
+    queries.getFolderDocumentsForUser.mockResolvedValue([{ id: "note-1" }]);
 
     const result = await callRoute(
-      import("@/app/api/subjects/[subjectId]/documents/route"),
-      "/api/subjects/s1/documents",
-      { subjectId: "s1" },
+      import("@/app/api/folders/[folderId]/documents/route"),
+      "/api/folders/s1/documents",
+      { folderId: "s1" },
     );
 
     expect(result).toEqual({ status: 200, body: [{ id: "note-1" }] });
-    expect(queries.getSubjectDocumentsForUser).toHaveBeenCalledWith(
+    expect(queries.getFolderDocumentsForUser).toHaveBeenCalledWith(
       "user-1",
       "s1",
     );

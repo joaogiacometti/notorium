@@ -42,7 +42,7 @@ interface DocumentRowDialogs {
 /**
  * Owns the per-document action dialogs (rename/delete) for every kind plus the
  * note copy action, and returns the row-menu handlers wired to them. Shared by
- * the documents list sidebar and the subject tree so both expose identical
+ * the documents list sidebar and the folder tree so both expose identical
  * document actions on their kebab menus.
  *
  * @example
@@ -106,7 +106,7 @@ export function useDocumentRowDialogs(): DocumentRowDialogs {
                   editTarget.id,
                   title,
                 ),
-              editTarget.subjectId,
+              editTarget.folderId,
             )
           }
           onSuccess={() => finishEdit()}
@@ -125,7 +125,7 @@ export function useDocumentRowDialogs(): DocumentRowDialogs {
                 DOCUMENT_KIND_ACTIONS[deleteTarget.kind].remove(
                   deleteTarget.id,
                 ),
-              deleteTarget.subjectId,
+              deleteTarget.folderId,
             )
           }
           onSuccess={() => finishDelete(deleteTarget)}

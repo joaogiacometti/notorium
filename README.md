@@ -2,7 +2,7 @@
 
 Notorium is a self-hosted knowledge editor. Write notes, read PDFs, and keep what matters in memory with spaced repetition.
 
-Your material is organized into subjects, and each account has its own. You can ask the assistant about your material and review its suggested edits and cards before applying them.
+Organize notes, PDFs, and flashcards in nested folders. Each account has its own workspace. You can ask the assistant about your material and review its suggested edits and cards before applying them.
 
 The first person to sign up becomes the admin and can approve later users from **Account → Admin Panel**.
 

@@ -9,7 +9,7 @@ export async function GET(request: Request): Promise<Response> {
     schema: flashcardsManageQuerySchema,
     input: readSearchParams(request.url, {
       numberKeys: ["pageIndex", "pageSize"],
-      arrayKeys: ["subjectIds"],
+      arrayKeys: ["folderIds"],
     }),
     read: (user, query) => getFlashcardsManagePageForUser(user.id, query),
   });

@@ -12,14 +12,14 @@ import { useFlashcardReviewShortcuts } from "@/features/flashcard-review/shortcu
 import { getFlashcardsHref } from "@/lib/navigation/detail-page-back-link";
 import type {
   FlashcardReviewEntity,
-  SubjectEntity,
-  SubjectOption,
+  FolderEntity,
+  FolderOption,
 } from "@/lib/server/api-contracts";
 
 interface FlashcardExamSessionProps {
   initialCards: FlashcardReviewEntity[];
-  subjects: Array<SubjectEntity | SubjectOption>;
-  subjectId?: string;
+  folders: Array<FolderEntity | FolderOption>;
+  folderId?: string;
 }
 
 /**
@@ -28,12 +28,12 @@ interface FlashcardExamSessionProps {
  * a fresh exam.
  *
  * @example
- * <FlashcardExamSession initialCards={cards} subjects={subjects} />
+ * <FlashcardExamSession initialCards={cards} folders={folders} />
  */
 export function FlashcardExamSession({
   initialCards,
-  subjects,
-  subjectId,
+  folders,
+  folderId,
 }: Readonly<FlashcardExamSessionProps>) {
   const router = useRouter();
   const shortcutsSuspended = useShortcutsDialogOpen();
@@ -53,7 +53,7 @@ export function FlashcardExamSession({
   const exam = useFlashcardExamController({
     initialCards,
     resetCardViewState,
-    onExit: () => router.push(getFlashcardsHref("review", subjectId)),
+    onExit: () => router.push(getFlashcardsHref("review", folderId)),
   });
   const { currentCard, session } = exam;
 
@@ -92,7 +92,7 @@ export function FlashcardExamSession({
         isExamMode
         currentCard={currentCard}
         headerText={`Card ${(session?.currentIndex ?? 0) + 1} of ${session?.cards.length ?? 0}`}
-        subjects={subjects}
+        folders={folders}
         progress={exam.progress}
         revealed={revealed}
         isPending={false}

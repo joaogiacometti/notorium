@@ -28,17 +28,17 @@ import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import type {
   FlashcardEntity,
   FlashcardReviewState,
-  SubjectEntity,
-  SubjectOption,
+  FolderEntity,
+  FolderOption,
 } from "@/lib/server/api-contracts";
-import { isSubjectOption } from "@/lib/utils";
+import { isFolderOption } from "@/lib/utils";
 
 type ReviewCard = FlashcardReviewState["cards"][number];
 
 interface ReviewSessionScreenProps {
   currentCard: ReviewCard | null;
   headerText: string;
-  subjects: Array<SubjectEntity | SubjectOption>;
+  folders: Array<FolderEntity | FolderOption>;
   progress: number;
   revealed: boolean;
   isPending: boolean;
@@ -63,7 +63,7 @@ interface ReviewSessionScreenProps {
  * Routes the session page to the due-review or exam session presentation.
  *
  * @example
- * <ReviewSessionScreen currentCard={card} headerText="3 due of 10 total cards" subjects={subjects} progress={0} revealed={false} isPending={false} onReveal={showBack} onGrade={gradeCard} onExit={exit} />
+ * <ReviewSessionScreen currentCard={card} headerText="3 due of 10 total cards" folders={folders} progress={0} revealed={false} isPending={false} onReveal={showBack} onGrade={gradeCard} onExit={exit} />
  */
 export function ReviewSessionScreen(props: Readonly<ReviewSessionScreenProps>) {
   if (!props.currentCard) {
@@ -86,8 +86,8 @@ interface SessionScreenProps extends ReviewSessionScreenProps {
 }
 
 function ActiveSessionScreen(props: Readonly<SessionScreenProps>) {
-  const { currentCard, subjects, isExamMode = false } = props;
-  const subjectLabel = getSubjectLabel(currentCard, subjects);
+  const { currentCard, folders, isExamMode = false } = props;
+  const folderLabel = getFolderLabel(currentCard, folders);
   const shellProps = {
     progress: props.progress,
     headerText: props.headerText,
@@ -101,7 +101,7 @@ function ActiveSessionScreen(props: Readonly<SessionScreenProps>) {
       <ReviewCardEditor
         key={currentCard.id}
         card={currentCard}
-        subjectLabel={subjectLabel}
+        folderLabel={folderLabel}
         onSaved={props.onFlashcardUpdated}
         onClose={props.onStopEditing}
         renderSession={(content, footer) => (
@@ -121,7 +121,7 @@ function ActiveSessionScreen(props: Readonly<SessionScreenProps>) {
           isPending={props.isPending}
           canUndoReview={!isExamMode && props.canUndoReview}
           onUndoReview={props.onUndoReview}
-          onCopyFlashcard={() => copyReviewCard(currentCard, subjects)}
+          onCopyFlashcard={() => copyReviewCard(currentCard, folders)}
           studyLaterMarked={currentCard.studyLaterAt !== null}
           onToggleStudyLater={props.onToggleStudyLater}
           onEditFlashcard={props.onEditFlashcard}
@@ -134,7 +134,7 @@ function ActiveSessionScreen(props: Readonly<SessionScreenProps>) {
       <ReviewSessionCardContent
         mode={isExamMode ? "exam" : "review"}
         card={currentCard}
-        subjectLabel={subjectLabel}
+        folderLabel={folderLabel}
         revealed={props.revealed}
       />
     </ReviewSessionShell>
@@ -337,34 +337,34 @@ function ReviewSessionEmptyState({
 
 function copyReviewCard(
   currentCard: ReviewCard,
-  subjects: Array<SubjectEntity | SubjectOption>,
+  folders: Array<FolderEntity | FolderOption>,
 ): void {
   void copyFlashcardsWithToast([
     {
       front: currentCard.front,
       back: currentCard.back,
-      subjectPath: getSubjectLabel(currentCard, subjects),
+      folderPath: getFolderLabel(currentCard, folders),
     },
   ]);
 }
 
-function getSubjectLabel(
+function getFolderLabel(
   currentCard: ReviewCard,
-  subjects: Array<SubjectEntity | SubjectOption>,
+  folders: Array<FolderEntity | FolderOption>,
 ) {
-  if (currentCard.subjectPath) {
-    return currentCard.subjectPath;
+  if (currentCard.folderPath) {
+    return currentCard.folderPath;
   }
 
-  const currentSubject = subjects?.find(
-    (subject) => subject.id === currentCard.subjectId,
+  const currentFolder = folders?.find(
+    (folder) => folder.id === currentCard.folderId,
   );
 
-  if (!currentSubject) {
+  if (!currentFolder) {
     return "";
   }
 
-  return isSubjectOption(currentSubject)
-    ? currentSubject.path
-    : currentSubject.name;
+  return isFolderOption(currentFolder)
+    ? currentFolder.path
+    : currentFolder.name;
 }

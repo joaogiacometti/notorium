@@ -10,7 +10,7 @@ function values(
   overrides: Partial<FlashcardFormValues> = {},
 ): FlashcardFormValues {
   return {
-    subjectId: "deck-1",
+    folderId: "deck-1",
     front: testDocument(""),
     back: testDocument(""),
     ...overrides,
@@ -30,7 +30,7 @@ describe("haveFlashcardDialogValuesChanged", () => {
     expect(
       haveFlashcardDialogValuesChanged(
         createValues,
-        values({ subjectId: "deck-2" }),
+        values({ folderId: "deck-2" }),
       ),
     ).toBe(true);
 
@@ -85,7 +85,7 @@ describe("shouldSyncFlashcardDialogValues", () => {
         }),
         nextValues: values({
           id: "flashcard-2",
-          subjectId: "deck-2",
+          folderId: "deck-2",
           front: testDocument("<p>Other front</p>"),
           back: testDocument("<p>Other back</p>"),
         }),

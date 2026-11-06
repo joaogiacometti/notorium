@@ -7,10 +7,10 @@ import {
   flashcard,
   flashcardReviewLog,
   flashcardSchedulerSettings,
+  folder,
   instanceState,
   note,
   session,
-  subject,
   user,
   verification,
 } from "@/db/schema";
@@ -78,7 +78,7 @@ export interface E2EFsrsSettingsSnapshot {
 }
 
 export interface E2EFsrsReviewSeed {
-  subjectId: string;
+  folderId: string;
   flashcardIds: string[];
 }
 
@@ -197,21 +197,18 @@ export async function ensureApprovedE2EWorkerUser(workerIndex: number) {
   } satisfies E2EUserAccount;
 }
 
-export async function clearUserSubjects(userId: string) {
-  await getDb().delete(subject).where(eq(subject.userId, userId));
+export async function clearUserFolders(userId: string) {
+  await getDb().delete(folder).where(eq(folder.userId, userId));
 }
 
-export async function clearUserSubjectsByNames(
-  userId: string,
-  names: string[],
-) {
+export async function clearUserFoldersByNames(userId: string, names: string[]) {
   if (names.length === 0) {
     return;
   }
 
   await getDb()
-    .delete(subject)
-    .where(and(eq(subject.userId, userId), inArray(subject.name, names)));
+    .delete(folder)
+    .where(and(eq(folder.userId, userId), inArray(folder.name, names)));
 }
 
 export async function clearUserSessions(userId: string) {
@@ -220,7 +217,7 @@ export async function clearUserSessions(userId: string) {
 
 export async function createNote(
   userId: string,
-  subjectId: string,
+  folderId: string,
   title: string,
   content: string,
 ) {
@@ -228,7 +225,7 @@ export async function createNote(
     .insert(note)
     .values({
       userId,
-      subjectId,
+      folderId,
       title,
       content: testDocument(content),
       contentText: documentText(testDocument(content)),
@@ -265,21 +262,21 @@ export async function getNoteById(userId: string, noteId: string) {
   return existingNote ?? null;
 }
 
-export async function createSubject(userId: string, name: string) {
-  const [newSubject] = await getDb()
-    .insert(subject)
+export async function createFolder(userId: string, name: string) {
+  const [newFolder] = await getDb()
+    .insert(folder)
     .values({
       userId,
       name,
     })
-    .returning({ id: subject.id });
+    .returning({ id: folder.id });
 
-  return newSubject;
+  return newFolder;
 }
 
 async function createFlashcard(
   userId: string,
-  subjectId: string,
+  folderId: string,
   front: string,
   back: string,
   dueAt: Date = new Date(Date.now() - 60_000),
@@ -288,7 +285,7 @@ async function createFlashcard(
     .insert(flashcard)
     .values({
       userId,
-      subjectId,
+      folderId,
       front: testDocument(front),
       frontText: documentText(testDocument(front)),
       frontNormalized: documentUniquenessText(testDocument(front)),
@@ -365,7 +362,7 @@ export async function createFsrsOptimizationReviewHistory(
   name: string,
   reviewCount: number,
 ): Promise<E2EFsrsReviewSeed> {
-  const createdSubject = await createSubject(userId, name);
+  const createdFolder = await createFolder(userId, name);
   const flashcardCount = Math.max(1, Math.ceil(reviewCount / 4));
   const createdFlashcards: { id: string }[] = [];
 
@@ -373,7 +370,7 @@ export async function createFsrsOptimizationReviewHistory(
     createdFlashcards.push(
       await createFlashcard(
         userId,
-        createdSubject.id,
+        createdFolder.id,
         `${name} front ${index}`,
         `${name} back ${index}`,
       ),
@@ -388,7 +385,7 @@ export async function createFsrsOptimizationReviewHistory(
   );
 
   return {
-    subjectId: createdSubject.id,
+    folderId: createdFolder.id,
     flashcardIds: createdFlashcards.map(
       (createdFlashcard) => createdFlashcard.id,
     ),

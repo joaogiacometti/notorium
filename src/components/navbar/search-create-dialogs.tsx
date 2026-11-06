@@ -1,22 +1,22 @@
 "use client";
 
 import { CreateFlashcardDialog } from "@/components/flashcards/dialogs/create-flashcard-dialog";
+import { CreateFolderDialog } from "@/components/folders/create-folder-dialog";
 import type { ContextFreeDialog } from "@/components/navbar/search-commands";
 import { CreateNoteTitleDialog } from "@/components/notes/create-note-title-dialog";
 import { CreatePdfDialog } from "@/components/pdfs/create-pdf-dialog";
-import { CreateSubjectDialog } from "@/components/subjects/create-subject-dialog";
 import {
   getDocumentDetailHref,
   getNoteDetailHref,
 } from "@/lib/navigation/detail-page-back-link";
-import type { SubjectOption } from "@/lib/server/api-contracts";
+import type { FolderOption } from "@/lib/server/api-contracts";
 
 export type ActiveCreateDialog = ContextFreeDialog;
 
 interface SearchCreateDialogsProps {
   activeDialog: ActiveCreateDialog | null;
-  subjectId: string | null;
-  subjects: SubjectOption[];
+  folderId: string | null;
+  folders: FolderOption[];
   onClose: () => void;
   onNavigate: (href: string) => void;
 }
@@ -27,8 +27,8 @@ interface SearchCreateDialogsProps {
  */
 export function SearchCreateDialogs({
   activeDialog,
-  subjectId,
-  subjects,
+  folderId,
+  folders,
   onClose,
   onNavigate,
 }: Readonly<SearchCreateDialogsProps>) {
@@ -40,35 +40,35 @@ export function SearchCreateDialogs({
 
   return (
     <>
-      <CreateSubjectDialog
+      <CreateFolderDialog
         trigger={null}
-        open={activeDialog === "subject"}
+        open={activeDialog === "folder"}
         onOpenChange={handleOpenChange}
       />
       <CreateFlashcardDialog
         open={activeDialog === "flashcard"}
         onOpenChange={handleOpenChange}
-        subjectId={subjectId ?? undefined}
+        folderId={folderId ?? undefined}
       />
       <CreateNoteTitleDialog
-        subjectId={subjectId ?? undefined}
-        subjects={subjects}
+        folderId={folderId ?? undefined}
+        folders={folders}
         open={activeDialog === "note"}
         onOpenChange={handleOpenChange}
-        onSuccess={(noteId, createdSubjectId) =>
-          onNavigate(getNoteDetailHref(createdSubjectId, noteId))
+        onSuccess={(noteId, createdFolderId) =>
+          onNavigate(getNoteDetailHref(createdFolderId, noteId))
         }
       />
       <CreatePdfDialog
-        subjectId={subjectId ?? undefined}
-        subjects={subjects}
+        folderId={folderId ?? undefined}
+        folders={folders}
         open={activeDialog === "pdf"}
         onOpenChange={handleOpenChange}
-        onSuccess={(pdfId, createdSubjectId) =>
+        onSuccess={(pdfId, createdFolderId) =>
           onNavigate(
             getDocumentDetailHref({
               kind: "pdf",
-              subjectId: createdSubjectId,
+              folderId: createdFolderId,
               id: pdfId,
             }),
           )

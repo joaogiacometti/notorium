@@ -60,7 +60,7 @@ const A4_POINTS: PdfPageSize = { width: 595, height: 842 };
 interface PdfReaderProps {
   pdfId: string;
   title: string;
-  subjectPath: string;
+  folderPath: string;
   fileUrl: string;
   initialPage: number;
 }
@@ -72,12 +72,12 @@ interface PdfReaderProps {
  * the selected or visible text to the study assistant.
  *
  * @example
- * <PdfReader pdfId={pdf.id} title={pdf.title} subjectPath={subjectName} fileUrl={url} initialPage={pdf.lastPage} />
+ * <PdfReader pdfId={pdf.id} title={pdf.title} folderPath={folderName} fileUrl={url} initialPage={pdf.lastPage} />
  */
 export function PdfReader({
   pdfId,
   title,
-  subjectPath,
+  folderPath,
   fileUrl,
   initialPage,
 }: Readonly<PdfReaderProps>) {
@@ -121,7 +121,7 @@ export function PdfReader({
           navigationRef={navigationRef}
           pdfId={pdfId}
           title={title}
-          subjectPath={subjectPath}
+          folderPath={folderPath}
           pdfDocument={opened.pdfDocument}
           pageCount={opened.pageCount}
           initialPage={opened.initialPage}
@@ -149,14 +149,14 @@ interface PdfPageColumnProps extends OpenedPdf {
   navigationRef: RefObject<PdfScrollLayout | null>;
   pdfId: string;
   title: string;
-  subjectPath: string;
+  folderPath: string;
 }
 
 function PdfPageColumn({
   navigationRef,
   pdfId,
   title,
-  subjectPath,
+  folderPath,
   pdfDocument,
   pageCount,
   initialPage,
@@ -219,7 +219,7 @@ function PdfPageColumn({
   });
   usePdfStudyContext({
     pdf: { id: pdfId, title },
-    subjectPath,
+    folderPath,
     pdfDocument,
     currentPage: layout.currentPage,
     pagesRef: contentRef,

@@ -1,20 +1,20 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
-import { clearUserSubjectsByNames, createSubject } from "./support/db";
+import { clearUserFoldersByNames, createFolder } from "./support/db";
+import {
+  clickFolderDocumentsMenuItem,
+  openFolderInSidebar,
+} from "./support/folders";
 import { MediaStorageUploadFixture } from "./support/media-storage-fixture";
 import { buildBlankPdf } from "./support/pdf-file";
 import { getPdfByTitle } from "./support/pdfs";
-import {
-  clickSubjectDocumentsMenuItem,
-  openSubjectInSidebar,
-} from "./support/subjects";
 
-const PDF_DETAIL_URL = /\/subjects\/.+\/documents\/pdfs\/.+$/;
+const PDF_DETAIL_URL = /\/folders\/.+\/documents\/pdfs\/.+$/;
 const UPLOADED_PDF = buildBlankPdf(3);
 
-function getUniqueSubjectName(testTitle: string) {
-  return getPrefixedValue("pdf-subject", testTitle);
+function getUniqueFolderName(testTitle: string) {
+  return getPrefixedValue("pdf-folder", testTitle);
 }
 
 function getUniquePdfTitle(testTitle: string) {
@@ -23,10 +23,10 @@ function getUniquePdfTitle(testTitle: string) {
 
 async function uploadPdfFromSidebar(
   page: Page,
-  subjectName: string,
+  folderName: string,
   title: string,
 ) {
-  await clickSubjectDocumentsMenuItem(page, subjectName, "Add PDF");
+  await clickFolderDocumentsMenuItem(page, folderName, "Add PDF");
   const dialog = page.getByRole("dialog", { name: "Add PDF" });
   await dialog.locator("#form-create-pdf-file").setInputFiles({
     name: "book.pdf",
@@ -55,14 +55,14 @@ test("uploads a PDF, reads it, and reopens on the last page", async ({
   page,
   e2eUser,
 }) => {
-  const subjectName = getUniqueSubjectName("upload-read");
+  const folderName = getUniqueFolderName("upload-read");
   const pdfTitle = getUniquePdfTitle("upload-read");
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
 
   try {
-    await createSubject(e2eUser.userId, subjectName);
-    await openSubjectInSidebar(page, subjectName);
-    await uploadPdfFromSidebar(page, subjectName, pdfTitle);
+    await createFolder(e2eUser.userId, folderName);
+    await openFolderInSidebar(page, folderName);
+    await uploadPdfFromSidebar(page, folderName, pdfTitle);
 
     await expect(page.getByText("/ 3")).toBeVisible();
     const pageNumber = page.getByRole("textbox", { name: "Page number" });
@@ -77,19 +77,19 @@ test("uploads a PDF, reads it, and reopens on the last page", async ({
     await page.reload();
     await expect(pageNumber).toHaveValue("3");
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });
 
 test("finds an uploaded PDF from global search", async ({ page, e2eUser }) => {
-  const subjectName = getUniqueSubjectName("search");
+  const folderName = getUniqueFolderName("search");
   const pdfTitle = getUniquePdfTitle("search");
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
 
   try {
-    await createSubject(e2eUser.userId, subjectName);
-    await openSubjectInSidebar(page, subjectName);
-    await uploadPdfFromSidebar(page, subjectName, pdfTitle);
+    await createFolder(e2eUser.userId, folderName);
+    await openFolderInSidebar(page, folderName);
+    await uploadPdfFromSidebar(page, folderName, pdfTitle);
     await page.goto("/");
 
     await page.keyboard.press("ControlOrMeta+k");
@@ -102,7 +102,7 @@ test("finds an uploaded PDF from global search", async ({ page, e2eUser }) => {
     await expect(page).toHaveURL(PDF_DETAIL_URL);
     await expect(page.getByRole("heading", { name: pdfTitle })).toBeVisible();
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });
 
@@ -110,13 +110,13 @@ test("keeps mobile reading controls on screen while only the book scrolls", asyn
   page,
   e2eUser,
 }) => {
-  const subjectName = getUniqueSubjectName("mobile-scroll");
+  const folderName = getUniqueFolderName("mobile-scroll");
   const pdfTitle = getUniquePdfTitle("mobile-scroll");
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   try {
-    await createSubject(e2eUser.userId, subjectName);
-    await openSubjectInSidebar(page, subjectName);
-    await uploadPdfFromSidebar(page, subjectName, pdfTitle);
+    await createFolder(e2eUser.userId, folderName);
+    await openFolderInSidebar(page, folderName);
+    await uploadPdfFromSidebar(page, folderName, pdfTitle);
     await expect(
       page.getByRole("textbox", { name: "Page number" }),
     ).toBeVisible();
@@ -143,7 +143,7 @@ test("keeps mobile reading controls on screen while only the book scrolls", asyn
     await page.getByRole("button", { name: "Exit zen mode" }).click();
     await expectReaderWithinViewport(page);
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });
 
@@ -180,15 +180,15 @@ test("renames and deletes a PDF from its header menu", async ({
   page,
   e2eUser,
 }) => {
-  const subjectName = getUniqueSubjectName("rename-delete");
+  const folderName = getUniqueFolderName("rename-delete");
   const pdfTitle = getUniquePdfTitle("rename-delete");
   const renamedTitle = getUniquePdfTitle("rename-delete-renamed");
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
 
   try {
-    await createSubject(e2eUser.userId, subjectName);
-    await openSubjectInSidebar(page, subjectName);
-    await uploadPdfFromSidebar(page, subjectName, pdfTitle);
+    await createFolder(e2eUser.userId, folderName);
+    await openFolderInSidebar(page, folderName);
+    await uploadPdfFromSidebar(page, folderName, pdfTitle);
 
     await openPdfActions(page);
     await page.getByRole("menuitem", { name: "Rename", exact: true }).click();
@@ -210,6 +210,6 @@ test("renames and deletes a PDF from its header menu", async ({
       .poll(() => getPdfByTitle(e2eUser.userId, renamedTitle))
       .toBeNull();
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });

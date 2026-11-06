@@ -8,7 +8,7 @@ vi.mock("@/app/actions/flashcards", () => ({ createFlashcard: vi.fn() }));
 describe("getCreateFlashcardFormValues", () => {
   it("keeps proposal sources through the editable create form and validation", () => {
     const source = { kind: "note" as const, id: "note-1" };
-    const values = getCreateFlashcardFormValues("subject-1", {
+    const values = getCreateFlashcardFormValues("folder-1", {
       front: testDocument("<p>Q</p>"),
       back: testDocument("<p>A</p>"),
       source,
@@ -17,7 +17,7 @@ describe("getCreateFlashcardFormValues", () => {
   });
   it("leaves ordinary new cards without a source", () => {
     expect(getCreateFlashcardFormValues()).toEqual({
-      subjectId: "",
+      folderId: "",
       front: testDocument(""),
       back: testDocument(""),
     });

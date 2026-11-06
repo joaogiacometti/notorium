@@ -9,11 +9,11 @@ import {
 import { useActiveFlashcardEditor } from "@/components/assistant/use-active-flashcard-editor";
 import { FlashcardCardEditor } from "@/components/flashcards/shared/flashcard-card-editor";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { SubjectSelect } from "@/components/shared/subject-select";
+import { FolderSelect } from "@/components/shared/folder-select";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
-import type { SubjectOption } from "@/lib/server/api-contracts";
+import type { FolderOption } from "@/lib/server/api-contracts";
 import { cn } from "@/lib/utils";
 
 interface CreateFlashcardKeepOptions {
@@ -28,8 +28,8 @@ interface CreateFlashcardFormProps<TValues extends FlashcardFormValues> {
   form: UseFormReturn<TValues>;
   formId: string;
   editorResetVersion?: number;
-  subjects: SubjectOption[];
-  onCreateSubject?: (name: string) => Promise<boolean>;
+  folders: FolderOption[];
+  onCreateFolder?: (name: string) => Promise<boolean>;
   onSubmit: (values: TValues) => Promise<void>;
   isSubmitting: boolean;
   isSaved?: boolean;
@@ -38,7 +38,7 @@ interface CreateFlashcardFormProps<TValues extends FlashcardFormValues> {
 }
 
 /**
- * Body and footer of the create dialog: subject, the shared card editor, and
+ * Body and footer of the create dialog: folder, the shared card editor, and
  * a footer that keeps chosen fields for rapid consecutive captures.
  *
  * @example <CreateFlashcardForm open form={form} formId="form-create-flashcard" ... />
@@ -48,8 +48,8 @@ export function CreateFlashcardForm<TValues extends FlashcardFormValues>({
   form,
   formId,
   editorResetVersion,
-  subjects,
-  onCreateSubject,
+  folders,
+  onCreateFolder,
   onSubmit,
   isSubmitting,
   isSaved,
@@ -62,7 +62,7 @@ export function CreateFlashcardForm<TValues extends FlashcardFormValues>({
     form,
     enabled: open,
     resetVersion: editorResetVersion,
-    subjects,
+    folders,
     blocked: isSubmitting || isImageUploading,
   });
   const submitBlocked = isSubmitting || isImageUploading || review.blocked;
@@ -81,18 +81,18 @@ export function CreateFlashcardForm<TValues extends FlashcardFormValues>({
     <form id={formId} onSubmit={submit} className="flex min-h-0 flex-col">
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 sm:px-6">
         <Controller
-          name={"subjectId" as FieldPath<TValues>}
+          name={"folderId" as FieldPath<TValues>}
           control={form.control}
           render={({ field, fieldState }) => (
-            <SubjectSelect
+            <FolderSelect
               value={(field.value ?? null) as string | null}
               onChange={field.onChange}
-              subjects={subjects}
-              id={`${formId}-subject`}
+              folders={folders}
+              id={`${formId}-folder`}
               error={fieldState.error?.message as string}
               ariaInvalid={fieldState.invalid}
-              disabled={subjects.length === 0 && !onCreateSubject}
-              onCreateSubject={onCreateSubject}
+              disabled={folders.length === 0 && !onCreateFolder}
+              onCreateFolder={onCreateFolder}
             />
           )}
         />

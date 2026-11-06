@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { libraryHitSchema } from "@/features/assistant/library-search-contract";
 import { buildLibraryHit } from "@/features/search/library-hits";
-import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
+import { FOLDER_PATH_MAX_CHARS, LIMITS } from "@/lib/config/limits";
 
 const longBody = `${"Intro sentence. ".repeat(20)}A mitose produz duas células.${" Fim.".repeat(40)}`;
 
@@ -11,7 +11,7 @@ describe("buildLibraryHit", () => {
       {
         kind: "note",
         id: "n1",
-        subjectId: "s1",
+        folderId: "s1",
         title: "Divisão celular",
         body: longBody,
       },
@@ -29,7 +29,7 @@ describe("buildLibraryHit", () => {
       {
         kind: "flashcard",
         id: "c1",
-        subjectId: "s1",
+        folderId: "s1",
         title: "Q",
         body: longBody,
       },
@@ -45,12 +45,12 @@ describe("buildLibraryHit", () => {
       {
         kind: "note",
         id: "m1",
-        subjectId: "s1",
+        folderId: "s1",
         title: `Line one\n\n  line two ${"x".repeat(500)}`,
         body: "",
       },
       ["line"],
-      "A::".repeat(SUBJECT_PATH_MAX_CHARS),
+      "A::".repeat(FOLDER_PATH_MAX_CHARS),
     );
 
     expect(hit.title.startsWith("Line one line two")).toBe(true);

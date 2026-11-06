@@ -72,10 +72,10 @@ export async function runUserReadRoute<TSchema extends z.ZodType, TResult>(
  * junk, which numeric schemas reject). Absent keys stay `undefined`.
  *
  * @example
- * readSearchParams("https://x/api?pageIndex=2&subjectIds=a&subjectIds=b", {
+ * readSearchParams("https://x/api?pageIndex=2&folderIds=a&folderIds=b", {
  *   numberKeys: ["pageIndex"],
- *   arrayKeys: ["subjectIds"],
- * }); // { pageIndex: 2, subjectIds: ["a", "b"] }
+ *   arrayKeys: ["folderIds"],
+ * }); // { pageIndex: 2, folderIds: ["a", "b"] }
  */
 export function readSearchParams(
   requestUrl: string,

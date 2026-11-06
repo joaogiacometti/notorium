@@ -12,7 +12,7 @@ vi.mock("sonner", () => ({ toast: toastMock }));
 const card = {
   front: testDocument("<p>What is ATP?</p>"),
   back: testDocument("<p>Energy</p>"),
-  subjectPath: "Biology",
+  folderPath: "Biology",
 };
 
 describe("copyFlashcardsWithToast", () => {

@@ -1,19 +1,18 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, note, subject } from "@/db/schema";
+import { flashcard, folder, note } from "@/db/schema";
 import {
   LIBRARY_HIT_KINDS,
   type LibraryHit,
   type LibrarySearchInput,
   type LibrarySearchOutput,
 } from "@/features/assistant/library-search-contract";
+import { getFolderPathMapForUser } from "@/features/folders/queries";
 import {
   buildLibraryHit,
   type LibraryHitSource,
 } from "@/features/search/library-hits";
 import { buildTermSearch } from "@/features/search/match-sql";
-import { getSubjectPathMapForUser } from "@/features/subjects/queries";
-import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 import { LIMITS } from "@/lib/config/limits";
 
 import { documentText } from "@/lib/editor/document";
@@ -45,7 +44,7 @@ export async function searchLibraryForUser(
     (kind) => !kinds || kinds.includes(kind),
   );
   const [paths, ...sourcesByKind] = await Promise.all([
-    getSubjectPathMapForUser(userId),
+    getFolderPathMapForUser(userId),
     ...wanted.map((kind) => LIBRARY_HIT_FINDERS[kind](userId, terms)),
   ]);
 
@@ -53,7 +52,7 @@ export async function searchLibraryForUser(
     hits: sourcesByKind
       .flat()
       .map((source) =>
-        buildLibraryHit(source, terms, paths.get(source.subjectId) ?? ""),
+        buildLibraryHit(source, terms, paths.get(source.folderId) ?? ""),
       ),
   };
 }
@@ -64,25 +63,21 @@ async function findNoteHitSources(
 ): Promise<LibraryHitSource[]> {
   const search = buildTermSearch(
     terms,
-    [note.title, note.contentText, subject.name],
+    [note.title, note.contentText, folder.name],
     note.title,
     note.updatedAt,
   );
   const rows = await getDb()
     .select({
       id: note.id,
-      subjectId: note.subjectId,
+      folderId: note.folderId,
       title: note.title,
       content: note.content,
     })
     .from(note)
-    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .innerJoin(folder, eq(note.folderId, folder.id))
     .where(
-      and(
-        eq(note.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-        search.where,
-      ),
+      and(eq(note.userId, userId), eq(folder.userId, userId), search.where),
     )
     .orderBy(...search.orderBy)
     .limit(LIMITS.assistantLibraryHitsPerKind);
@@ -107,7 +102,7 @@ async function findFlashcardHitSources(
   const rows = await getDb()
     .select({
       id: flashcard.id,
-      subjectId: flashcard.subjectId,
+      folderId: flashcard.folderId,
       front: flashcard.front,
       back: flashcard.back,
     })

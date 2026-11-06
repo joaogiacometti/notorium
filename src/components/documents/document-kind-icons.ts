@@ -1,7 +1,7 @@
 import { FileText, FileType } from "lucide-react";
 import type { DocumentKind } from "@/features/documents/types";
 
-/** One icon per document kind, shared by the subject tree and source links.
+/** One icon per document kind, shared by the folder tree and source links.
  * @example const Icon = DOCUMENT_KIND_ICONS[document.kind];
  */
 export const DOCUMENT_KIND_ICONS = {

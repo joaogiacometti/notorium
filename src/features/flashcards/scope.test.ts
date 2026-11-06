@@ -1,20 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { resolveScopedSubjectId } from "@/features/flashcards/scope";
+import { resolveScopedFolderId } from "@/features/flashcards/scope";
 
-const subjects = [{ id: "subject-1" }, { id: "subject-2" }];
+const folders = [{ id: "folder-1" }, { id: "folder-2" }];
 
-describe("resolveScopedSubjectId", () => {
-  it("keeps an id that belongs to the user's subjects", () => {
-    expect(resolveScopedSubjectId(subjects, "subject-2")).toBe("subject-2");
+describe("resolveScopedFolderId", () => {
+  it("keeps an id that belongs to the user's folders", () => {
+    expect(resolveScopedFolderId(folders, "folder-2")).toBe("folder-2");
   });
 
   it("drops an unknown id", () => {
-    expect(resolveScopedSubjectId(subjects, "other-user-subject")).toBe(
-      undefined,
-    );
+    expect(resolveScopedFolderId(folders, "other-user-folder")).toBe(undefined);
   });
 
   it("returns undefined when no id is given", () => {
-    expect(resolveScopedSubjectId(subjects, undefined)).toBe(undefined);
+    expect(resolveScopedFolderId(folders, undefined)).toBe(undefined);
   });
 });

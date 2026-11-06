@@ -115,7 +115,7 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
-const subjects = [
+const folders = [
   { id: "bio", name: "Biology", path: "Biology" },
   { id: "cells", name: "Cells", path: "Biology::Cells" },
 ];
@@ -124,14 +124,14 @@ const atpCard = { front: "What is ATP?", back: "Energy carrier." };
 const dnaCard = { front: "What is DNA?", back: "Genetic material." };
 
 function pendingProposal(
-  subjectPath?: string,
+  folderPath?: string,
   cards: ProposedFlashcard[] = [atpCard],
 ): AssistantFlashcardProposalPart {
   return {
     type: "tool-proposeFlashcards",
     toolCallId: "call-1",
     state: "input-available",
-    input: { cards: cards.map((card) => ({ ...card, subjectPath })) },
+    input: { cards: cards.map((card) => ({ ...card, folderPath })) },
   };
 }
 
@@ -144,7 +144,7 @@ describe("AssistantFlashcardProposal", () => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
     fakes.actions = new FakeFlashcardActions();
     fakes.toastError.mockReset();
-    new FakeReadApiFetch().install().replyJson(200, subjects);
+    new FakeReadApiFetch().install().replyJson(200, folders);
     resolved = [];
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -177,15 +177,15 @@ describe("AssistantFlashcardProposal", () => {
     });
   }
 
-  // Let the subject options request settle so the preselection is in place.
+  // Let the folder options request settle so the preselection is in place.
   async function renderPendingProposal(
-    subjectPath: string,
+    folderPath: string,
     cards?: ProposedFlashcard[],
   ) {
-    await renderProposal(pendingProposal(subjectPath, cards));
+    await renderProposal(pendingProposal(folderPath, cards));
     await act(async () => {
       await vi.waitFor(() =>
-        expect(container.textContent).not.toContain("Loading subjects"),
+        expect(container.textContent).not.toContain("Loading folders"),
       );
     });
   }
@@ -236,14 +236,14 @@ describe("AssistantFlashcardProposal", () => {
     ]);
   });
 
-  it("preselects the proposed subject and creates the card as rich text", async () => {
+  it("preselects the proposed folder and creates the card as rich text", async () => {
     await renderPendingProposal("Biology::Cells");
 
     await click("Create");
 
     expect(fakes.actions?.created).toEqual([
       {
-        subjectId: "cells",
+        folderId: "cells",
         front: testDocument("<p>What is ATP?</p>"),
         back: testDocument("<p>Energy carrier.</p>"),
       },
@@ -308,7 +308,7 @@ describe("AssistantFlashcardProposal", () => {
     );
   });
 
-  it("keeps Create disabled until a subject is known", async () => {
+  it("keeps Create disabled until a folder is known", async () => {
     await renderPendingProposal("Chemistry");
 
     expect(button("Create").disabled).toBe(true);

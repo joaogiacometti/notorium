@@ -2,7 +2,7 @@ import { z } from "zod";
 import { editToolInputObject } from "@/features/assistant/edit-guards";
 import { editorHtmlText } from "@/features/assistant/editor-html-text";
 import { EDITOR_HTML_MATH_RULE } from "@/lib/ai/prompt-rules";
-import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
+import { FOLDER_PATH_MAX_CHARS, LIMITS } from "@/lib/config/limits";
 import type { RichTextDocument } from "@/lib/editor/document";
 
 /** Raw size cap for a card side sent to the assistant; the visible-text limit
@@ -18,7 +18,7 @@ const draftHtml = (limit: number) =>
       `Expected rich text with at most ${limit} visible characters`,
     );
 
-/** Current unsaved editor content; empty fields and subject are allowed.
+/** Current unsaved editor content; empty fields and folder are allowed.
  * @example flashcardDraftSchema.parse({ sessionId: "draft-1", revision: 0, front: "", back: "" });
  */
 export const flashcardDraftSchema = z.object({
@@ -26,7 +26,7 @@ export const flashcardDraftSchema = z.object({
   revision: z.number().int().nonnegative(),
   front: draftHtml(LIMITS.flashcardFrontMax),
   back: draftHtml(LIMITS.flashcardBackMax),
-  subjectPath: z.string().max(SUBJECT_PATH_MAX_CHARS).optional(),
+  folderPath: z.string().max(FOLDER_PATH_MAX_CHARS).optional(),
 });
 
 /** Model replacements use supported editor HTML, with images represented by placeholders.

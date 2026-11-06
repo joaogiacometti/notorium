@@ -4,7 +4,7 @@ import type { FlashcardFormValues } from "@/features/flashcards/validation";
 import { testDocument } from "@/test/document";
 
 const values: FlashcardFormValues = {
-  subjectId: "deck-1",
+  folderId: "deck-1",
   front: testDocument("<p>Front</p>"),
   back: testDocument("<p>Back</p>"),
 };
@@ -17,7 +17,7 @@ describe("getCreateFlashcardResetValues", () => {
         keepBackAfterSubmit: false,
       }),
     ).toEqual({
-      subjectId: "deck-1",
+      folderId: "deck-1",
       front: testDocument(""),
       back: testDocument(""),
     });
@@ -30,7 +30,7 @@ describe("getCreateFlashcardResetValues", () => {
         keepBackAfterSubmit: false,
       }),
     ).toEqual({
-      subjectId: "deck-1",
+      folderId: "deck-1",
       front: testDocument("<p>Front</p>"),
       back: testDocument(""),
     });
@@ -43,7 +43,7 @@ describe("getCreateFlashcardResetValues", () => {
         keepBackAfterSubmit: true,
       }),
     ).toEqual({
-      subjectId: "deck-1",
+      folderId: "deck-1",
       front: testDocument(""),
       back: testDocument("<p>Back</p>"),
     });

@@ -1,7 +1,7 @@
 import type { RichTextDocument } from "@/lib/editor/document";
 
 /**
- * Subject-independent link target, so links survive moving the note.
+ * Folder-independent link target, so links survive moving the note.
  *
  * @example getNoteLinkHref("n1"); // "/notes/n1"
  */

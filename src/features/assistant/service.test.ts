@@ -16,8 +16,8 @@ import {
   readStreamedText,
 } from "@/test/fake-streaming-model";
 
-/** Subject store standing in for the DB; records whose subjects were read. */
-class FakeSubjectPathStore {
+/** Folder store standing in for the DB; records whose folders were read. */
+class FakeFolderPathStore {
   readonly requestedUserIds: string[] = [];
 
   constructor(private readonly paths: string[]) {}
@@ -95,7 +95,7 @@ describe("streamAssistantReplyForUser", () => {
     const result = await streamAssistantReplyForUser({
       userId: "user-1",
       messages,
-      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      loadFolderPaths: new FakeFolderPathStore([]).load,
     });
 
     expect(result.success).toBe(true);
@@ -132,10 +132,10 @@ describe("streamAssistantReplyForUser", () => {
     expect(getAiModelMock).not.toHaveBeenCalled();
   });
 
-  it("offers the flashcard tool and the user's subject paths", async () => {
+  it("offers the flashcard tool and the user's folder paths", async () => {
     const model = createFakeStreamingModel("Here is a card.");
     getAiModelMock.mockReturnValue(model);
-    const subjects = new FakeSubjectPathStore(["Biology::Cells"]);
+    const folders = new FakeFolderPathStore(["Biology::Cells"]);
     const { streamAssistantReplyForUser } = await import(
       "@/features/assistant/service"
     );
@@ -143,12 +143,12 @@ describe("streamAssistantReplyForUser", () => {
     const result = await streamAssistantReplyForUser({
       userId: "user-1",
       messages,
-      loadSubjectPaths: subjects.load,
+      loadFolderPaths: folders.load,
     });
     if (result.success) await result.response.text();
 
     const call = model.doStreamCalls[0];
-    expect(subjects.requestedUserIds).toEqual(["user-1"]);
+    expect(folders.requestedUserIds).toEqual(["user-1"]);
     expect(call?.tools?.map((tool) => tool.name)).toEqual([
       "proposeFlashcards",
       "searchLibrary",
@@ -187,7 +187,7 @@ describe("streamAssistantReplyForUser", () => {
           },
         ],
         bypassLearning,
-        loadSubjectPaths: new FakeSubjectPathStore([]).load,
+        loadFolderPaths: new FakeFolderPathStore([]).load,
       });
       if (result.success) await result.response.text();
 
@@ -231,7 +231,7 @@ describe("streamAssistantReplyForUser", () => {
           parts: [{ type: "text", text: "Give me options" }],
         },
       ],
-      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      loadFolderPaths: new FakeFolderPathStore([]).load,
     });
     if (!result.success) throw new Error("Expected a streamed reply");
     const body = await result.response.text();
@@ -252,9 +252,9 @@ describe("streamAssistantReplyForUser", () => {
         {
           kind: "flashcard",
           id: "card-1",
-          subjectId: "subject-1",
+          folderId: "folder-1",
           title: "What is mitosis?",
-          subjectPath: "Biology",
+          folderPath: "Biology",
           snippet: "Cell division.",
         },
       ],
@@ -266,7 +266,7 @@ describe("streamAssistantReplyForUser", () => {
     const result = await streamAssistantReplyForUser({
       userId: "user-1",
       messages,
-      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      loadFolderPaths: new FakeFolderPathStore([]).load,
       searchLibrary: library.search,
     });
     if (!result.success) throw new Error("Expected a streamed reply");
@@ -300,7 +300,7 @@ describe("streamAssistantReplyForUser", () => {
         front: "O que é ATP?",
         back: "Transporta energia.",
       },
-      loadSubjectPaths: new FakeSubjectPathStore(["Biologia"]).load,
+      loadFolderPaths: new FakeFolderPathStore(["Biologia"]).load,
     });
     if (!result.success) throw new Error("Expected a streamed reply");
     await result.response.text();
@@ -341,7 +341,7 @@ describe("streamAssistantReplyForUser", () => {
     const result = await streamAssistantReplyForUser({
       userId: "user-1",
       messages,
-      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      loadFolderPaths: new FakeFolderPathStore([]).load,
       searchLibrary: library.search,
     });
     if (!result.success) throw new Error("Expected a streamed reply");
@@ -371,7 +371,7 @@ describe("streamAssistantReplyForUser", () => {
         mode: "exam",
         front: "Current visible question",
       },
-      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      loadFolderPaths: new FakeFolderPathStore([]).load,
     });
     if (result.success) await result.response.text();
     const prompt = model.doStreamCalls[0].prompt;
@@ -442,7 +442,7 @@ describe("streamAssistantReplyForUser", () => {
     const result = await streamAssistantReplyForUser({
       ...request,
       userId: "user-1",
-      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      loadFolderPaths: new FakeFolderPathStore([]).load,
     });
     if (!result.success) throw new Error("Expected a streamed reply");
     await result.response.text();
@@ -493,7 +493,7 @@ describe("streamAssistantReplyForUser", () => {
           partial: true,
           blocks: [{ id: "b0", html }],
         },
-        loadSubjectPaths: new FakeSubjectPathStore([]).load,
+        loadFolderPaths: new FakeFolderPathStore([]).load,
       });
       if (result.success) await result.response.text();
     }
@@ -521,7 +521,7 @@ describe("streamAssistantReplyForUser", () => {
         userId: "user-1",
         messages,
         draft: { sessionId: "d", revision: 0, front: "<p>Question</p>", back },
-        loadSubjectPaths: new FakeSubjectPathStore([]).load,
+        loadFolderPaths: new FakeFolderPathStore([]).load,
       });
       if (result.success) await result.response.text();
     }
@@ -559,7 +559,7 @@ describe("streamAssistantReplyForUser", () => {
         front: "<p>Explain alpha</p>",
         back: "",
       },
-      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      loadFolderPaths: new FakeFolderPathStore([]).load,
     });
     if (result.success) await result.response.text();
     const finalTurn = model.doStreamCalls[0].prompt.at(-1);
@@ -616,7 +616,7 @@ describe("streamAssistantReplyForUser", () => {
     const result = await streamAssistantReplyForUser({
       ...request,
       userId: "user-1",
-      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      loadFolderPaths: new FakeFolderPathStore([]).load,
     });
     if (result.success) await result.response.text();
     const call = model.doStreamCalls[0];
@@ -650,7 +650,7 @@ describe("streamAssistantReplyForUser", () => {
       userId: "user-1",
       messages,
       chatId: "chat-1",
-      loadSubjectPaths: new FakeSubjectPathStore([]).load,
+      loadFolderPaths: new FakeFolderPathStore([]).load,
     });
     if (result.success) await result.response.text();
 

@@ -34,8 +34,8 @@ const deleteMock = vi.fn(() => ({
 const andMock = vi.fn((...conditions) => conditions);
 const eqMock = vi.fn((column, value) => ({ column, value }));
 const inArrayMock = vi.fn((column, values) => ({ column, values }));
-const countFlashcardsBySubjectForUserMock = vi.fn();
-const getSubjectRecordForUserMock = vi.fn();
+const countFlashcardsByFolderForUserMock = vi.fn();
+const getFolderRecordForUserMock = vi.fn();
 const getFlashcardByIdForUserMock = vi.fn();
 const getFlashcardRecordForUserMock = vi.fn();
 const getFlashcardRecordsForUserMock = vi.fn();
@@ -62,8 +62,8 @@ vi.mock("@/db/schema", () => ({
   },
 }));
 
-vi.mock("@/features/subjects/queries", () => ({
-  getSubjectRecordForUser: getSubjectRecordForUserMock,
+vi.mock("@/features/folders/queries", () => ({
+  getFolderRecordForUser: getFolderRecordForUserMock,
 }));
 
 vi.mock("@/features/flashcards/fsrs", () => ({
@@ -71,7 +71,7 @@ vi.mock("@/features/flashcards/fsrs", () => ({
 }));
 
 vi.mock("@/features/flashcards/queries", () => ({
-  countFlashcardsBySubjectForUser: countFlashcardsBySubjectForUserMock,
+  countFlashcardsByFolderForUser: countFlashcardsByFolderForUserMock,
   getFlashcardByIdForUser: getFlashcardByIdForUserMock,
   getFlashcardRecordForUser: getFlashcardRecordForUserMock,
   getFlashcardRecordsForUser: getFlashcardRecordsForUserMock,
@@ -80,8 +80,8 @@ vi.mock("@/features/flashcards/queries", () => ({
 describe("createFlashcardForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    countFlashcardsBySubjectForUserMock.mockResolvedValue(0);
-    getSubjectRecordForUserMock.mockResolvedValue({
+    countFlashcardsByFolderForUserMock.mockResolvedValue(0);
+    getFolderRecordForUserMock.mockResolvedValue({
       id: "deck-1",
       name: "Metabolism",
     });
@@ -104,7 +104,7 @@ describe("createFlashcardForUser", () => {
       "@/features/flashcards/mutations"
     );
     const result = await createFlashcardForUser("user-1", {
-      subjectId: "deck-1",
+      folderId: "deck-1",
       front: testDocument("<p>Q</p>"),
       back: testDocument("<p>A</p>"),
       source: { kind: "note", id: "foreign" },
@@ -120,11 +120,11 @@ describe("createFlashcardForUser", () => {
     expect(insertMock).not.toHaveBeenCalled();
   });
 
-  it("persists an owned note source independently of the card subject", async () => {
+  it("persists an owned note source independently of the card folder", async () => {
     readOwnedFlashcardSourceMock.mockResolvedValueOnce({
       id: "doc-1",
       kind: "note",
-      subjectId: "other-subject",
+      folderId: "other-folder",
     });
     insertReturningMock.mockResolvedValueOnce([{ id: "card-1" }]);
     const { createFlashcardForUser } = await import(
@@ -132,7 +132,7 @@ describe("createFlashcardForUser", () => {
     );
     expect(
       await createFlashcardForUser("user-1", {
-        subjectId: "deck-1",
+        folderId: "deck-1",
         front: testDocument("<p>Q</p>"),
         back: testDocument("<p>A</p>"),
         source: { kind: "note", id: "doc-1" },
@@ -153,7 +153,7 @@ describe("createFlashcardForUser", () => {
     );
 
     const result = await createFlashcardForUser("user-1", {
-      subjectId: "deck-1",
+      folderId: "deck-1",
       front: testDocument("<p>Same Front</p>"),
       back: testDocument("<p>Back</p>"),
     });
@@ -171,7 +171,7 @@ describe("createFlashcardForUser", () => {
     insertReturningMock.mockResolvedValueOnce([
       {
         id: "flashcard-1",
-        subjectId: "deck-1",
+        folderId: "deck-1",
         front: testDocument("<p>Front</p>"),
         frontNormalized: "front",
         back: testDocument("<p>Back</p>"),
@@ -183,7 +183,7 @@ describe("createFlashcardForUser", () => {
     );
 
     const result = await createFlashcardForUser("user-1", {
-      subjectId: "deck-1",
+      folderId: "deck-1",
       front: testDocument("<p>Front</p>"),
       back: testDocument("<p>Back</p>"),
     });
@@ -192,14 +192,14 @@ describe("createFlashcardForUser", () => {
       success: true,
       flashcard: {
         id: "flashcard-1",
-        subjectId: "deck-1",
+        folderId: "deck-1",
         front: testDocument("<p>Front</p>"),
         frontNormalized: "front",
         back: testDocument("<p>Back</p>"),
       },
     });
     expect(insertValuesMock).toHaveBeenCalledWith({
-      subjectId: "deck-1",
+      folderId: "deck-1",
       userId: "user-1",
       front: testDocument("<p>Front</p>"),
       frontNormalized: "front",
@@ -223,7 +223,7 @@ describe("createFlashcardForUser", () => {
 describe("editFlashcardForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getSubjectRecordForUserMock.mockResolvedValue({
+    getFolderRecordForUserMock.mockResolvedValue({
       id: "deck-2",
       name: "Revised Deck",
     });
@@ -232,7 +232,7 @@ describe("editFlashcardForUser", () => {
   it("returns a duplicate error when the database rejects an updated front", async () => {
     getFlashcardByIdForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
-      subjectId: "deck-2",
+      folderId: "deck-2",
       front: testDocument("<p>Original front</p>"),
       back: testDocument("<p>Original back</p>"),
     });
@@ -243,7 +243,7 @@ describe("editFlashcardForUser", () => {
     expect(
       await editFlashcardForUser("user-1", {
         id: "flashcard-1",
-        subjectId: "deck-2",
+        folderId: "deck-2",
         front: testDocument("<p>Same Front</p>"),
         back: testDocument("<p>Back</p>"),
       }),
@@ -253,15 +253,15 @@ describe("editFlashcardForUser", () => {
   it("updates front, back, and deck", async () => {
     getFlashcardByIdForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
-      subjectId: "deck-1",
+      folderId: "deck-1",
       front: testDocument("<p>Original front</p>"),
       back: testDocument("<p>Original back</p>"),
     });
-    countFlashcardsBySubjectForUserMock.mockResolvedValueOnce(1);
+    countFlashcardsByFolderForUserMock.mockResolvedValueOnce(1);
     updateReturningMock.mockResolvedValueOnce([
       {
         id: "flashcard-1",
-        subjectId: "deck-2",
+        folderId: "deck-2",
         front: testDocument("<p>Updated front</p>"),
         back: testDocument("<p>Updated back</p>"),
       },
@@ -273,7 +273,7 @@ describe("editFlashcardForUser", () => {
 
     const result = await editFlashcardForUser("user-1", {
       id: "flashcard-1",
-      subjectId: "deck-2",
+      folderId: "deck-2",
       front: testDocument("<p>Updated front</p>"),
       back: testDocument("<p>Updated back</p>"),
     });
@@ -282,14 +282,14 @@ describe("editFlashcardForUser", () => {
       success: true,
       flashcard: {
         id: "flashcard-1",
-        subjectId: "deck-2",
+        folderId: "deck-2",
         front: testDocument("<p>Updated front</p>"),
         back: testDocument("<p>Updated back</p>"),
       },
-      previousSubjectId: "deck-1",
+      previousFolderId: "deck-1",
     });
     expect(updateSetMock).toHaveBeenCalledWith({
-      subjectId: "deck-2",
+      folderId: "deck-2",
       front: testDocument("<p>Updated front</p>"),
       frontNormalized: "updated front",
       frontText: "Updated front",
@@ -306,8 +306,8 @@ describe("bulkDeleteFlashcardsForUser", () => {
 
   it("deletes owned flashcards and returns their ids and deck ids", async () => {
     getFlashcardRecordsForUserMock.mockResolvedValueOnce([
-      { id: "flashcard-1", subjectId: "deck-1" },
-      { id: "flashcard-2", subjectId: "deck-2" },
+      { id: "flashcard-1", folderId: "deck-1" },
+      { id: "flashcard-2", folderId: "deck-2" },
     ]);
 
     const { bulkDeleteFlashcardsForUser } = await import(
@@ -321,14 +321,14 @@ describe("bulkDeleteFlashcardsForUser", () => {
     expect(result).toEqual({
       success: true,
       ids: ["flashcard-1", "flashcard-2"],
-      subjectIds: ["deck-1", "deck-2"],
+      folderIds: ["deck-1", "deck-2"],
     });
     expect(deleteMock).toHaveBeenCalledTimes(1);
   });
 
   it("loads a large deletion batch with one ownership read", async () => {
     const ids = Array.from({ length: 1000 }, (_, index) => `card-${index}`);
-    const records = ids.map((id) => ({ id, subjectId: "deck-1" }));
+    const records = ids.map((id) => ({ id, folderId: "deck-1" }));
     getFlashcardRecordsForUserMock.mockResolvedValueOnce(records);
     const { bulkDeleteFlashcardsForUser } = await import(
       "@/features/flashcards/bulk-mutations"
@@ -336,7 +336,7 @@ describe("bulkDeleteFlashcardsForUser", () => {
 
     const result = await bulkDeleteFlashcardsForUser("user-1", { ids });
 
-    expect(result).toEqual({ success: true, ids, subjectIds: ["deck-1"] });
+    expect(result).toEqual({ success: true, ids, folderIds: ["deck-1"] });
     const ownershipReadCount =
       getFlashcardByIdForUserMock.mock.calls.length +
       getFlashcardRecordsForUserMock.mock.calls.length;
@@ -350,7 +350,7 @@ describe("bulkDeleteFlashcardsForUser", () => {
 
   it("does not delete any cards when a requested card is missing or unowned", async () => {
     getFlashcardRecordsForUserMock.mockResolvedValueOnce([
-      { id: "owned", subjectId: "deck-1" },
+      { id: "owned", folderId: "deck-1" },
     ]);
     const { bulkDeleteFlashcardsForUser } = await import(
       "@/features/flashcards/bulk-mutations"
@@ -370,18 +370,18 @@ describe("bulkDeleteFlashcardsForUser", () => {
 describe("bulkMoveFlashcardsForUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getSubjectRecordForUserMock.mockResolvedValue({
+    getFolderRecordForUserMock.mockResolvedValue({
       id: "deck-3",
       name: "Destination Deck",
     });
   });
 
-  it("moves flashcards to another subject", async () => {
+  it("moves flashcards to another folder", async () => {
     getFlashcardRecordsForUserMock.mockResolvedValueOnce([
-      { id: "flashcard-1", subjectId: "deck-1" },
-      { id: "flashcard-2", subjectId: "deck-2" },
+      { id: "flashcard-1", folderId: "deck-1" },
+      { id: "flashcard-2", folderId: "deck-2" },
     ]);
-    countFlashcardsBySubjectForUserMock.mockResolvedValueOnce(10);
+    countFlashcardsByFolderForUserMock.mockResolvedValueOnce(10);
 
     const { bulkMoveFlashcardsForUser } = await import(
       "@/features/flashcards/mutations"
@@ -389,14 +389,14 @@ describe("bulkMoveFlashcardsForUser", () => {
 
     const result = await bulkMoveFlashcardsForUser("user-1", {
       ids: ["flashcard-1", "flashcard-2"],
-      subjectId: "deck-3",
+      folderId: "deck-3",
     });
 
     expect(result).toEqual({
       success: true,
       ids: ["flashcard-1", "flashcard-2"],
-      subjectId: "deck-3",
-      previousSubjectIds: ["deck-1", "deck-2"],
+      folderId: "deck-3",
+      previousFolderIds: ["deck-1", "deck-2"],
     });
   });
 });

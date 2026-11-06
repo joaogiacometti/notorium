@@ -1,15 +1,15 @@
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, note, pdfDocument, subject } from "@/db/schema";
+import { flashcard, folder, note, pdfDocument } from "@/db/schema";
 import { createFlashcardForUser } from "@/features/flashcards/mutations";
 import { MEDIA_STORAGE_CONTEXTS } from "@/lib/media-storage/storage-pathname";
 import { testDocument } from "@/test/document";
-import { createNote, createSubject } from "./db";
+import { createFolder, createNote } from "./db";
 import { buildBlankPdf } from "./pdf-file";
 
 export async function seedIsolationData(userId: string, name: string) {
-  const home = await createSubject(userId, name);
-  const destination = await createSubject(userId, `${name} destination`);
+  const home = await createFolder(userId, name);
+  const destination = await createFolder(userId, `${name} destination`);
   const createdNote = await createNote(
     userId,
     home.id,
@@ -17,7 +17,7 @@ export async function seedIsolationData(userId: string, name: string) {
     `<p>${name} private note content</p>`,
   );
   const card = await createFlashcardForUser(userId, {
-    subjectId: home.id,
+    folderId: home.id,
     front: testDocument(`<p>${name} question</p>`),
     back: testDocument(`<p>${name} private answer</p>`),
     source: { kind: "note", id: createdNote.id },
@@ -36,7 +36,7 @@ export async function seedIsolationData(userId: string, name: string) {
     .insert(pdfDocument)
     .values({
       userId,
-      subjectId: home.id,
+      folderId: home.id,
       title: `${name} PDF`,
       fileName: "private.pdf",
       blobPathname: pdfBlob.pathname,
@@ -45,7 +45,7 @@ export async function seedIsolationData(userId: string, name: string) {
     })
     .returning();
   return {
-    subjectId: home.id,
+    folderId: home.id,
     destinationId: destination.id,
     noteId: createdNote.id,
     cardId: card.flashcard.id,
@@ -57,12 +57,12 @@ export async function seedIsolationData(userId: string, name: string) {
 // Read the stored rows directly, not through the ownership helpers under test.
 export async function snapshotIsolationData(userId: string) {
   const db = getDb();
-  const [subjects, notes, cards, pdfs] = await Promise.all([
+  const [folders, notes, cards, pdfs] = await Promise.all([
     db
       .select()
-      .from(subject)
-      .where(eq(subject.userId, userId))
-      .orderBy(asc(subject.id)),
+      .from(folder)
+      .where(eq(folder.userId, userId))
+      .orderBy(asc(folder.id)),
     db.select().from(note).where(eq(note.userId, userId)).orderBy(asc(note.id)),
     db
       .select()
@@ -75,5 +75,5 @@ export async function snapshotIsolationData(userId: string) {
       .where(eq(pdfDocument.userId, userId))
       .orderBy(asc(pdfDocument.id)),
   ]);
-  return { subjects, notes, cards, pdfs };
+  return { folders, notes, cards, pdfs };
 }

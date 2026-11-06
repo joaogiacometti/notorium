@@ -1,9 +1,9 @@
 import type { DocumentCapacityRule } from "@/features/documents/move-target";
-import { countPdfsBySubjectForUser } from "@/features/pdfs/queries";
+import { countPdfsByFolderForUser } from "@/features/pdfs/queries";
 import { LIMITS } from "@/lib/config/limits";
 
 export const pdfCapacityRule: DocumentCapacityRule = {
-  countInSubject: countPdfsBySubjectForUser,
-  max: LIMITS.maxPdfsPerSubject,
+  countInFolder: countPdfsByFolderForUser,
+  max: LIMITS.maxPdfsPerFolder,
   limitErrorCode: "limits.pdfLimit",
 };

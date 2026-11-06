@@ -7,8 +7,8 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createNote } from "@/app/actions/notes";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { SubjectSelect } from "@/components/shared/subject-select";
-import { useCreateInlineSubjectPicker } from "@/components/shared/use-create-inline-subject-picker";
+import { FolderSelect } from "@/components/shared/folder-select";
+import { useCreateInlineFolderPicker } from "@/components/shared/use-create-inline-folder-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,21 +31,21 @@ import {
 } from "@/features/notes/validation";
 import { invalidateDocumentViews } from "@/lib/client-cache/invalidation";
 import { emptyDocument } from "@/lib/editor/document";
-import type { SubjectOption } from "@/lib/server/api-contracts";
+import type { FolderOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 
 interface CreateNoteTitleDialogProps {
-  subjectId?: string;
-  subjects?: SubjectOption[];
+  folderId?: string;
+  folders?: FolderOption[];
   trigger?: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (noteId: string, subjectId: string) => void;
+  onSuccess: (noteId: string, folderId: string) => void;
 }
 
 export function CreateNoteTitleDialog({
-  subjectId,
-  subjects: initialSubjects,
+  folderId,
+  folders: initialFolders,
   trigger,
   open,
   onOpenChange,
@@ -56,16 +56,16 @@ export function CreateNoteTitleDialog({
   const form = useForm<CreateNoteForm>({
     resolver: zodResolver(createNoteSchema),
     defaultValues: {
-      subjectId: subjectId ?? "",
+      folderId: folderId ?? "",
       title: "",
       content: emptyDocument(),
     },
   });
-  const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
-    initialSubjects,
+  const { folders, handleCreateFolder } = useCreateInlineFolderPicker({
+    initialFolders,
     open,
-    onSubjectCreated: (createdSubjectId) =>
-      form.setValue("subjectId", createdSubjectId, {
+    onFolderCreated: (createdFolderId) =>
+      form.setValue("folderId", createdFolderId, {
         shouldDirty: true,
         shouldValidate: true,
       }),
@@ -74,12 +74,12 @@ export function CreateNoteTitleDialog({
   useEffect(() => {
     if (open) {
       form.reset({
-        subjectId: subjectId ?? "",
+        folderId: folderId ?? "",
         title: "",
         content: emptyDocument(),
       });
     }
-  }, [form, open, subjectId]);
+  }, [form, open, folderId]);
 
   async function handleSubmit(data: CreateNoteForm) {
     if (isSubmitting) {
@@ -90,7 +90,7 @@ export function CreateNoteTitleDialog({
 
     try {
       const result = await createNote({
-        subjectId: data.subjectId,
+        folderId: data.folderId,
         title: data.title,
         content: emptyDocument(),
       });
@@ -100,14 +100,14 @@ export function CreateNoteTitleDialog({
         return;
       }
 
-      await invalidateDocumentViews(queryClient, [result.subjectId]);
+      await invalidateDocumentViews(queryClient, [result.folderId]);
       form.reset({
-        subjectId: subjectId ?? "",
+        folderId: folderId ?? "",
         title: "",
         content: emptyDocument(),
       });
       onOpenChange(false);
-      onSuccess(result.noteId, data.subjectId);
+      onSuccess(result.noteId, data.folderId);
     } finally {
       setIsSubmitting(false);
     }
@@ -116,7 +116,7 @@ export function CreateNoteTitleDialog({
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       form.reset({
-        subjectId: subjectId ?? "",
+        folderId: folderId ?? "",
         title: "",
         content: emptyDocument(),
       });
@@ -140,19 +140,19 @@ export function CreateNoteTitleDialog({
           onSubmit={form.handleSubmit(handleSubmit)}
         >
           <FieldGroup className="gap-4">
-            {initialSubjects ? (
+            {initialFolders ? (
               <Controller
-                name="subjectId"
+                name="folderId"
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <SubjectSelect
+                  <FolderSelect
                     value={field.value}
                     onChange={(value) => field.onChange(value ?? "")}
-                    subjects={subjects}
-                    id="form-create-note-subject"
+                    folders={folders}
+                    id="form-create-note-folder"
                     error={fieldState.error?.message}
                     ariaInvalid={fieldState.invalid}
-                    onCreateSubject={handleCreateSubject}
+                    onCreateFolder={handleCreateFolder}
                   />
                 )}
               />

@@ -25,7 +25,7 @@ describe("createFlashcardSchema", () => {
     ]) {
       expect(
         createFlashcardSchema.safeParse({
-          subjectId: "s1",
+          folderId: "s1",
           front,
           back: richBack,
         }).success,
@@ -35,7 +35,7 @@ describe("createFlashcardSchema", () => {
 
   it("accepts valid input", () => {
     const result = createFlashcardSchema.safeParse({
-      subjectId: "deck-1",
+      folderId: "deck-1",
       front: testDocument(richFront),
       back: testDocument(richBack),
     });
@@ -43,7 +43,7 @@ describe("createFlashcardSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects missing subjectId", () => {
+  it("rejects missing folderId", () => {
     const result = createFlashcardSchema.safeParse({
       front: testDocument(richFront),
       back: testDocument(richBack),
@@ -54,7 +54,7 @@ describe("createFlashcardSchema", () => {
 
   it("rejects empty rich text front", () => {
     const result = createFlashcardSchema.safeParse({
-      subjectId: "deck-1",
+      folderId: "deck-1",
       front: testDocument("<p> </p>"),
       back: testDocument(richBack),
     });
@@ -72,7 +72,7 @@ describe("createFlashcardSchema", () => {
       '<img src="/api/attachments/blob?pathname=notorium%2Fflashcards%2Fuser-1%2Foverflow.png">';
 
     const result = createFlashcardSchema.safeParse({
-      subjectId: "deck-1",
+      folderId: "deck-1",
       front: testDocument(front),
       back: testDocument(back),
     });
@@ -85,7 +85,7 @@ describe("editFlashcardSchema", () => {
   it("accepts valid input", () => {
     const result = editFlashcardSchema.safeParse({
       id: "flashcard-1",
-      subjectId: "deck-1",
+      folderId: "deck-1",
       front: testDocument(richFront),
       back: testDocument(richBack),
     });
@@ -95,7 +95,7 @@ describe("editFlashcardSchema", () => {
 
   it("rejects missing id", () => {
     const result = editFlashcardSchema.safeParse({
-      subjectId: "deck-1",
+      folderId: "deck-1",
       front: testDocument(richFront),
       back: testDocument(richBack),
     });
@@ -115,7 +115,7 @@ describe("delete and bulk schemas", () => {
     expect(
       bulkMoveFlashcardsSchema.safeParse({
         ids: ["flashcard-1", "flashcard-2"],
-        subjectId: "deck-2",
+        folderId: "deck-2",
       }).success,
     ).toBe(true);
   });
@@ -156,7 +156,7 @@ describe("flashcardsManageQuerySchema", () => {
 
 describe("flashcard source validation", () => {
   const card = {
-    subjectId: "s1",
+    folderId: "s1",
     front: testDocument("<p>Q</p>"),
     back: testDocument("<p>A</p>"),
   };

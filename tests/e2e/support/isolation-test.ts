@@ -10,7 +10,7 @@ import {
 import { test as authenticatedTest } from "./authenticated-test";
 import { runWithCleanup } from "./cleanup";
 import {
-  clearUserSubjectsByNames,
+  clearUserFoldersByNames,
   type E2EUserAccount,
   ensureE2EUserAccount,
 } from "./db";
@@ -58,7 +58,7 @@ export const test = authenticatedTest.extend<{ isolation: IsolationFixture }>({
       for (const [index, account] of [e2eUser, otherUser].entries()) {
         const name = `${term}-${index}`;
         registerCleanup(() =>
-          clearUserSubjectsByNames(account.userId, [
+          clearUserFoldersByNames(account.userId, [
             name,
             `${name} destination`,
           ]),

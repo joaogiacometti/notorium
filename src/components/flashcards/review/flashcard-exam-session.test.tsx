@@ -139,14 +139,14 @@ describe("FlashcardExamSession", () => {
       ?.click();
   }
 
-  async function renderExam(subjectId?: string) {
+  async function renderExam(folderId?: string) {
     await act(async () => {
       root.render(
         <QueryProvider>
           <FlashcardExamSession
             initialCards={[makeCard("card-1"), makeCard("card-2")]}
-            subjects={[]}
-            subjectId={subjectId}
+            folders={[]}
+            folderId={folderId}
           />
         </QueryProvider>,
       );
@@ -168,7 +168,7 @@ describe("FlashcardExamSession", () => {
     await act(async () => clickButton("Exit exam"));
 
     expect(router.pushedHrefs).toEqual([
-      "/flashcards?view=review&subjectId=deck-1",
+      "/flashcards?view=review&folderId=deck-1",
     ]);
   });
 

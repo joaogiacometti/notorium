@@ -5,7 +5,7 @@ import { FlashcardsManager } from "@/components/flashcards/manage/flashcards-man
 import { FlashcardsManagerTableSkeleton } from "@/components/flashcards/manage/flashcards-manager-table";
 import { FlashcardReviewActionCardSkeleton } from "@/components/flashcards/review/flashcard-review-loading";
 import { ReviewHubView } from "@/components/flashcards/review/review-hub-view";
-import { SubjectScopeFilter } from "@/components/flashcards/shared/subject-scope-filter";
+import { FolderScopeFilter } from "@/components/flashcards/shared/folder-scope-filter";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FlashcardManageFilter } from "@/features/flashcards/validation";
 import type { FlashcardsView } from "@/features/flashcards/view";
@@ -16,47 +16,47 @@ import {
 import type {
   FlashcardManagePage,
   FlashcardReviewSummary,
-  SubjectOption,
+  FolderOption,
 } from "@/lib/server/api-contracts";
 
 interface FlashcardsPageClientProps {
   currentView: FlashcardsView;
-  scopedSubjectId?: string;
+  scopedFolderId?: string;
   initialSearch?: string;
   initialFilter?: FlashcardManageFilter;
   initialPageSize: number;
-  subjects: SubjectOption[];
+  folders: FolderOption[];
   initialManagePageData: FlashcardManagePage;
   reviewSummary: FlashcardReviewSummary;
 }
 
 /**
  * Flashcards hub. There is no in-page tree: review runs globally (or scoped
- * when the sidebar deep-links a subject), and manage lists every card with a
- * subject filter. Scope lives in the `?subjectId` URL param.
+ * when the sidebar deep-links a folder), and manage lists every card with a
+ * folder filter. Scope lives in the `?folderId` URL param.
  */
 export function FlashcardsPageClient({
   currentView,
-  scopedSubjectId,
+  scopedFolderId,
   initialSearch,
   initialFilter,
   initialPageSize,
-  subjects,
+  folders,
   initialManagePageData,
   reviewSummary,
 }: Readonly<FlashcardsPageClientProps>) {
-  const scopeKey = `${currentView}:${scopedSubjectId ?? "all"}`;
-  const [isSubjectChanging, setIsSubjectChanging] = useState(false);
+  const scopeKey = `${currentView}:${scopedFolderId ?? "all"}`;
+  const [isFolderChanging, setIsFolderChanging] = useState(false);
 
   return (
     <div className="flex min-w-0 flex-col gap-4 lg:h-full lg:min-h-0">
-      <SubjectScopeFilter
-        subjects={subjects}
+      <FolderScopeFilter
+        folders={folders}
         view={currentView}
-        selectedSubjectId={scopedSubjectId}
-        onPendingChange={setIsSubjectChanging}
+        selectedFolderId={scopedFolderId}
+        onPendingChange={setIsFolderChanging}
       />
-      {currentView === "review" && isSubjectChanging && (
+      {currentView === "review" && isFolderChanging && (
         <div className="flex h-full min-h-0 flex-col overflow-y-auto">
           <div className="grid gap-3 lg:grid-cols-2">
             {(["review", "exam"] as const).map((key) => (
@@ -65,7 +65,7 @@ export function FlashcardsPageClient({
           </div>
         </div>
       )}
-      {currentView === "review" && !isSubjectChanging && (
+      {currentView === "review" && !isFolderChanging && (
         <div className="flex h-full min-h-0 min-w-0 flex-col overflow-y-auto">
           <ReviewHubView
             hasDueCards={reviewSummary.dueCount > 0}
@@ -75,14 +75,14 @@ export function FlashcardsPageClient({
               reviewSummary.totalCount === 1 ? "card" : "cards"
             }`}
             examScopeLabel={
-              scopedSubjectId ? "All cards in subject" : "All flashcards"
+              scopedFolderId ? "All cards in folder" : "All flashcards"
             }
-            reviewHref={getFlashcardReviewSessionHref(scopedSubjectId)}
-            examHref={getFlashcardExamSessionHref(scopedSubjectId)}
+            reviewHref={getFlashcardReviewSessionHref(scopedFolderId)}
+            examHref={getFlashcardExamSessionHref(scopedFolderId)}
           />
         </div>
       )}
-      {currentView === "manage" && isSubjectChanging && (
+      {currentView === "manage" && isFolderChanging && (
         <div
           className="flex flex-col gap-3 lg:h-full lg:min-h-0"
           data-testid="flashcards-manage-loading"
@@ -113,11 +113,11 @@ export function FlashcardsPageClient({
           </div>
         </div>
       )}
-      {currentView === "manage" && !isSubjectChanging && (
+      {currentView === "manage" && !isFolderChanging && (
         <FlashcardsManager
           key={scopeKey}
           initialPageData={initialManagePageData}
-          initialSubjectId={scopedSubjectId}
+          initialFolderId={scopedFolderId}
           initialSearch={initialSearch}
           initialFilter={initialFilter}
           initialPageSize={initialPageSize}

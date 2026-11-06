@@ -24,7 +24,7 @@ import {
 } from "@/features/assistant/library-search-contract";
 import { findNoteEditProblems } from "@/features/assistant/note-edit-rules";
 import type { AssistantChatRequest } from "@/features/assistant/validation";
-import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
+import { FOLDER_PATH_MAX_CHARS, LIMITS } from "@/lib/config/limits";
 
 /** Most cards one proposal may hold; keeps a single turn reviewable. */
 export const FLASHCARD_PROPOSAL_MAX_CARDS = 5;
@@ -94,13 +94,13 @@ export const proposedFlashcardSchema = z
       .describe(
         "Optional supplementary code block, appended to the back on creation. Use only when a code block adds value; keep prose and inline-code illustrations in the back. Omit when the example is already in the front or back.",
       ),
-    subjectPath: z
+    folderPath: z
       .string()
       .trim()
-      .max(SUBJECT_PATH_MAX_CHARS)
+      .max(FOLDER_PATH_MAX_CHARS)
       .optional()
       .describe(
-        "Copy an exact available subject path from request context; :: separates parent and child. Omit if none fits. Never invent a path.",
+        "Copy an exact available folder path from request context; :: separates parent and child. Omit if none fits. Never invent a path.",
       ),
   })
   .superRefine((card, ctx) => {

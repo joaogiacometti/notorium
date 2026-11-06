@@ -15,7 +15,7 @@ describe("createNoteSchema", () => {
       { version: 1, type: "doc", content: "bad" },
     ]) {
       expect(
-        createNoteSchema.safeParse({ title: "Note", subjectId: "s1", content })
+        createNoteSchema.safeParse({ title: "Note", folderId: "s1", content })
           .success,
       ).toBe(false);
     }
@@ -24,7 +24,7 @@ describe("createNoteSchema", () => {
   it("accepts valid input with required fields only", () => {
     const result = createNoteSchema.safeParse({
       title: "My Note",
-      subjectId: "s1",
+      folderId: "s1",
     });
 
     expect(result.success).toBe(true);
@@ -33,7 +33,7 @@ describe("createNoteSchema", () => {
   it("accepts valid input with optional content", () => {
     const result = createNoteSchema.safeParse({
       title: "My Note",
-      subjectId: "s1",
+      folderId: "s1",
       content: testDocument("Some content"),
     });
 
@@ -41,7 +41,7 @@ describe("createNoteSchema", () => {
   });
 
   it("rejects empty title", () => {
-    const result = createNoteSchema.safeParse({ title: "", subjectId: "s1" });
+    const result = createNoteSchema.safeParse({ title: "", folderId: "s1" });
 
     expect(result.success).toBe(false);
   });
@@ -49,7 +49,7 @@ describe("createNoteSchema", () => {
   it("rejects title longer than max characters", () => {
     const result = createNoteSchema.safeParse({
       title: "a".repeat(LIMITS.noteTitleMax + 1),
-      subjectId: "s1",
+      folderId: "s1",
     });
 
     expect(result.success).toBe(false);
@@ -58,7 +58,7 @@ describe("createNoteSchema", () => {
   it("accepts title at exactly max characters", () => {
     const result = createNoteSchema.safeParse({
       title: "a".repeat(LIMITS.noteTitleMax),
-      subjectId: "s1",
+      folderId: "s1",
     });
 
     expect(result.success).toBe(true);
@@ -67,7 +67,7 @@ describe("createNoteSchema", () => {
   it("rejects content longer than max characters", () => {
     const result = createNoteSchema.safeParse({
       title: "Valid",
-      subjectId: "s1",
+      folderId: "s1",
       content: testDocument("x".repeat(LIMITS.noteContentMax + 1)),
     });
 
@@ -77,7 +77,7 @@ describe("createNoteSchema", () => {
   it("accepts content at exactly max characters", () => {
     const result = createNoteSchema.safeParse({
       title: "Valid",
-      subjectId: "s1",
+      folderId: "s1",
       content: testDocument("x".repeat(LIMITS.noteContentMax)),
     });
 
@@ -98,7 +98,7 @@ describe("createNoteSchema", () => {
       ],
     };
     expect(
-      createNoteSchema.safeParse({ title: "Note", subjectId: "s1", content })
+      createNoteSchema.safeParse({ title: "Note", folderId: "s1", content })
         .success,
     ).toBe(false);
   });
@@ -112,7 +112,7 @@ describe("createNoteSchema", () => {
 
     const result = createNoteSchema.safeParse({
       title: "Valid",
-      subjectId: "s1",
+      folderId: "s1",
       content: testDocument(content),
     });
 
@@ -128,7 +128,7 @@ describe("createNoteSchema", () => {
 
     const result = createNoteSchema.safeParse({
       title: "Valid",
-      subjectId: "s1",
+      folderId: "s1",
       content: testDocument(content),
     });
 

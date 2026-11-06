@@ -39,7 +39,7 @@ async function renderCard(
       <AssistantWorkspaceProvider transport={new FakeFlashcardEditChat()}>
         <ReviewSessionCardContent
           card={makeCard(cardId)}
-          subjectLabel="Biology"
+          folderLabel="Biology"
           revealed={revealed}
           mode={mode}
         />

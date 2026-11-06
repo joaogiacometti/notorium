@@ -6,7 +6,7 @@ import { resolveFlashcardDetailBackLink } from "@/lib/navigation/detail-page-bac
 
 interface FlashcardDetailPageProps {
   params: Promise<{ flashcardId: string }>;
-  searchParams: Promise<{ from?: string; view?: string; subjectId?: string }>;
+  searchParams: Promise<{ from?: string; view?: string; folderId?: string }>;
 }
 
 export default async function FlashcardDetailPage({
@@ -33,7 +33,7 @@ export default async function FlashcardDetailPage({
       <FlashcardDetail
         breadcrumb={{
           parent: { label: "Flashcards", href: backLink.href, icon: "layers" },
-          current: { label: flashcard.subjectPath },
+          current: { label: flashcard.folderPath },
         }}
         returnHref={backLink.href}
         flashcard={flashcard}

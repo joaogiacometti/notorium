@@ -39,7 +39,7 @@ describe("runCatchingActionFailure", () => {
       .spyOn(console, "error")
       .mockImplementation(() => {});
 
-    await runCatchingActionFailure("subjects.create", async () => {
+    await runCatchingActionFailure("folders.create", async () => {
       throw new Error("Failed query: params: private text", {
         cause: new FakeDriverError("duplicate key (name)=(private text)"),
       });
@@ -48,7 +48,7 @@ describe("runCatchingActionFailure", () => {
     const logLine = String(consoleErrorSpy.mock.calls[0]?.[0]);
     expect(JSON.parse(logLine)).toEqual({
       event: "server_action_failed",
-      scope: "subjects.create",
+      scope: "folders.create",
       errorName: "Error",
       errorCode: "23505",
     });
@@ -72,7 +72,7 @@ describe("runCatchingActionFailure", () => {
       .spyOn(console, "error")
       .mockImplementation(() => {});
 
-    await runCatchingActionFailure("subjects.create", async () => {
+    await runCatchingActionFailure("folders.create", async () => {
       throw new FakeDriverError("connection refused");
     });
 

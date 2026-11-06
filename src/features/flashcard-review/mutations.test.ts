@@ -57,7 +57,7 @@ vi.mock("@/db/schema", () => ({
     userId: "flashcard_user_id_column",
     front: "flashcard_front_column",
     back: "flashcard_back_column",
-    subjectId: "flashcard_subject_id_column",
+    folderId: "flashcard_folder_id_column",
     state: "flashcard_state_column",
     dueAt: "flashcard_due_at_column",
     stability: "flashcard_stability_column",
@@ -161,7 +161,7 @@ describe("reviewFlashcardForUser", () => {
 
     getReviewableFlashcardForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       front: "<p>Front</p>",
       back: "<p>Back</p>",
       state: "review",
@@ -173,8 +173,8 @@ describe("reviewFlashcardForUser", () => {
       lastReviewedAt: new Date("2026-03-03T12:00:00.000Z"),
       reviewCount: 10,
       lapseCount: 0,
-      subjectName: "Biology",
-      subjectPath: "Biology::Cells",
+      folderName: "Biology",
+      folderPath: "Biology::Cells",
     });
     scheduleFlashcardReviewMock.mockReturnValueOnce({
       state: "review",
@@ -200,7 +200,7 @@ describe("reviewFlashcardForUser", () => {
         id: "flashcard-1",
         front: "<p>Front</p>",
         back: "<p>Back</p>",
-        subjectId: "subject-1",
+        folderId: "folder-1",
         state: "review",
         dueAt: new Date("2026-03-20T12:00:00.000Z"),
         stability: "12.0000",
@@ -254,7 +254,7 @@ describe("reviewFlashcardForUser", () => {
   it("returns unavailable when the transaction fails", async () => {
     getReviewableFlashcardForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       state: "new",
       dueAt: new Date("2026-03-13T11:00:00.000Z"),
       stability: null,
@@ -304,8 +304,8 @@ describe("reviewFlashcardForUser", () => {
     vi.setSystemTime(now);
     getReviewableFlashcardForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
-      subjectId: "subject-1",
-      subjectName: "Biology",
+      folderId: "folder-1",
+      folderName: "Biology",
       state: "learning",
       dueAt,
       reviewCount: 1,
@@ -321,7 +321,7 @@ describe("reviewFlashcardForUser", () => {
       callback({ update: updateMock, insert: insertMock }),
     );
     returningMock.mockResolvedValueOnce([
-      { id: "flashcard-1", subjectId: "subject-1", reviewCount: 2 },
+      { id: "flashcard-1", folderId: "folder-1", reviewCount: 2 },
     ]);
 
     const { reviewFlashcardForUser } = await import(
@@ -345,7 +345,7 @@ describe("reviewFlashcardForUser", () => {
     expect(insertValuesMock).toHaveBeenCalledWith(
       expect.objectContaining({
         reviewedAt: now,
-        subjectId: "subject-1",
+        folderId: "folder-1",
       }),
     );
     vi.useRealTimers();
@@ -357,7 +357,7 @@ describe("reviewFlashcardForUser", () => {
     vi.setSystemTime(now);
     getReviewableFlashcardForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       state: "new",
       dueAt: new Date("2026-03-13T11:00:00.000Z"),
       reviewCount: 0,
@@ -415,7 +415,7 @@ describe("reviewFlashcardForUser", () => {
     returningMock.mockResolvedValueOnce([
       {
         id: "flashcard-1",
-        subjectId: "subject-1",
+        folderId: "folder-1",
         state: "review",
         dueAt: new Date("2026-03-13T11:00:00.000Z"),
         reviewCount: 10,

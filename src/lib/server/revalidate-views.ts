@@ -3,10 +3,10 @@ import { revalidatePath } from "next/cache";
 type DocumentRouteKind = "notes";
 
 /**
- * Refreshes the app shell rendered by the `(app)` layout: the sidebar subject
+ * Refreshes the app shell rendered by the `(app)` layout: the sidebar folder
  * tree, its document counts, and its due-card review badges. Targeting the
  * root layout also invalidates every page under it, so callers need no extra
- * page-level revalidation. Call after any write that changes subjects,
+ * page-level revalidation. Call after any write that changes folders,
  * document counts, or flashcards (create, edit, move, delete, reset). Review
  * grades are the exception; see `use-app-shell-refresh-after-review.ts`.
  *
@@ -21,12 +21,12 @@ export function revalidateAppShell(): void {
  * Refreshes one note page after a content or title edit.
  *
  * @example
- * revalidateDocumentPage("notes", result.subjectId, data.id);
+ * revalidateDocumentPage("notes", result.folderId, data.id);
  */
 export function revalidateDocumentPage(
   kind: DocumentRouteKind,
-  subjectId: string,
+  folderId: string,
   documentId: string,
 ): void {
-  revalidatePath(`/subjects/${subjectId}/documents/${kind}/${documentId}`);
+  revalidatePath(`/folders/${folderId}/documents/${kind}/${documentId}`);
 }

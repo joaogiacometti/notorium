@@ -69,7 +69,7 @@ describe("note links", () => {
   describe("linked from", () => {
     it("lists backlinks at their current location", async () => {
       fetchNoteConnections.mockResolvedValue({
-        backlinks: [{ id: "n2", title: "Source", subjectId: "s1" }],
+        backlinks: [{ id: "n2", title: "Source", folderId: "s1" }],
         outgoing: [],
         missingIds: [],
       } satisfies NoteConnections);
@@ -79,9 +79,7 @@ describe("note links", () => {
 
       const link = container.querySelector("a");
       expect(link?.textContent).toBe("Source");
-      expect(link?.getAttribute("href")).toBe(
-        "/subjects/s1/documents/notes/n2",
-      );
+      expect(link?.getAttribute("href")).toBe("/folders/s1/documents/notes/n2");
     });
 
     it("stays out of the way without backlinks", async () => {
@@ -100,7 +98,7 @@ describe("note links", () => {
     it("offers a retry after a failed load", async () => {
       fetchNoteConnections.mockRejectedValueOnce(new Error("offline"));
       fetchNoteConnections.mockResolvedValue({
-        backlinks: [{ id: "n2", title: "Source", subjectId: "s1" }],
+        backlinks: [{ id: "n2", title: "Source", folderId: "s1" }],
         outgoing: [],
         missingIds: [],
       } satisfies NoteConnections);
@@ -179,7 +177,7 @@ describe("note links", () => {
 
       await renderEditor({
         backlinks: [],
-        outgoing: [{ id: "n1", title: "Renamed", subjectId: "s1" }],
+        outgoing: [{ id: "n1", title: "Renamed", folderId: "s1" }],
         missingIds: [],
       });
       expect(chip()?.textContent).toBe("Renamed");
@@ -191,7 +189,7 @@ describe("note links", () => {
     it("show the target's current title and stable link", async () => {
       await renderEditor({
         backlinks: [],
-        outgoing: [{ id: "n1", title: "New title", subjectId: "s1" }],
+        outgoing: [{ id: "n1", title: "New title", folderId: "s1" }],
         missingIds: [],
       });
 
@@ -261,9 +259,9 @@ describe("note links", () => {
     it("searches notes, leaving out the current one, and picks by keyboard", async () => {
       fetchSearchData.mockResolvedValue({
         notes: [
-          { id: "current", title: "Current", subjectName: "Bio" },
-          { id: "a", title: "Alpha", subjectName: "Bio" },
-          { id: "b", title: "Beta", subjectName: "Bio" },
+          { id: "current", title: "Current", folderName: "Bio" },
+          { id: "a", title: "Alpha", folderName: "Bio" },
+          { id: "b", title: "Beta", folderName: "Bio" },
         ],
         pdfs: [],
         flashcards: [],

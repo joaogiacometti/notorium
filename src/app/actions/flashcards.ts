@@ -95,7 +95,7 @@ export async function deleteFlashcard(
       return {
         success: true as const,
         id: parsedData.id,
-        subjectId: mutationResult.subjectId,
+        folderId: mutationResult.folderId,
       };
     },
   );

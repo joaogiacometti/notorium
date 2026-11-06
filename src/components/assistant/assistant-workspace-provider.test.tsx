@@ -16,7 +16,7 @@ function NestedCardEditor() {
     defaultValues: {
       front: testDocument("Other front"),
       back: testDocument("Other back"),
-      subjectId: "s1",
+      folderId: "s1",
     },
   });
   useActiveFlashcardEditor({ form, enabled: true, blocked: false });
@@ -54,7 +54,7 @@ function DraftHarness() {
     defaultValues: {
       front: testDocument("<p>Original front</p>"),
       back: testDocument("<p>Original back</p>"),
-      subjectId: "s1",
+      folderId: "s1",
     },
   });
   const review = useActiveFlashcardEditor({

@@ -29,15 +29,15 @@ import { cn } from "@/lib/utils";
 
 type PdfDetailRecord = Pick<
   PdfDocumentEntity,
-  "id" | "title" | "subjectId" | "fileName" | "blobPathname" | "lastPage"
+  "id" | "title" | "folderId" | "fileName" | "blobPathname" | "lastPage"
 >;
 
 interface PdfDetailProps {
   pdf: PdfDetailRecord;
-  subjectName: string;
+  folderName: string;
 }
 
-export function PdfDetail({ pdf, subjectName }: Readonly<PdfDetailProps>) {
+export function PdfDetail({ pdf, folderName }: Readonly<PdfDetailProps>) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [, startNavTransition] = useTransition();
@@ -51,7 +51,7 @@ export function PdfDetail({ pdf, subjectName }: Readonly<PdfDetailProps>) {
       {!isZenMode ? (
         <PageTopBar
           breadcrumb={{
-            parent: { label: subjectName, icon: "book-open" },
+            parent: { label: folderName, icon: "folder" },
             current: { label: pdf.title },
           }}
         />
@@ -86,7 +86,7 @@ export function PdfDetail({ pdf, subjectName }: Readonly<PdfDetailProps>) {
         <LazyPdfReader
           pdfId={pdf.id}
           title={pdf.title}
-          subjectPath={subjectName}
+          folderPath={folderName}
           fileUrl={fileUrl}
           initialPage={pdf.lastPage}
         />
@@ -102,7 +102,7 @@ export function PdfDetail({ pdf, subjectName }: Readonly<PdfDetailProps>) {
           runDocumentAction(
             queryClient,
             () => DOCUMENT_KIND_ACTIONS.pdf.rename(pdf.id, title),
-            pdf.subjectId,
+            pdf.folderId,
           )
         }
         onSuccess={() => setRenameOpen(false)}
@@ -116,7 +116,7 @@ export function PdfDetail({ pdf, subjectName }: Readonly<PdfDetailProps>) {
           runDocumentAction(
             queryClient,
             () => DOCUMENT_KIND_ACTIONS.pdf.remove(pdf.id),
-            pdf.subjectId,
+            pdf.folderId,
           )
         }
         onSuccess={() => {

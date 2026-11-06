@@ -13,7 +13,7 @@ const pdfTitleSchema = z
 const pdfFileNameSchema = z.string().min(1).max(LIMITS.pdfFileNameMax);
 
 export const preparePdfUploadSchema = z.object({
-  subjectId: z.string().min(1),
+  folderId: z.string().min(1),
   fileName: pdfFileNameSchema,
   sizeBytes: z.number().int().positive(),
 });
@@ -21,7 +21,7 @@ export const preparePdfUploadSchema = z.object({
 export type PreparePdfUploadForm = z.infer<typeof preparePdfUploadSchema>;
 
 export const createPdfSchema = z.object({
-  subjectId: z.string().min(1),
+  folderId: z.string().min(1),
   title: pdfTitleSchema,
   fileName: pdfFileNameSchema,
   blobPathname: z.string().min(1).max(512),
@@ -55,7 +55,7 @@ export const pdfTitleFormSchema = renamePdfSchema.pick({ title: true });
 
 /** Client form for the Add PDF dialog; the file is checked separately. */
 export const createPdfFormSchema = createPdfSchema.pick({
-  subjectId: true,
+  folderId: true,
   title: true,
 });
 

@@ -2,8 +2,8 @@ import type { Locator, Page } from "@playwright/test";
 import { AssistantChatFixture } from "./support/assistant-chat-fixture";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
-import { clearUserSubjectsByNames, createSubject } from "./support/db";
-import { createFlashcardForSubject } from "./support/flashcards";
+import { clearUserFoldersByNames, createFolder } from "./support/db";
+import { createFlashcardForFolder } from "./support/flashcards";
 
 async function askAssistant(page: Page, text: string): Promise<void> {
   const message = page.getByRole("textbox", {
@@ -21,13 +21,13 @@ test("improves an unsaved card and keeps one conversation across review and edit
   page,
   e2eUser,
 }) => {
-  const subjectName = getPrefixedValue("assistant-edit", "draft");
+  const folderName = getPrefixedValue("assistant-edit", "draft");
   const front = getPrefixedValue("assistant-card", "draft");
-  const subject = await createSubject(e2eUser.userId, subjectName);
+  const folder = await createFolder(e2eUser.userId, folderName);
   const assistant = new AssistantChatFixture();
   await assistant.install(page);
   try {
-    await page.goto(`/flashcards?view=manage&subjectId=${subject.id}`);
+    await page.goto(`/flashcards?view=manage&folderId=${folder.id}`);
     await page.getByRole("button", { name: "Open assistant" }).click();
     await askAssistant(page, "Explain retrieval practice");
     await expect(
@@ -108,7 +108,7 @@ test("improves an unsaved card and keeps one conversation across review and edit
       page.getByRole("progressbar", { name: "Review progress" }),
     ).toBeVisible();
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });
 
@@ -117,11 +117,11 @@ test("reviews mobile suggestions in the inputs and auto-saves accepted detail ed
   e2eUser,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const subjectName = getPrefixedValue("assistant-edit", "mobile");
-  const subject = await createSubject(e2eUser.userId, subjectName);
-  const card = await createFlashcardForSubject(
+  const folderName = getPrefixedValue("assistant-edit", "mobile");
+  const folder = await createFolder(e2eUser.userId, folderName);
+  const card = await createFlashcardForFolder(
     e2eUser.userId,
-    subject.id,
+    folder.id,
     "<p>What is recall?</p>",
     "<p>A long original answer.</p>",
   );
@@ -159,6 +159,6 @@ test("reviews mobile suggestions in the inputs and auto-saves accepted detail ed
       "A concise improved answer.",
     );
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });

@@ -5,7 +5,7 @@ import type { Locator, Page } from "@playwright/test";
  *
  * After the layout refactor page titles render as the final breadcrumb crumb
  * (`<span aria-current="page">`) instead of an `<h1>`. The match is scoped to
- * `nav[aria-label="Breadcrumb"]` because the left section nav and the subject
+ * `nav[aria-label="Breadcrumb"]` because the left section nav and the folder
  * sidebar tree also mark their active link with `aria-current="page"`, so an
  * unscoped selector would resolve to several elements and trip strict mode.
  *

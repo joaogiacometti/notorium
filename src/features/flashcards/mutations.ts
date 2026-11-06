@@ -3,7 +3,7 @@ import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
-  countFlashcardsBySubjectForUser,
+  countFlashcardsByFolderForUser,
   getFlashcardByIdForUser,
   getFlashcardRecordForUser,
 } from "@/features/flashcards/queries";
@@ -14,7 +14,7 @@ import type {
   EditFlashcardForm,
   ResetFlashcardForm,
 } from "@/features/flashcards/validation";
-import { getSubjectRecordForUser } from "@/features/subjects/queries";
+import { getFolderRecordForUser } from "@/features/folders/queries";
 import { LIMITS } from "@/lib/config/limits";
 import { isUniqueViolationError } from "@/lib/db/errors";
 import { documentText } from "@/lib/editor/document";
@@ -34,7 +34,7 @@ export type DeleteFlashcardMutationResult =
   | {
       success: true;
       id: string;
-      subjectId: string | null;
+      folderId: string | null;
     }
   | ActionErrorResult;
 
@@ -42,24 +42,24 @@ async function validateCreateFlashcardInput(
   userId: string,
   data: CreateFlashcardForm,
 ): Promise<
-  { error: ActionErrorResult } | { subjectId: string; frontNormalized: string }
+  { error: ActionErrorResult } | { folderId: string; frontNormalized: string }
 > {
   const frontNormalized = documentUniquenessText(data.front);
 
-  const [existingSubject, currentCount, ownedSource] = await Promise.all([
-    getSubjectRecordForUser(userId, data.subjectId),
-    countFlashcardsBySubjectForUser(userId, data.subjectId),
+  const [existingFolder, currentCount, ownedSource] = await Promise.all([
+    getFolderRecordForUser(userId, data.folderId),
+    countFlashcardsByFolderForUser(userId, data.folderId),
     data.source ? readOwnedFlashcardSource(userId, data.source) : null,
   ]);
 
-  if (!existingSubject) {
-    return { error: actionError("subjects.notFound") };
+  if (!existingFolder) {
+    return { error: actionError("folders.notFound") };
   }
 
-  if (currentCount >= LIMITS.maxFlashcardsPerSubject) {
+  if (currentCount >= LIMITS.maxFlashcardsPerFolder) {
     return {
       error: actionError("limits.flashcardLimit", {
-        errorParams: { max: LIMITS.maxFlashcardsPerSubject },
+        errorParams: { max: LIMITS.maxFlashcardsPerFolder },
       }),
     };
   }
@@ -68,12 +68,12 @@ async function validateCreateFlashcardInput(
     return { error: actionError(`${data.source.kind}s.notFound`) };
   }
 
-  return { subjectId: data.subjectId, frontNormalized };
+  return { folderId: data.folderId, frontNormalized };
 }
 
 async function createFlashcardRecord(
   userId: string,
-  subjectId: string,
+  folderId: string,
   data: CreateFlashcardForm,
   frontNormalized: string,
 ) {
@@ -82,7 +82,7 @@ async function createFlashcardRecord(
   const inserted = await getDb()
     .insert(flashcard)
     .values({
-      subjectId,
+      folderId,
       userId,
       front: data.front,
       frontText: documentText(data.front),
@@ -118,7 +118,7 @@ export async function createFlashcardForUser(
   try {
     const flashcardRecord = await createFlashcardRecord(
       userId,
-      validation.subjectId,
+      validation.folderId,
       data,
       validation.frontNormalized,
     );
@@ -148,27 +148,24 @@ async function validateEditFlashcardInput(
 ): Promise<ValidateEditFlashcardResult> {
   const frontNormalized = documentUniquenessText(data.front);
 
-  const existingSubject = await getSubjectRecordForUser(userId, data.subjectId);
+  const existingFolder = await getFolderRecordForUser(userId, data.folderId);
 
-  if (!existingSubject) {
+  if (!existingFolder) {
     return {
       ok: false,
-      error: actionError("subjects.notFound"),
+      error: actionError("folders.notFound"),
       existingFlashcard,
     };
   }
 
-  if (existingFlashcard.subjectId !== data.subjectId) {
-    const current = await countFlashcardsBySubjectForUser(
-      userId,
-      data.subjectId,
-    );
+  if (existingFlashcard.folderId !== data.folderId) {
+    const current = await countFlashcardsByFolderForUser(userId, data.folderId);
 
-    if (current >= LIMITS.maxFlashcardsPerSubject) {
+    if (current >= LIMITS.maxFlashcardsPerFolder) {
       return {
         ok: false,
         error: actionError("limits.flashcardLimit", {
-          errorParams: { max: LIMITS.maxFlashcardsPerSubject },
+          errorParams: { max: LIMITS.maxFlashcardsPerFolder },
         }),
         existingFlashcard,
       };
@@ -187,7 +184,7 @@ async function performFlashcardUpdate(
     const updated = await getDb()
       .update(flashcard)
       .set({
-        subjectId: data.subjectId,
+        folderId: data.folderId,
         front: data.front,
         frontText: documentText(data.front),
         frontNormalized,
@@ -256,7 +253,7 @@ async function updateFlashcardContent(
   return {
     success: true,
     flashcard: updatedFlashcard,
-    previousSubjectId: existingFlashcard.subjectId,
+    previousFolderId: existingFlashcard.folderId,
   };
 }
 
@@ -277,7 +274,7 @@ export async function deleteFlashcardForUser(
   return {
     success: true,
     id: data.id,
-    subjectId: existingFlashcard.subjectId,
+    folderId: existingFlashcard.folderId,
   };
 }
 

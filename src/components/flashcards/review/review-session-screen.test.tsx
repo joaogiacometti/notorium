@@ -51,9 +51,9 @@ function makeCard(): FlashcardReviewEntity {
     reviewCount: 0,
     lapseCount: 0,
     studyLaterAt: null,
-    subjectId: "deck-1",
-    subjectName: "Biology",
-    subjectPath: "Biology",
+    folderId: "deck-1",
+    folderName: "Biology",
+    folderPath: "Biology",
   };
 }
 
@@ -88,7 +88,7 @@ describe("ReviewSessionScreen", () => {
         kind: "note" as const,
         id: "n1",
         title: "Cells",
-        subjectId: "biology",
+        folderId: "biology",
       },
     };
     await renderReviewSessionScreen({ currentCard, revealed: false });
@@ -98,7 +98,7 @@ describe("ReviewSessionScreen", () => {
       container
         .querySelector('a[aria-label^="Source note"]')
         ?.getAttribute("href"),
-    ).toBe("/subjects/biology/documents/notes/n1");
+    ).toBe("/folders/biology/documents/notes/n1");
   });
 
   it("shows the card actions menu before the exit button", async () => {
@@ -175,7 +175,7 @@ describe("ReviewSessionScreen", () => {
         {
           front: testDocument("<p>Front</p>"),
           back: testDocument("<p>Back</p>"),
-          subjectPath: "Biology",
+          folderPath: "Biology",
         },
       ]),
     );
@@ -303,7 +303,7 @@ describe("ReviewSessionScreen", () => {
         <ReviewSessionScreen
           currentCard={currentCard}
           headerText="1 due of 1 total cards"
-          subjects={[]}
+          folders={[]}
           progress={0}
           revealed={false}
           isPending={false}

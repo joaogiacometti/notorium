@@ -9,9 +9,9 @@ import { LIMITS } from "@/lib/config/limits";
 const mitosisCard: LibraryHit = {
   kind: "flashcard",
   id: "card-1",
-  subjectId: "subject-1",
+  folderId: "folder-1",
   title: "What is mitosis?",
-  subjectPath: "Biology::Cells",
+  folderPath: "Biology::Cells",
   snippet: "Cell division into two identical cells.",
 };
 
@@ -34,7 +34,7 @@ describe("librarySearchInputSchema", () => {
       { terms: tooMany },
       { terms: ["a"] },
       { terms: [] },
-      { terms: ["cell"], kinds: ["subject"] },
+      { terms: ["cell"], kinds: ["folder"] },
     ]) {
       expect(librarySearchInputSchema.safeParse(input).success).toBe(false);
     }
@@ -49,7 +49,7 @@ describe("formatLibraryHitsForModel", () => {
       '1. flashcard "What is mitosis?" in "Biology::Cells": "Cell division into two identical cells."',
     );
     expect(text).not.toContain("card-1");
-    expect(text).not.toContain("subject-1");
+    expect(text).not.toContain("folder-1");
   });
 
   it("says so when nothing matched", () => {

@@ -33,14 +33,14 @@ const TEACHING_REMINDER =
  * words tagged as the request, and a short
  * reminder last. Earlier turns stay unchanged, so they remain a cacheable
  * prefix and context never accumulates on resend.
- * @example assembleAssistantMessages(request, subjectPaths);
+ * @example assembleAssistantMessages(request, folderPaths);
  */
 export function assembleAssistantMessages(
   input: AssistantContextInput,
-  subjectPaths: string[],
+  folderPaths: string[],
 ): AssistantChatRequest["messages"] {
   const contextParts = [
-    contextTextPart("Available subject paths", subjectPaths),
+    contextTextPart("Available folder paths", folderPaths),
     contextTextPart("Current material", describeAssistantMaterial(input)),
     ...(input.historyTruncated
       ? [

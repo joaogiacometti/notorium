@@ -26,7 +26,7 @@ describe("flashcard read-api fetchers", () => {
       id,
       front: id,
       back: "",
-      subjectPath: "",
+      folderPath: "",
     });
     const server = new FakeReadApiFetch()
       .install()

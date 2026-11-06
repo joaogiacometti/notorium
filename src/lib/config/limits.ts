@@ -1,12 +1,12 @@
 export const LIMITS = {
-  maxSubjects: 50,
-  maxChildSubjectsPerSubject: 50,
-  maxSubjectNestingDepth: 4,
-  maxNotesPerSubject: 100,
-  maxPdfsPerSubject: 20,
+  maxFolders: 50,
+  maxChildFoldersPerFolder: 50,
+  maxFolderNestingDepth: 4,
+  maxNotesPerFolder: 100,
+  maxPdfsPerFolder: 20,
   maxAttachmentsPerNote: 20,
   maxAttachmentsPerFlashcard: 10,
-  maxFlashcardsPerSubject: 2000,
+  maxFlashcardsPerFolder: 2000,
 
   noteTitleMax: 200,
   noteContentMax: 100000,
@@ -38,7 +38,7 @@ export const LIMITS = {
   // copy selections into several requests.
   flashcardContentsReadMax: 100,
 
-  subjectNameMax: 100,
+  folderNameMax: 100,
 
   accountNameMax: 100,
 
@@ -83,9 +83,9 @@ export const LIMITS = {
   ipAddressMaxLength: 64,
 } as const;
 
-// A subject path joins up to `maxSubjectNestingDepth` names with "::".
-export const SUBJECT_PATH_MAX_CHARS =
-  LIMITS.maxSubjectNestingDepth * (LIMITS.subjectNameMax + 2);
+// A folder path joins up to `maxFolderNestingDepth` names with "::".
+export const FOLDER_PATH_MAX_CHARS =
+  LIMITS.maxFolderNestingDepth * (LIMITS.folderNameMax + 2);
 
 export const AI_LIMITS = {
   assistantMaxOutputTokens: 4000,

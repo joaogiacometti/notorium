@@ -5,12 +5,12 @@ import { richTextToMarkdown } from "@/lib/clipboard/rich-text-markdown";
 import type { RichTextDocument } from "@/lib/editor/document";
 
 /** Build a bounded, image-safe snapshot of an unsaved note.
- * @example buildDocumentContext("note", title, subjectPath, content);
+ * @example buildDocumentContext("note", title, folderPath, content);
  */
 export function buildDocumentContext(
   kind: "note",
   title: string,
-  subjectPath: string,
+  folderPath: string,
   content: RichTextDocument,
   documentId?: string,
 ): Extract<StudyContext, { kind: "note" }> {
@@ -19,25 +19,25 @@ export function buildDocumentContext(
     kind,
     ...(documentId ? { documentId } : {}),
     title,
-    subjectPath,
+    folderPath,
     content: text.slice(0, STUDY_CONTEXT_MAX_CHARS),
     partial: text.length > STUDY_CONTEXT_MAX_CHARS,
   };
 }
 
 /** Snapshot the card, marking the answer hidden until the session reveals it.
- * @example buildReviewContext(card, subjectPath, false, "review");
+ * @example buildReviewContext(card, folderPath, false, "review");
  */
 export function buildReviewContext(
   card: { front: RichTextDocument; back: RichTextDocument },
-  subjectPath: string,
+  folderPath: string,
   revealed: boolean,
   mode: "review" | "exam",
 ): Extract<StudyContext, { kind: "review" }> {
   return {
     kind: "review",
     mode,
-    subjectPath,
+    folderPath,
     front: studyRichText(card.front),
     ...(revealed
       ? { back: studyRichText(card.back) }
@@ -53,18 +53,18 @@ export interface PdfStudyText {
 }
 
 /** Build a bounded snapshot of a PDF's selected or visible text.
- * @example buildPdfContext(pdf, subjectPath, { page: 3, scope: "page", text });
+ * @example buildPdfContext(pdf, folderPath, { page: 3, scope: "page", text });
  */
 export function buildPdfContext(
   pdf: { id: string; title: string },
-  subjectPath: string,
+  folderPath: string,
   source: PdfStudyText,
 ): Extract<StudyContext, { kind: "pdf" }> {
   return {
     kind: "pdf",
     documentId: pdf.id,
     title: pdf.title,
-    subjectPath,
+    folderPath,
     content: source.text.slice(0, STUDY_CONTEXT_MAX_CHARS),
     partial: source.text.length > STUDY_CONTEXT_MAX_CHARS,
     page: source.page,

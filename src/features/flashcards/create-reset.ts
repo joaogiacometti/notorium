@@ -11,7 +11,7 @@ export function getCreateFlashcardResetValues(
   options: CreateFlashcardResetOptions,
 ): FlashcardFormValues {
   return {
-    subjectId: values.subjectId,
+    folderId: values.folderId,
     front: options.keepFrontAfterSubmit ? values.front : emptyDocument(),
     back: options.keepBackAfterSubmit ? values.back : emptyDocument(),
   };

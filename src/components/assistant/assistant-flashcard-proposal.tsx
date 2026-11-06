@@ -12,7 +12,7 @@ import type {
 } from "@/components/assistant/use-flashcard-proposal-outcomes";
 import { LazyCreateFlashcardDialog } from "@/components/flashcards/dialogs/lazy-create-flashcard-dialog";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { SubjectSelect } from "@/components/shared/subject-select";
+import { FolderSelect } from "@/components/shared/folder-select";
 import { Button } from "@/components/ui/button";
 import type {
   FlashcardProposalOutcome,
@@ -21,13 +21,13 @@ import type {
 import type { AssistantFlashcardProposalPart } from "@/features/assistant/types";
 import {
   composeProposedFlashcardBack,
-  findProposedSubjectId,
+  findProposedFolderId,
   formatFlashcardExample,
 } from "@/features/assistant/utils";
 import type { FlashcardSource } from "@/features/flashcards/source-contract";
 import { plainTextToDocument } from "@/lib/ai/plain-text-rich-text";
 import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
-import { subjectOptionsQuery } from "@/lib/client-cache/queries";
+import { folderOptionsQuery } from "@/lib/client-cache/queries";
 import { documentText } from "@/lib/editor/document";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
@@ -146,14 +146,14 @@ function PendingFlashcardProposal({
   onResolve,
 }: Readonly<PendingFlashcardProposalProps>) {
   const queryClient = useQueryClient();
-  const subject = useProposedSubject(input.subjectPath);
+  const folder = useProposedFolder(input.folderPath);
   const [isCreating, startCreating] = useTransition();
   const [editorOpen, setEditorOpen] = useState(false);
   const richCard = { ...toRichFlashcard(input), ...(source ? { source } : {}) };
 
-  function createProposedCard(subjectId: string) {
+  function createProposedCard(folderId: string) {
     startCreating(async () => {
-      const result = await createFlashcard({ subjectId, ...richCard });
+      const result = await createFlashcard({ folderId, ...richCard });
       if (!result.success) {
         toast.error(resolveActionErrorMessage(result));
         return;
@@ -167,13 +167,13 @@ function PendingFlashcardProposal({
 
   return (
     <div className="space-y-3 rounded-lg border bg-background p-3 text-sm">
-      <SubjectSelect
-        value={subject.id}
-        onChange={subject.choose}
-        subjects={subject.options}
-        label="Subject"
-        placeholder={subject.loading ? "Loading subjects…" : undefined}
-        error={subject.loadFailed ? "Could not load subjects." : undefined}
+      <FolderSelect
+        value={folder.id}
+        onChange={folder.choose}
+        folders={folder.options}
+        label="Folder"
+        placeholder={folder.loading ? "Loading folders…" : undefined}
+        error={folder.loadFailed ? "Could not load folders." : undefined}
         disabled={isCreating}
       />
       <FlashcardProposalPreview input={input} />
@@ -201,8 +201,8 @@ function PendingFlashcardProposal({
         <Button
           type="button"
           size="sm"
-          onClick={() => subject.id && createProposedCard(subject.id)}
-          disabled={disabled || isCreating || !subject.id}
+          onClick={() => folder.id && createProposedCard(folder.id)}
+          disabled={disabled || isCreating || !folder.id}
         >
           <AsyncButtonContent
             pending={isCreating}
@@ -216,7 +216,7 @@ function PendingFlashcardProposal({
         <LazyCreateFlashcardDialog
           open
           onOpenChange={setEditorOpen}
-          subjectId={subject.id ?? undefined}
+          folderId={folder.id ?? undefined}
           initialCard={richCard}
           onCreated={() => {
             setEditorOpen(false);
@@ -294,10 +294,10 @@ function ResolvedFlashcardProposal({
   );
 }
 
-// Every proposal shares one cached subject list. Until the user picks, the
-// selection follows the model's `subjectPath`, so it fills in once loaded.
-function useProposedSubject(proposedPath: string | undefined) {
-  const query = useQuery(subjectOptionsQuery());
+// Every proposal shares one cached folder list. Until the user picks, the
+// selection follows the model's `folderPath`, so it fills in once loaded.
+function useProposedFolder(proposedPath: string | undefined) {
+  const query = useQuery(folderOptionsQuery());
   const [chosenId, setChosenId] = useState<string | null | undefined>();
   const options = query.data ?? [];
 
@@ -305,7 +305,7 @@ function useProposedSubject(proposedPath: string | undefined) {
     options,
     id:
       chosenId === undefined
-        ? findProposedSubjectId(options, proposedPath)
+        ? findProposedFolderId(options, proposedPath)
         : chosenId,
     choose: setChosenId,
     loading: query.isPending,

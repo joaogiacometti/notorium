@@ -1,12 +1,13 @@
 import type { DocumentListItem } from "@/features/documents/types";
 import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
-import type { SubjectTreeNode } from "@/lib/server/api-contracts";
-import { isSubjectDescendant } from "@/lib/trees/subject-tree";
+import { getFolderIdFromPathname } from "@/lib/navigation/folder-path";
+import type { FolderTreeNode } from "@/lib/server/api-contracts";
+import { isFolderDescendant } from "@/lib/trees/folder-tree";
 
 /**
  * Returns home when deleting the document currently shown by the active route.
  *
- * @example getDocumentDeleteRedirectHref("/subjects/s1/documents/notes/n1", item)
+ * @example getDocumentDeleteRedirectHref("/folders/s1/documents/notes/n1", item)
  */
 export function getDocumentDeleteRedirectHref(
   pathname: string,
@@ -16,25 +17,18 @@ export function getDocumentDeleteRedirectHref(
 }
 
 /**
- * Returns home when deleting the subject, or an ancestor of the subject,
+ * Returns home when deleting the folder, or an ancestor of the folder,
  * currently shown by the active route.
  *
- * @example getSubjectDeleteRedirectHref("/subjects/child", tree, "parent")
+ * @example getFolderDeleteRedirectHref("/folders/child", tree, "parent")
  */
-export function getSubjectDeleteRedirectHref(
+export function getFolderDeleteRedirectHref(
   pathname: string,
-  tree: SubjectTreeNode[],
-  deletedSubjectId: string,
+  tree: FolderTreeNode[],
+  deletedFolderId: string,
 ): string | null {
-  const activeSubjectId = getSubjectIdFromPathname(pathname);
-  if (!activeSubjectId) return null;
-  if (activeSubjectId === deletedSubjectId) return "/";
-  return isSubjectDescendant(tree, deletedSubjectId, activeSubjectId)
-    ? "/"
-    : null;
-}
-
-function getSubjectIdFromPathname(pathname: string): string | null {
-  const segments = pathname.split("/").filter(Boolean);
-  return segments[0] === "subjects" && segments[1] ? segments[1] : null;
+  const activeFolderId = getFolderIdFromPathname(pathname);
+  if (!activeFolderId) return null;
+  if (activeFolderId === deletedFolderId) return "/";
+  return isFolderDescendant(tree, deletedFolderId, activeFolderId) ? "/" : null;
 }

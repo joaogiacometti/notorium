@@ -19,13 +19,13 @@ describe("action runner", () => {
         title: z.string().min(1),
       }),
       { title: "" },
-      "subjects.invalidData",
+      "folders.invalidData",
       action,
     );
 
     expect(result).toEqual({
       success: false,
-      errorCode: "subjects.invalidData",
+      errorCode: "folders.invalidData",
       errorParams: undefined,
       errorMessage: undefined,
     });
@@ -45,7 +45,7 @@ describe("action runner", () => {
         title: z.string().min(1),
       }),
       { title: "Midterm" },
-      "subjects.invalidData",
+      "folders.invalidData",
       action,
     );
 

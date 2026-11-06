@@ -155,7 +155,7 @@ export function FlashcardsManagerToolbar({
                     onChange={(event) =>
                       onSearchQueryChange(event.target.value)
                     }
-                    placeholder="Search front, back, or subject path..."
+                    placeholder="Search front, back, or folder path..."
                     className="h-10 rounded-lg border-border bg-background/80 pl-10"
                   />
                 </div>

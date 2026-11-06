@@ -1,6 +1,6 @@
 import {
-  BookOpen,
   ChevronRight,
+  Folder,
   Home,
   Layers,
   Layers3,
@@ -18,14 +18,14 @@ import { cn } from "@/lib/utils";
  * across the Client Component boundary without serializing Lucide functions.
  */
 export type BreadcrumbIcon =
-  | "book-open"
+  | "folder"
   | "home"
   | "layers"
   | "layers-3"
   | "shield";
 
 const breadcrumbIconMap: Record<BreadcrumbIcon, LucideIcon> = {
-  "book-open": BookOpen,
+  folder: Folder,
   home: Home,
   layers: Layers,
   "layers-3": Layers3,
@@ -40,9 +40,9 @@ export interface BreadcrumbItem {
 }
 
 /**
- * Where the page sits: an optional parent (a subject, or a section that links
+ * Where the page sits: an optional parent (a folder, or a section that links
  * back) and the current page, which is never linked. Two named slots instead of
- * a list, so a note named like its unlinked subject still renders as two
+ * a list, so a note named like its unlinked folder still renders as two
  * distinct crumbs.
  */
 export interface Breadcrumb {

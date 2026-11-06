@@ -52,7 +52,7 @@ async function readSourceDocuments(
 ): Promise<FlashcardSourceLink[]> {
   if (!ids.length) return [];
   const rows = await getDb()
-    .select({ id: note.id, title: note.title, subjectId: note.subjectId })
+    .select({ id: note.id, title: note.title, folderId: note.folderId })
     .from(note)
     .where(and(eq(note.userId, userId), inArray(note.id, [...new Set(ids)])));
   return rows.map((row) => ({ ...row, kind: "note" }));

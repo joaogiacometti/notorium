@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   composeProposedFlashcardBack,
-  findProposedSubjectId,
+  findProposedFolderId,
   formatFlashcardExample,
   getLibraryHitHref,
   isAssistantReplyInFlight,
@@ -12,23 +12,23 @@ import {
   stampLastUserMetadata,
 } from "@/features/assistant/utils";
 
-const subjects = [
+const folders = [
   { id: "bio", path: "Biology" },
   { id: "cells", path: "Biology::Cells" },
 ];
 
-describe("findProposedSubjectId", () => {
+describe("findProposedFolderId", () => {
   it("matches an exact path", () => {
-    expect(findProposedSubjectId(subjects, "Biology::Cells")).toBe("cells");
+    expect(findProposedFolderId(folders, "Biology::Cells")).toBe("cells");
   });
 
   it("matches ignoring case and spacing around separators", () => {
-    expect(findProposedSubjectId(subjects, " biology :: CELLS")).toBe("cells");
+    expect(findProposedFolderId(folders, " biology :: CELLS")).toBe("cells");
   });
 
   it("returns null for a missing or unknown path", () => {
-    expect(findProposedSubjectId(subjects, undefined)).toBeNull();
-    expect(findProposedSubjectId(subjects, "Chemistry")).toBeNull();
+    expect(findProposedFolderId(folders, undefined)).toBeNull();
+    expect(findProposedFolderId(folders, "Chemistry")).toBeNull();
   });
 });
 
@@ -112,15 +112,15 @@ describe("readLibrarySearchParts", () => {
 describe("getLibraryHitHref", () => {
   const hit = {
     id: "item-1",
-    subjectId: "subject-1",
+    folderId: "folder-1",
     title: "Mitosis",
-    subjectPath: "Biology",
+    folderPath: "Biology",
     snippet: "",
   };
 
   it("links each kind to its detail page", () => {
     expect(getLibraryHitHref({ ...hit, kind: "note" })).toBe(
-      "/subjects/subject-1/documents/notes/item-1",
+      "/folders/folder-1/documents/notes/item-1",
     );
     expect(getLibraryHitHref({ ...hit, kind: "flashcard" })).toBe(
       "/flashcards/item-1",
@@ -168,7 +168,7 @@ describe("readStudyContextSource", () => {
       kind: "note" as const,
       documentId: "n1",
       title: "Cells",
-      subjectPath: "Biology",
+      folderPath: "Biology",
       content: "ATP",
       partial: false,
     };

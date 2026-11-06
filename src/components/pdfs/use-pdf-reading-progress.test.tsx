@@ -11,7 +11,7 @@ class FakeReadingPageStore {
 
   save = async (data: SavePdfReadingPageForm) => {
     this.saves.push(data);
-    return { success: true as const, subjectId: "s1" };
+    return { success: true as const, folderId: "s1" };
   };
 }
 

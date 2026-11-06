@@ -18,7 +18,7 @@ function seededClient() {
   client.setQueryData(libraryKeys.searchResults("owner", "title"), {
     notes: [],
   });
-  client.setQueryData(libraryKeys.subjectDocuments("subject-1"), []);
+  client.setQueryData(libraryKeys.folderDocuments("folder-1"), []);
   return client;
 }
 
@@ -28,7 +28,7 @@ describe("runDocumentAction", () => {
     const result = await runDocumentAction(
       client,
       async () => ({ success: true }),
-      "subject-1",
+      "folder-1",
     );
     expect(result).toEqual({ success: true });
     expect(
@@ -36,7 +36,7 @@ describe("runDocumentAction", () => {
         ?.isInvalidated,
     ).toBe(true);
     expect(
-      client.getQueryState(libraryKeys.subjectDocuments("subject-1"))
+      client.getQueryState(libraryKeys.folderDocuments("folder-1"))
         ?.isInvalidated,
     ).toBe(true);
     client.clear();
@@ -47,7 +47,7 @@ describe("runDocumentAction", () => {
     const result = await runDocumentAction(
       client,
       async () => ({ errorCode: "notes.notFound" }),
-      "subject-1",
+      "folder-1",
     );
     expect(result).toEqual({ errorCode: "notes.notFound" });
     expect(
@@ -55,7 +55,7 @@ describe("runDocumentAction", () => {
         ?.isInvalidated,
     ).toBe(false);
     expect(
-      client.getQueryState(libraryKeys.subjectDocuments("subject-1"))
+      client.getQueryState(libraryKeys.folderDocuments("folder-1"))
         ?.isInvalidated,
     ).toBe(false);
     client.clear();

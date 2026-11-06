@@ -25,7 +25,7 @@ vi.mock("@/lib/read-api/flashcards", () => ({
 const emptyPageData: FlashcardManagePage = {
   items: [],
   total: 0,
-  subjectCardCount: null,
+  folderCardCount: null,
 };
 
 function ControllerHarness({
@@ -104,7 +104,7 @@ describe("useFlashcardsManagerController", () => {
     await renderController();
 
     await act(async () => {
-      controller.handleSubjectChange("subject-2");
+      controller.handleFolderChange("folder-2");
     });
     await vi.waitFor(() =>
       expect(controller.managePageQuery.isError).toBe(true),

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { createFlashcard } from "@/app/actions/flashcards";
 import { useFlashcardDialogState } from "@/components/flashcards/dialogs/use-flashcard-dialog-state";
-import { useCreateInlineSubjectPicker } from "@/components/shared/use-create-inline-subject-picker";
+import { useCreateInlineFolderPicker } from "@/components/shared/use-create-inline-folder-picker";
 import { getCreateFlashcardResetValues } from "@/features/flashcards/create-reset";
 import type { FlashcardSource } from "@/features/flashcards/source-contract";
 import {
@@ -22,18 +22,18 @@ export interface CreateFlashcardInitialCard {
 }
 
 /**
- * Create-flashcard form values, optionally pre-selecting a subject and
+ * Create-flashcard form values, optionally pre-selecting a folder and
  * prefilling the card.
  *
  * @example
- * getCreateFlashcardFormValues("subject-1", { front: "<p>Q</p>", back: "<p>A</p>" });
+ * getCreateFlashcardFormValues("folder-1", { front: "<p>Q</p>", back: "<p>A</p>" });
  */
 export function getCreateFlashcardFormValues(
-  subjectId?: string | null,
+  folderId?: string | null,
   initialCard?: CreateFlashcardInitialCard,
 ): FlashcardFormValues {
   return {
-    subjectId: subjectId ?? "",
+    folderId: folderId ?? "",
     ...(initialCard?.source ? { source: initialCard.source } : {}),
     front: initialCard?.front ?? emptyDocument(),
     back: initialCard?.back ?? emptyDocument(),
@@ -44,34 +44,34 @@ interface UseCreateFlashcardFormOptions {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: (flashcard: FlashcardEntity) => void;
-  subjectId?: string;
+  folderId?: string;
   initialCard?: CreateFlashcardInitialCard;
 }
 
 /**
- * Shared create-flashcard wiring: loads subjects, owns the form, and drives submit
+ * Shared create-flashcard wiring: loads folders, owns the form, and drives submit
  * via {@link useFlashcardDialogState} with `closeOnSuccess: false` so the form
  * stays open for rapid consecutive captures.
  *
  * @example
- * const { subjects, form, dialog } = useCreateFlashcardForm({ open, onOpenChange });
+ * const { folders, form, dialog } = useCreateFlashcardForm({ open, onOpenChange });
  */
 export function useCreateFlashcardForm({
   open,
   onOpenChange,
   onCreated,
-  subjectId,
+  folderId,
   initialCard,
 }: Readonly<UseCreateFlashcardFormOptions>) {
   const form = useForm<FlashcardFormValues>({
     resolver: zodResolver(flashcardFormSchema),
-    defaultValues: getCreateFlashcardFormValues(subjectId, initialCard),
+    defaultValues: getCreateFlashcardFormValues(folderId, initialCard),
   });
-  const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
+  const { folders, handleCreateFolder } = useCreateInlineFolderPicker({
     open,
-    loadSubjectsOnOpen: true,
-    onSubjectCreated: (createdSubjectId) =>
-      form.setValue("subjectId", createdSubjectId, {
+    loadFoldersOnOpen: true,
+    onFolderCreated: (createdFolderId) =>
+      form.setValue("folderId", createdFolderId, {
         shouldDirty: true,
         shouldValidate: true,
       }),
@@ -81,7 +81,7 @@ export function useCreateFlashcardForm({
     mode: "create",
     open,
     onOpenChange,
-    values: getCreateFlashcardFormValues(subjectId, initialCard),
+    values: getCreateFlashcardFormValues(folderId, initialCard),
     form,
     onSubmitAction: (values) => createFlashcard(values),
     onSuccess: (flashcard) => {
@@ -94,5 +94,5 @@ export function useCreateFlashcardForm({
     closeOnSuccess: false,
   });
 
-  return { subjects, form, dialog, handleCreateSubject };
+  return { folders, form, dialog, handleCreateFolder };
 }

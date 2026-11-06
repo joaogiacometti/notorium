@@ -4,9 +4,9 @@ import { documentText } from "@/lib/editor/document";
 import { documentUniquenessText } from "@/lib/editor/document-content";
 import { testDocument } from "@/test/document";
 
-export async function createFlashcardForSubject(
+export async function createFlashcardForFolder(
   userId: string,
-  subjectId: string,
+  folderId: string,
   front: string,
   back: string,
   dueAt: Date = new Date(Date.now() - 86_400_000),
@@ -15,7 +15,7 @@ export async function createFlashcardForSubject(
     .insert(flashcard)
     .values({
       userId,
-      subjectId,
+      folderId,
       front: testDocument(front),
       frontText: documentText(testDocument(front)),
       frontNormalized: documentUniquenessText(testDocument(front)),

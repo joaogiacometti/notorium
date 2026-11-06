@@ -23,7 +23,7 @@ export interface PdfUploadSteps {
 }
 
 export interface UploadPdfDocumentInput {
-  subjectId: string;
+  folderId: string;
   title: string;
   file: File;
   onProgress: (percentage: number) => void;
@@ -51,14 +51,14 @@ const defaultSteps: PdfUploadSteps = {
  * shows with `t(result.errorCode, result.errorParams)`.
  *
  * @example
- * const result = await uploadPdfDocument({ subjectId, title, file, onProgress });
+ * const result = await uploadPdfDocument({ folderId, title, file, onProgress });
  */
 export async function uploadPdfDocument(
   input: UploadPdfDocumentInput,
   steps: PdfUploadSteps = defaultSteps,
 ): Promise<CreatePdfResult> {
   const prepared = await steps.prepare({
-    subjectId: input.subjectId,
+    folderId: input.folderId,
     fileName: input.file.name,
     sizeBytes: input.file.size,
   });
@@ -78,7 +78,7 @@ export async function uploadPdfDocument(
   }
 
   return steps.create({
-    subjectId: input.subjectId,
+    folderId: input.folderId,
     title: input.title,
     fileName: input.file.name,
     blobPathname: prepared.pathname,

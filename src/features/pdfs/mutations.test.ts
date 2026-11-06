@@ -4,14 +4,14 @@ const {
   updateCalls,
   updateReturning,
   getPdfByIdForUserMock,
-  getSubjectRecordForUserMock,
-  countPdfsBySubjectForUserMock,
+  getFolderRecordForUserMock,
+  countPdfsByFolderForUserMock,
 } = vi.hoisted(() => ({
   updateCalls: [] as Record<string, unknown>[],
-  updateReturning: { rows: [] as { subjectId: string }[] },
+  updateReturning: { rows: [] as { folderId: string }[] },
   getPdfByIdForUserMock: vi.fn(),
-  getSubjectRecordForUserMock: vi.fn(),
-  countPdfsBySubjectForUserMock: vi.fn(),
+  getFolderRecordForUserMock: vi.fn(),
+  countPdfsByFolderForUserMock: vi.fn(),
 }));
 
 vi.mock("@/db/index", () => ({
@@ -32,10 +32,10 @@ vi.mock("@/db/index", () => ({
 }));
 vi.mock("@/features/pdfs/queries", () => ({
   getPdfByIdForUser: getPdfByIdForUserMock,
-  countPdfsBySubjectForUser: countPdfsBySubjectForUserMock,
+  countPdfsByFolderForUser: countPdfsByFolderForUserMock,
 }));
-vi.mock("@/features/subjects/queries", () => ({
-  getSubjectRecordForUser: getSubjectRecordForUserMock,
+vi.mock("@/features/folders/queries", () => ({
+  getFolderRecordForUser: getFolderRecordForUserMock,
 }));
 
 import {
@@ -47,10 +47,10 @@ import { LIMITS } from "@/lib/config/limits";
 beforeEach(() => {
   vi.clearAllMocks();
   updateCalls.length = 0;
-  updateReturning.rows = [{ subjectId: "subject-1" }];
-  getPdfByIdForUserMock.mockResolvedValue({ id: "p1", subjectId: "subject-1" });
-  getSubjectRecordForUserMock.mockResolvedValue({ id: "subject-2" });
-  countPdfsBySubjectForUserMock.mockResolvedValue(0);
+  updateReturning.rows = [{ folderId: "folder-1" }];
+  getPdfByIdForUserMock.mockResolvedValue({ id: "p1", folderId: "folder-1" });
+  getFolderRecordForUserMock.mockResolvedValue({ id: "folder-2" });
+  countPdfsByFolderForUserMock.mockResolvedValue(0);
 });
 
 describe("savePdfReadingPageForUser", () => {
@@ -61,7 +61,7 @@ describe("savePdfReadingPageForUser", () => {
       pageCount: 340,
     });
 
-    expect(result).toEqual({ success: true, subjectId: "subject-1" });
+    expect(result).toEqual({ success: true, folderId: "folder-1" });
     expect(updateCalls[0]).toMatchObject({ lastPage: 12, pageCount: 340 });
     expect(updateCalls[0]?.updatedAt).toBeDefined();
     expect(updateCalls[0]?.updatedAt).not.toBeInstanceOf(Date);
@@ -91,39 +91,39 @@ describe("savePdfReadingPageForUser", () => {
 });
 
 describe("movePdfForUser", () => {
-  it("reparents the PDF and reports both subjects", async () => {
+  it("reparents the PDF and reports both folders", async () => {
     const result = await movePdfForUser("user-1", {
       id: "p1",
-      subjectId: "subject-2",
+      folderId: "folder-2",
     });
 
     expect(result).toEqual({
       success: true,
-      subjectId: "subject-2",
-      previousSubjectId: "subject-1",
+      folderId: "folder-2",
+      previousFolderId: "folder-1",
     });
-    expect(updateCalls[0]).toEqual({ subjectId: "subject-2" });
+    expect(updateCalls[0]).toEqual({ folderId: "folder-2" });
   });
 
   it("rejects a destination at its PDF limit", async () => {
-    countPdfsBySubjectForUserMock.mockResolvedValue(LIMITS.maxPdfsPerSubject);
+    countPdfsByFolderForUserMock.mockResolvedValue(LIMITS.maxPdfsPerFolder);
 
     const result = await movePdfForUser("user-1", {
       id: "p1",
-      subjectId: "subject-2",
+      folderId: "folder-2",
     });
 
     expect(result).toMatchObject({ errorCode: "limits.pdfLimit" });
     expect(updateCalls).toHaveLength(0);
   });
 
-  it("is a no-op when the subject is unchanged", async () => {
+  it("is a no-op when the folder is unchanged", async () => {
     const result = await movePdfForUser("user-1", {
       id: "p1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
     });
 
-    expect(result).toMatchObject({ success: true, subjectId: "subject-1" });
+    expect(result).toMatchObject({ success: true, folderId: "folder-1" });
     expect(updateCalls).toHaveLength(0);
   });
 });

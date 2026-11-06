@@ -21,14 +21,14 @@ test("opens with Ctrl/Cmd+K and navigates to a section", async ({ page }) => {
   await page.waitForURL("**/flashcards");
 });
 
-test("runs the create subject command from the dialog", async ({ page }) => {
+test("runs the create folder command from the dialog", async ({ page }) => {
   await page.goto("/");
 
   await openSearchDialog(page);
-  await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill("subject");
-  await page.getByRole("option", { name: "Create Subject" }).click();
+  await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill("folder");
+  await page.getByRole("option", { name: "Create Folder" }).click();
 
   await expect(
-    page.getByRole("dialog", { name: "Create Subject" }),
+    page.getByRole("dialog", { name: "Create Folder" }),
   ).toBeVisible();
 });

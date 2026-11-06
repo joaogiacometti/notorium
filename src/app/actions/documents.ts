@@ -26,10 +26,10 @@ const MOVE_DOCUMENT_BY_KIND = {
 >;
 
 /**
- * Moves a note or PDF to another subject (tree drag-and-drop). Revalidates the origin and
- * destination subject so each sidebar branch reflects the change.
+ * Moves a note or PDF to another folder (tree drag-and-drop). Revalidates the origin and
+ * destination folder so each sidebar branch reflects the change.
  *
- * @example moveDocument({ kind: "note", id, subjectId: targetId })
+ * @example moveDocument({ kind: "note", id, folderId: targetId })
  */
 export async function moveDocument(
   data: MoveDocumentForm,

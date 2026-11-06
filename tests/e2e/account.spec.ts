@@ -4,7 +4,7 @@ import { expect, test } from "./support/authenticated-test";
 import { runWithCleanup } from "./support/cleanup";
 import { getPrefixedValue } from "./support/data";
 import {
-  clearUserSubjectsByNames,
+  clearUserFoldersByNames,
   createFsrsOptimizationReviewHistory,
   readFsrsSchedulerSettings,
   resetFsrsSchedulerSettings,
@@ -14,8 +14,8 @@ import {
 const optimizationReviewCount = 64;
 const optimizationTimeoutMs = 35_000;
 
-function getUniqueSubjectName(testTitle: string) {
-  return getPrefixedValue("account-fsrs-subject", testTitle);
+function getUniqueFolderName(testTitle: string) {
+  return getPrefixedValue("account-fsrs-folder", testTitle);
 }
 
 async function openAccountPage(page: Page) {
@@ -34,15 +34,15 @@ test("can manually optimize flashcard scheduling", async ({
   e2eUser,
 }) => {
   await runWithCleanup(async (registerCleanup) => {
-    const subjectName = getUniqueSubjectName("manual-optimize");
+    const folderName = getUniqueFolderName("manual-optimize");
     await seedFsrsSchedulerSettings(e2eUser.userId);
     await createFsrsOptimizationReviewHistory(
       e2eUser.userId,
-      subjectName,
+      folderName,
       optimizationReviewCount,
     );
     registerCleanup(() =>
-      clearUserSubjectsByNames(e2eUser.userId, [subjectName]),
+      clearUserFoldersByNames(e2eUser.userId, [folderName]),
     );
     registerCleanup(() => resetFsrsSchedulerSettings(e2eUser.userId));
 
@@ -74,15 +74,15 @@ test("can reset flashcard optimization without deleting review history", async (
   e2eUser,
 }) => {
   await runWithCleanup(async (registerCleanup) => {
-    const subjectName = getUniqueSubjectName("reset-optimization");
+    const folderName = getUniqueFolderName("reset-optimization");
     await seedFsrsSchedulerSettings(e2eUser.userId, { optimized: true });
     await createFsrsOptimizationReviewHistory(
       e2eUser.userId,
-      subjectName,
+      folderName,
       optimizationReviewCount,
     );
     registerCleanup(() =>
-      clearUserSubjectsByNames(e2eUser.userId, [subjectName]),
+      clearUserFoldersByNames(e2eUser.userId, [folderName]),
     );
     registerCleanup(() => resetFsrsSchedulerSettings(e2eUser.userId));
 

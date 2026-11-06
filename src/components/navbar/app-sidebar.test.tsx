@@ -37,8 +37,8 @@ vi.mock("@/components/navbar/app-sidebar-nav", () => ({
   ),
 }));
 
-vi.mock("@/components/subjects/tree/subject-tree-sidebar", () => ({
-  SubjectTreeSidebar: () => <div data-testid="subject-tree" />,
+vi.mock("@/components/folders/tree/folder-tree-sidebar", () => ({
+  FolderTreeSidebar: () => <div data-testid="folder-tree" />,
 }));
 
 function findByText(container: HTMLElement, text: string) {
@@ -86,7 +86,7 @@ describe("AppSidebar", () => {
     expect(findByText(container, "Search")).toBeTruthy();
     // The brand link to "/" was removed; the account button sits at the top.
     expect(findByText(container, "Notorium")).toBeFalsy();
-    // The "Home" entry was removed: the app always opens a subject instead.
+    // The "Home" entry was removed: the app always opens a folder instead.
     expect(findByText(container, "Home")).toBeFalsy();
   });
 

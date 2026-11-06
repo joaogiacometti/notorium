@@ -7,8 +7,8 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { bulkMoveFlashcards } from "@/app/actions/flashcards";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { SubjectSelect } from "@/components/shared/subject-select";
-import { useCreateInlineSubjectPicker } from "@/components/shared/use-create-inline-subject-picker";
+import { FolderSelect } from "@/components/shared/folder-select";
+import { useCreateInlineFolderPicker } from "@/components/shared/use-create-inline-folder-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,14 +45,14 @@ export function BulkMoveFlashcardsDialog({
     resolver: zodResolver(bulkMoveFlashcardsSchema),
     defaultValues: {
       ids,
-      subjectId: "",
+      folderId: "",
     },
   });
-  const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
+  const { folders, handleCreateFolder } = useCreateInlineFolderPicker({
     open,
-    loadSubjectsOnOpen: true,
-    onSubjectCreated: (createdSubjectId) =>
-      form.setValue("subjectId", createdSubjectId, {
+    loadFoldersOnOpen: true,
+    onFolderCreated: (createdFolderId) =>
+      form.setValue("folderId", createdFolderId, {
         shouldDirty: true,
         shouldValidate: true,
       }),
@@ -60,13 +60,13 @@ export function BulkMoveFlashcardsDialog({
 
   useEffect(() => {
     if (open) {
-      form.reset({ ids, subjectId: "" });
+      form.reset({ ids, folderId: "" });
     }
   }, [form, open, ids]);
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      form.reset({ ids, subjectId: "" });
+      form.reset({ ids, folderId: "" });
     }
     onOpenChange(nextOpen);
   }
@@ -79,7 +79,7 @@ export function BulkMoveFlashcardsDialog({
         await invalidateFlashcardViews(queryClient);
         onMoved(result.ids);
         onOpenChange(false);
-        form.reset({ ids: [], subjectId: "" });
+        form.reset({ ids: [], folderId: "" });
         return;
       }
 
@@ -90,8 +90,8 @@ export function BulkMoveFlashcardsDialog({
   const count = ids.length;
   const descriptionText =
     count === 1
-      ? "Move 1 selected flashcard to another subject."
-      : `Move ${count} selected flashcards to another subject.`;
+      ? "Move 1 selected flashcard to another folder."
+      : `Move ${count} selected flashcards to another folder.`;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -103,17 +103,17 @@ export function BulkMoveFlashcardsDialog({
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup className="gap-4">
             <Controller
-              name="subjectId"
+              name="folderId"
               control={form.control}
               render={({ field, fieldState }) => (
-                <SubjectSelect
+                <FolderSelect
                   value={field.value ?? null}
                   onChange={field.onChange}
-                  subjects={subjects}
-                  id="bulk-move-flashcards-subject"
+                  folders={folders}
+                  id="bulk-move-flashcards-folder"
                   error={fieldState.error?.message as string}
                   ariaInvalid={fieldState.invalid}
-                  onCreateSubject={handleCreateSubject}
+                  onCreateFolder={handleCreateFolder}
                 />
               )}
             />

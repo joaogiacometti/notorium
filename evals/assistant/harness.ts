@@ -101,7 +101,7 @@ async function askAssistant(evalCase: AssistantEvalCase): Promise<Reply> {
   const result = await streamAssistantReplyForUser({
     ...request,
     userId: "eval-user",
-    loadSubjectPaths: async () => ["Biology"],
+    loadFolderPaths: async () => ["Biology"],
     searchLibrary: async () => ({ hits: evalCase.searchHits ?? [] }),
   });
   if (!result.success) throw new Error(result.errorCode);

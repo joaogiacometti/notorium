@@ -12,7 +12,7 @@ function DialogWithToolbar() {
     <Dialog open>
       <FlashcardEditorDialogContent title="New flashcard">
         <button type="button" disabled>
-          Subject
+          Folder
         </button>
         <button type="button">Heading 1</button>
       </FlashcardEditorDialogContent>

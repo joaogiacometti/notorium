@@ -46,7 +46,7 @@ function ReaderHarness({ pdfDocument, currentPage }: ReaderHarnessProps) {
   const workspace = useAssistantWorkspace();
   usePdfStudyContext({
     pdf: { id: "pdf-1", title: "Cell biology" },
-    subjectPath: "Biology",
+    folderPath: "Biology",
     pdfDocument,
     currentPage,
     pagesRef,

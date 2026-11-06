@@ -40,13 +40,13 @@ export const DOCUMENT_KIND_ACTIONS = {
 export async function runDocumentAction(
   queryClient: QueryClient,
   action: () => DocumentActionResult,
-  subjectId?: string,
+  folderId?: string,
 ): DocumentActionResult {
   const result = await action();
   if (result.success) {
     await invalidateDocumentViews(
       queryClient,
-      subjectId ? [subjectId] : undefined,
+      folderId ? [folderId] : undefined,
     );
   }
   return result;

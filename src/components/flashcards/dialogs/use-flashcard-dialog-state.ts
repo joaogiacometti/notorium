@@ -159,7 +159,7 @@ export function useFlashcardDialogState<TValues extends FlashcardFormValues>({
             JSON.stringify(savedValues.front) ||
           JSON.stringify(currentValues.back) !==
             JSON.stringify(savedValues.back) ||
-          currentValues.subjectId !== savedValues.subjectId
+          currentValues.folderId !== savedValues.folderId
         : hasContent;
 
     if ((hasUnsavedChanges || hasPendingEdits) && !isSubmitting) {

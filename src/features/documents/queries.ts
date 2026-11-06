@@ -3,11 +3,11 @@ import type {
   DocumentListItem,
 } from "@/features/documents/types";
 import {
-  getNotesBySubjectForUser,
+  getNotesByFolderForUser,
   getRecentNotesForUser,
 } from "@/features/notes/queries";
 import {
-  getPdfsBySubjectForUser,
+  getPdfsByFolderForUser,
   getRecentPdfsForUser,
 } from "@/features/pdfs/queries";
 
@@ -22,7 +22,7 @@ function toDocumentListItems(
     title: row.title,
     updatedAt: row.updatedAt,
     kind,
-    subjectId: row.subjectId,
+    folderId: row.folderId,
   }));
 }
 
@@ -33,19 +33,19 @@ function sortByMostRecent(items: DocumentListItem[]): DocumentListItem[] {
 }
 
 /**
- * Lists a subject's notes and PDFs ordered by recency, used
- * by the unified documents sidebar and the subject documents preview.
+ * Lists a folder's notes and PDFs ordered by recency, used
+ * by the unified documents sidebar and the folder documents preview.
  *
  * @example
- * const documents = await getSubjectDocumentsForUser(userId, subjectId);
+ * const documents = await getFolderDocumentsForUser(userId, folderId);
  */
-export async function getSubjectDocumentsForUser(
+export async function getFolderDocumentsForUser(
   userId: string,
-  subjectId: string,
+  folderId: string,
 ): Promise<DocumentListItem[]> {
   const [notes, pdfs] = await Promise.all([
-    getNotesBySubjectForUser(userId, subjectId),
-    getPdfsBySubjectForUser(userId, subjectId),
+    getNotesByFolderForUser(userId, folderId),
+    getPdfsByFolderForUser(userId, folderId),
   ]);
 
   return sortByMostRecent([
@@ -55,7 +55,7 @@ export async function getSubjectDocumentsForUser(
 }
 
 /**
- * Lists a user's most recently updated notes and PDFs across active subjects
+ * Lists a user's most recently updated notes and PDFs across active folders
  * for the home dashboard's "recent documents" card.
  *
  * @example

@@ -75,7 +75,7 @@ function DialogProbe({
         {testDocumentHtml(currentValues.front)}
       </output>
       <output data-testid="back">{testDocumentHtml(currentValues.back)}</output>
-      <output data-testid="subjectId">{currentValues.subjectId}</output>
+      <output data-testid="folderId">{currentValues.folderId}</output>
       <output data-testid="duplicate">
         {dialog.isDuplicateFront ? "true" : "false"}
       </output>
@@ -164,7 +164,7 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            subjectId: "deck-1",
+            folderId: "deck-1",
             front: testDocument("<p>Front A</p>"),
             back: testDocument("<p>Back A</p>"),
           }}
@@ -177,7 +177,7 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            subjectId: "deck-2",
+            folderId: "deck-2",
             front: testDocument("<p>Front B</p>"),
             back: testDocument("<p>Back B</p>"),
           }}
@@ -185,7 +185,7 @@ describe("useFlashcardDialogState", () => {
       );
     });
 
-    expect(getByTestId(container, "subjectId").textContent).toBe("deck-2");
+    expect(getByTestId(container, "folderId").textContent).toBe("deck-2");
     expect(getByTestId(container, "front").textContent).toBe("<p>Front B</p>");
     expect(getByTestId(container, "back").textContent).toBe("<p>Back B</p>");
   });
@@ -200,7 +200,7 @@ describe("useFlashcardDialogState", () => {
             mode={mode}
             open
             values={{
-              subjectId: "deck-1",
+              folderId: "deck-1",
               front: testDocument("<p>Front</p>"),
               back: testDocument("<p>Back</p>"),
             }}
@@ -211,7 +211,7 @@ describe("useFlashcardDialogState", () => {
       await act(async () => getByTestId(container, "edit-front").click());
       await act(async () => getByTestId(container, "submit").click());
       expect(onSubmitAction).toHaveBeenCalledWith({
-        subjectId: "deck-1",
+        folderId: "deck-1",
         front: testDocument("<p>Revised front</p>"),
         back: testDocument("<p>Back</p>"),
       });
@@ -234,7 +234,7 @@ describe("useFlashcardDialogState", () => {
             mode={mode}
             open
             values={{
-              subjectId: "deck-1",
+              folderId: "deck-1",
               front: testDocument("<p>Front</p>"),
               back: testDocument("<p>Back</p>"),
             }}
@@ -246,7 +246,7 @@ describe("useFlashcardDialogState", () => {
       expect(getByTestId(container, "duplicate").textContent).toBe("true");
       expect(getByTestId(container, "front").textContent).toBe("<p>Front</p>");
       expect(getByTestId(container, "back").textContent).toBe("<p>Back</p>");
-      expect(getByTestId(container, "subjectId").textContent).toBe("deck-1");
+      expect(getByTestId(container, "folderId").textContent).toBe("deck-1");
       await act(async () => getByTestId(container, "edit-front").click());
       expect(getByTestId(container, "duplicate").textContent).toBe("false");
       await act(async () => getByTestId(container, "submit").click());
@@ -268,7 +268,7 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            subjectId: "deck-1",
+            folderId: "deck-1",
             front: testDocument("<p>Front</p>"),
             back: testDocument("<p>Back</p>"),
           }}
@@ -291,12 +291,12 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            subjectId: "deck-1",
+            folderId: "deck-1",
             front: testDocument("<p>Front A</p>"),
             back: testDocument("<p>Back A</p>"),
           }}
           getSuccessValues={(currentValues, options) => ({
-            subjectId: currentValues.subjectId,
+            folderId: currentValues.folderId,
             front: options.keepFrontAfterSubmit
               ? currentValues.front
               : testDocument(""),
@@ -322,12 +322,12 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            subjectId: "deck-1",
+            folderId: "deck-1",
             front: testDocument("<p>Front A</p>"),
             back: testDocument("<p>Back A</p>"),
           }}
           getSuccessValues={(currentValues, options) => ({
-            subjectId: currentValues.subjectId,
+            folderId: currentValues.folderId,
             front: options.keepFrontAfterSubmit
               ? currentValues.front
               : testDocument(""),
@@ -357,12 +357,12 @@ describe("useFlashcardDialogState", () => {
         <TestHarness
           open
           values={{
-            subjectId: "deck-1",
+            folderId: "deck-1",
             front: testDocument("<p>Front A</p>"),
             back: testDocument("<p>Back A</p>"),
           }}
           getSuccessValues={(currentValues, options) => ({
-            subjectId: currentValues.subjectId,
+            folderId: currentValues.folderId,
             front: options.keepFrontAfterSubmit
               ? currentValues.front
               : testDocument(""),
@@ -396,7 +396,7 @@ describe("useFlashcardDialogState", () => {
           mode="edit"
           onSubmitAction={onSubmitAction}
           values={{
-            subjectId: "deck-1",
+            folderId: "deck-1",
             front: testDocument("<p>Front</p>"),
             back: testDocument("<p>Back</p>"),
           }}
@@ -422,7 +422,7 @@ describe("useFlashcardDialogState", () => {
           open
           onOpenChange={onOpenChange}
           values={{
-            subjectId: "deck-1",
+            folderId: "deck-1",
             front: testDocument("<p>Front A</p>"),
             back: testDocument("<p>Back A</p>"),
           }}

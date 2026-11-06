@@ -50,7 +50,7 @@ const flashcardReviewSelection = {
   reviewCount: flashcard.reviewCount,
   lapseCount: flashcard.lapseCount,
   studyLaterAt: flashcard.studyLaterAt,
-  subjectId: flashcard.subjectId,
+  folderId: flashcard.folderId,
 };
 
 function getPreviousSchedulingState(
@@ -174,7 +174,7 @@ async function applyFlashcardReviewForUser(
       await tx.insert(flashcardReviewLog).values({
         id: reviewLogId,
         flashcardId: existingCard.id,
-        subjectId: existingCard.subjectId,
+        folderId: existingCard.folderId,
         userId,
         clientReviewId: data.clientReviewId,
         reviewCountAfter: nextState.reviewCount,

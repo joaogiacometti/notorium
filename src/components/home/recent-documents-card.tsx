@@ -15,7 +15,7 @@ interface RecentDocumentsCardProps {
 
 /**
  * Dashboard card listing the user's most recently updated notes and PDFs
- * across every subject, each linking to its detail page.
+ * across every folder, each linking to its detail page.
  */
 export function RecentDocumentsCard({
   documents,

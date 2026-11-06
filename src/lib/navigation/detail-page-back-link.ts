@@ -17,13 +17,13 @@ export interface DetailPageBackLink {
 
 interface DetailPageReturnContextInput {
   from?: string;
-  subjectId?: string;
+  folderId?: string;
   view?: string;
 }
 
 interface DetailPageReturnContext {
   from?: DetailPageOrigin;
-  subjectId?: string;
+  folderId?: string;
   view?: FlashcardsReturnView;
 }
 
@@ -43,10 +43,8 @@ export function resolveDetailPageReturnContext(
 
   return {
     from,
-    subjectId:
-      input.subjectId && input.subjectId.length > 0
-        ? input.subjectId
-        : undefined,
+    folderId:
+      input.folderId && input.folderId.length > 0 ? input.folderId : undefined,
     view:
       input.view && isFlashcardsReturnView(input.view) ? input.view : undefined,
   };
@@ -71,17 +69,17 @@ function withSearchParams(
 
 export function getFlashcardsHref(
   view: FlashcardsReturnView = "manage",
-  subjectId?: string,
+  folderId?: string,
 ) {
-  return withSearchParams("/flashcards", { view, subjectId });
+  return withSearchParams("/flashcards", { view, folderId });
 }
 
-export function getFlashcardReviewSessionHref(subjectId?: string) {
-  return withSearchParams("/flashcards/review", { subjectId });
+export function getFlashcardReviewSessionHref(folderId?: string) {
+  return withSearchParams("/flashcards/review", { folderId });
 }
 
-export function getFlashcardExamSessionHref(subjectId?: string) {
-  return withSearchParams("/flashcards/exam", { subjectId });
+export function getFlashcardExamSessionHref(folderId?: string) {
+  return withSearchParams("/flashcards/exam", { folderId });
 }
 
 const flashcardSessionPaths = ["/flashcards/review", "/flashcards/exam"];
@@ -102,20 +100,20 @@ export function getFlashcardDetailHref(
   return withSearchParams(`/flashcards/${flashcardId}`, {
     from: context.from,
     view: context.view,
-    subjectId: context.subjectId,
+    folderId: context.folderId,
   });
 }
 
-export function getNoteDetailHref(subjectId: string, noteId: string) {
-  return getDocumentDetailHref({ kind: "note", subjectId, id: noteId });
+export function getNoteDetailHref(folderId: string, noteId: string) {
+  return getDocumentDetailHref({ kind: "note", folderId, id: noteId });
 }
 
 export function getDocumentDetailHref(item: {
   kind: DocumentKind;
-  subjectId: string;
+  folderId: string;
   id: string;
 }) {
-  return `/subjects/${item.subjectId}/documents/${DOCUMENT_ROUTE_SEGMENTS[item.kind]}/${item.id}`;
+  return `/folders/${item.folderId}/documents/${DOCUMENT_ROUTE_SEGMENTS[item.kind]}/${item.id}`;
 }
 
 export function resolveFlashcardDetailBackLink(
@@ -125,14 +123,14 @@ export function resolveFlashcardDetailBackLink(
 
   if (context.from === "flashcards-manage") {
     return {
-      href: getFlashcardsHref(context.view, context.subjectId),
+      href: getFlashcardsHref(context.view, context.folderId),
       label: "flashcards",
     };
   }
 
-  if (context.view || context.subjectId) {
+  if (context.view || context.folderId) {
     return {
-      href: getFlashcardsHref(context.view ?? "manage", context.subjectId),
+      href: getFlashcardsHref(context.view ?? "manage", context.folderId),
       label: "flashcards",
     };
   }

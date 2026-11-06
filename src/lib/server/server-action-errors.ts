@@ -90,23 +90,23 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     "Invalid FSRS optimization settings.",
   "flashcards.fsrsOptimization.updateFailed":
     "Failed to update FSRS optimization settings.",
-  "limits.subjectLimit": (params) =>
-    `System limit reached: you can have up to ${params?.max} subjects.`,
-  "limits.childSubjectLimit": (params) =>
-    `System limit reached: a subject can have up to ${params?.max} subfolders.`,
-  "limits.subjectNestingDepthLimit": (params) =>
-    `System limit reached: subjects can only be nested up to ${params?.max} levels deep.`,
+  "limits.folderLimit": (params) =>
+    `System limit reached: you can have up to ${params?.max} folders.`,
+  "limits.childFolderLimit": (params) =>
+    `System limit reached: a folder can have up to ${params?.max} subfolders.`,
+  "limits.folderNestingDepthLimit": (params) =>
+    `System limit reached: folders can only be nested up to ${params?.max} levels deep.`,
   "limits.noteLimit": (params) =>
-    `System limit reached: you can have up to ${params?.max} notes per subject.`,
+    `System limit reached: you can have up to ${params?.max} notes per folder.`,
   "limits.attachmentLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} attachments per item.`,
   "limits.attachmentSizeLimit": (params) =>
     `File size limit exceeded: maximum ${params?.max} bytes.`,
   "limits.flashcardLimit": (params) =>
-    `System limit reached: you can have up to ${params?.max} flashcards per subject.`,
+    `System limit reached: you can have up to ${params?.max} flashcards per folder.`,
   "limits.aiAssistantPerDay": "Daily limit reached for the assistant.",
   "limits.pdfLimit": (params) =>
-    `System limit reached: you can have up to ${params?.max} PDFs per subject.`,
+    `System limit reached: you can have up to ${params?.max} PDFs per folder.`,
   "limits.pdfSizeLimit": (params) =>
     `File size limit exceeded: PDFs can be at most ${params?.maxMb} MB.`,
   "limits.pdfUploadsPerDay": "Daily PDF upload limit reached.",
@@ -117,12 +117,12 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "notes.invalidData": "Invalid note data.",
   "notes.notFound": "Note not found.",
   "documents.invalidData": "Invalid document data.",
-  "subjects.invalidData": "Invalid subject data.",
-  "subjects.notFound": "Subject not found.",
-  "subjects.duplicateName": "A subject with this name already exists.",
-  "subjects.cannotMoveIntoSelf": "A subject cannot be moved into itself.",
-  "subjects.wouldCreateCycle":
-    "This move would create a circular subject hierarchy.",
+  "folders.invalidData": "Invalid folder data.",
+  "folders.notFound": "Folder not found.",
+  "folders.duplicateName": "A folder with this name already exists.",
+  "folders.cannotMoveIntoSelf": "A folder cannot be moved into itself.",
+  "folders.wouldCreateCycle":
+    "This move would create a circular folder hierarchy.",
 };
 
 export function t(key: string, values?: ActionErrorParams): string {

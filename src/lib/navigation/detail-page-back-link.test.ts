@@ -16,12 +16,12 @@ describe("resolveDetailPageReturnContext", () => {
     expect(
       resolveDetailPageReturnContext({
         from: "flashcards-manage",
-        subjectId: "subject-1",
+        folderId: "folder-1",
         view: "review",
       }),
     ).toEqual({
       from: "flashcards-manage",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       view: "review",
     });
   });
@@ -30,12 +30,12 @@ describe("resolveDetailPageReturnContext", () => {
     expect(
       resolveDetailPageReturnContext({
         from: "invalid",
-        subjectId: "subject-1",
+        folderId: "folder-1",
         view: "invalid",
       }),
     ).toEqual({
       from: undefined,
-      subjectId: "subject-1",
+      folderId: "folder-1",
       view: undefined,
     });
   });
@@ -47,26 +47,26 @@ describe("detail href builders", () => {
       getFlashcardDetailHref("flashcard-1", {
         from: "flashcards-manage",
         view: "manage",
-        subjectId: "deck-1",
+        folderId: "deck-1",
       }),
     ).toBe(
-      "/flashcards/flashcard-1?from=flashcards-manage&view=manage&subjectId=deck-1",
+      "/flashcards/flashcard-1?from=flashcards-manage&view=manage&folderId=deck-1",
     );
   });
 
-  it("builds a note detail href with subject context", () => {
-    expect(getNoteDetailHref("subject-1", "note-1")).toBe(
-      "/subjects/subject-1/documents/notes/note-1",
+  it("builds a note detail href with folder context", () => {
+    expect(getNoteDetailHref("folder-1", "note-1")).toBe(
+      "/folders/folder-1/documents/notes/note-1",
     );
   });
 
   it("routes each document kind to its detail page", () => {
     expect(
-      getDocumentDetailHref({ kind: "note", subjectId: "s1", id: "n1" }),
-    ).toBe("/subjects/s1/documents/notes/n1");
+      getDocumentDetailHref({ kind: "note", folderId: "s1", id: "n1" }),
+    ).toBe("/folders/s1/documents/notes/n1");
     expect(
-      getDocumentDetailHref({ kind: "pdf", subjectId: "s1", id: "p1" }),
-    ).toBe("/subjects/s1/documents/pdfs/p1");
+      getDocumentDetailHref({ kind: "pdf", folderId: "s1", id: "p1" }),
+    ).toBe("/folders/s1/documents/pdfs/p1");
   });
 });
 
@@ -85,7 +85,7 @@ describe("resolveFlashcardDetailBackLink", () => {
       resolveFlashcardDetailBackLink({
         from: "flashcards-manage",
         view: "review",
-        subjectId: "deck-1",
+        folderId: "deck-1",
       }),
     ).toEqual({
       href: getFlashcardsHref("review", "deck-1"),
@@ -102,17 +102,17 @@ describe("resolveFlashcardDetailBackLink", () => {
 });
 
 describe("flashcard session hrefs", () => {
-  it("links the review session with an optional subject scope", () => {
+  it("links the review session with an optional folder scope", () => {
     expect(getFlashcardReviewSessionHref()).toBe("/flashcards/review");
     expect(getFlashcardReviewSessionHref("deck-1")).toBe(
-      "/flashcards/review?subjectId=deck-1",
+      "/flashcards/review?folderId=deck-1",
     );
   });
 
-  it("links the exam session with an optional subject scope", () => {
+  it("links the exam session with an optional folder scope", () => {
     expect(getFlashcardExamSessionHref()).toBe("/flashcards/exam");
     expect(getFlashcardExamSessionHref("deck-1")).toBe(
-      "/flashcards/exam?subjectId=deck-1",
+      "/flashcards/exam?folderId=deck-1",
     );
   });
 

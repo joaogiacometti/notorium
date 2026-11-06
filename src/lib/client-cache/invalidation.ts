@@ -11,29 +11,29 @@ async function refreshQueries(
   await client.invalidateQueries({ queryKey });
 }
 
-/** Client query dependencies of a subject create, rename, move, or deletion. */
-export async function invalidateSubjectViews(
+/** Client query dependencies of a folder create, rename, move, or deletion. */
+export async function invalidateFolderViews(
   client: QueryClient,
 ): Promise<void> {
   await Promise.all([
-    refreshQueries(client, libraryKeys.subjects),
+    refreshQueries(client, libraryKeys.folders),
     invalidateDocumentViews(client),
     refreshQueries(client, libraryKeys.flashcards),
   ]);
 }
 
-/** Omit subject IDs for changes whose result does not carry the owning subject. */
+/** Omit folder IDs for changes whose result does not carry the owning folder. */
 export async function invalidateDocumentViews(
   client: QueryClient,
-  subjectIds?: readonly string[],
+  folderIds?: readonly string[],
 ): Promise<void> {
   await Promise.all([
     refreshQueries(client, libraryKeys.search),
     // A note may add/remove links to any other note; all connection views depend on it.
     refreshQueries(client, libraryKeys.noteConnections),
-    ...(subjectIds
-      ? [...new Set(subjectIds)].map((id) =>
-          refreshQueries(client, libraryKeys.subjectDocuments(id)),
+    ...(folderIds
+      ? [...new Set(folderIds)].map((id) =>
+          refreshQueries(client, libraryKeys.folderDocuments(id)),
         )
       : [refreshQueries(client, libraryKeys.documents)]),
   ]);

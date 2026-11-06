@@ -46,7 +46,7 @@ describe("flashcard source reads", () => {
   });
 
   it("validates note source ownership and returns only link fields", async () => {
-    const document = { id: "doc-1", title: "Cells", subjectId: "biology" };
+    const document = { id: "doc-1", title: "Cells", folderId: "biology" };
     database.notes = [document];
     expect(
       await readOwnedFlashcardSource("owner", { kind: "note", id: "doc-1" }),
@@ -62,7 +62,7 @@ describe("flashcard source reads", () => {
   });
 
   it("resolves renamed and moved documents in batches, keeping cards with missing sources", async () => {
-    database.notes = [{ id: "n1", title: "Renamed", subjectId: "moved" }];
+    database.notes = [{ id: "n1", title: "Renamed", folderId: "moved" }];
     const cards = [
       { sourceNoteId: "n1" },
       { sourceNoteId: "deleted" },

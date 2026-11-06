@@ -48,7 +48,7 @@ function getColumnClassName(columnId: string) {
     // text truncates instead of widening the table.
     case "front":
       return "w-[65%] max-w-0 lg:w-full";
-    case "subjectPath":
+    case "folderPath":
       return "w-[35%] max-w-0 lg:w-36 lg:max-w-36";
     case "lapseCount":
       return "w-12 min-w-12";
@@ -109,15 +109,15 @@ function getColumns(
       ),
     },
     {
-      accessorKey: "subjectPath",
+      accessorKey: "folderPath",
       size: 140,
-      header: () => <TableHeaderLabel>Subject</TableHeaderLabel>,
+      header: () => <TableHeaderLabel>Folder</TableHeaderLabel>,
       cell: ({ row }) => (
         <div
           className="truncate py-1 text-sm leading-6 text-muted-foreground"
-          title={row.original.subjectPath ?? undefined}
+          title={row.original.folderPath ?? undefined}
         >
-          {row.original.subjectPath}
+          {row.original.folderPath}
         </div>
       ),
     },

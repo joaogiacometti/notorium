@@ -9,10 +9,9 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
-  // Subjects are folders in the sidebar tree and have no page of their own;
-  // their documents still live under `/subjects/:id/documents/**`.
+  // Folders organize the sidebar; documents have their own pages.
   async redirects() {
-    return [{ source: "/subjects/:id", destination: "/", permanent: false }];
+    return [{ source: "/folders/:id", destination: "/", permanent: false }];
   },
   serverExternalPackages: [
     "@open-spaced-repetition/binding",

@@ -8,9 +8,9 @@ import {
 import { LIMITS } from "@/lib/config/limits";
 
 describe("preparePdfUploadSchema", () => {
-  it("accepts a subject, file name, and positive size", () => {
+  it("accepts a folder, file name, and positive size", () => {
     const result = preparePdfUploadSchema.safeParse({
-      subjectId: "s1",
+      folderId: "s1",
       fileName: "book.pdf",
       sizeBytes: 1024,
     });
@@ -20,7 +20,7 @@ describe("preparePdfUploadSchema", () => {
 
   it("rejects an empty file", () => {
     const result = preparePdfUploadSchema.safeParse({
-      subjectId: "s1",
+      folderId: "s1",
       fileName: "book.pdf",
       sizeBytes: 0,
     });
@@ -32,7 +32,7 @@ describe("preparePdfUploadSchema", () => {
 describe("createPdfSchema", () => {
   it("trims the title", () => {
     const result = createPdfSchema.parse({
-      subjectId: "s1",
+      folderId: "s1",
       title: "  Calculus  ",
       fileName: "calc.pdf",
       blobPathname: "notorium/pdfs/u/id-calc.pdf",
@@ -43,7 +43,7 @@ describe("createPdfSchema", () => {
 
   it("rejects a blank title", () => {
     const result = createPdfSchema.safeParse({
-      subjectId: "s1",
+      folderId: "s1",
       title: "   ",
       fileName: "calc.pdf",
       blobPathname: "notorium/pdfs/u/id-calc.pdf",

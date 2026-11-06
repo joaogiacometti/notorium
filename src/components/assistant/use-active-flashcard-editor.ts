@@ -16,13 +16,13 @@ import type {
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
 import type { RichTextDocument } from "@/lib/editor/document";
 import { documentSnapshot } from "@/lib/editor/document-snapshot";
-import type { SubjectOption } from "@/lib/server/api-contracts";
+import type { FolderOption } from "@/lib/server/api-contracts";
 
 interface ActiveFlashcardEditorOptions<TValues extends FlashcardFormValues> {
   form: UseFormReturn<TValues>;
   enabled: boolean;
   resetVersion?: number | string;
-  subjects?: SubjectOption[];
+  folders?: FolderOption[];
   blocked: boolean | (() => boolean);
 }
 
@@ -59,7 +59,7 @@ export function useActiveFlashcardEditor<TValues extends FlashcardFormValues>(
           values.id,
           values.front,
           values.back,
-          values.subjectId,
+          values.folderId,
         ]),
       );
       return {
@@ -67,8 +67,8 @@ export function useActiveFlashcardEditor<TValues extends FlashcardFormValues>(
         revision,
         front: values.front,
         back: values.back,
-        subjectPath: current.subjects?.find(
-          (subject) => subject.id === values.subjectId,
+        folderPath: current.folders?.find(
+          (folder) => folder.id === values.folderId,
         )?.path,
       };
     };

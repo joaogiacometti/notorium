@@ -133,7 +133,7 @@ export function NoteLinkPicker({
           >
             <span className="truncate">{note.title}</span>
             <span className="truncate text-xs text-muted-foreground">
-              {note.subjectName}
+              {note.folderName}
             </span>
           </button>
         ))

@@ -11,14 +11,14 @@ interface FlashcardsViewSwitchProps {
   currentView: FlashcardsView;
   manageLabel: string;
   reviewLabel: string;
-  subjectId?: string;
+  folderId?: string;
 }
 
-function getViewHref(view: FlashcardsView, subjectId?: string) {
+function getViewHref(view: FlashcardsView, folderId?: string) {
   const params = new URLSearchParams();
   params.set("view", view);
-  if (subjectId) {
-    params.set("subjectId", subjectId);
+  if (folderId) {
+    params.set("folderId", folderId);
   }
   return `/flashcards?${params.toString()}`;
 }
@@ -27,7 +27,7 @@ export function FlashcardsViewSwitch({
   currentView,
   manageLabel,
   reviewLabel,
-  subjectId,
+  folderId,
 }: Readonly<FlashcardsViewSwitchProps>) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -52,7 +52,7 @@ export function FlashcardsViewSwitch({
     setPendingView(view);
 
     startTransition(() => {
-      router.replace(getViewHref(view, subjectId));
+      router.replace(getViewHref(view, folderId));
     });
   }
 

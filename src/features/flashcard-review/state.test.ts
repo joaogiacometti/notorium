@@ -47,7 +47,7 @@ function makeCard(
     reviewCount: 0,
     lapseCount: 0,
     studyLaterAt: null,
-    subjectId: "deck-1",
+    folderId: "deck-1",
     ...overrides,
   };
 }
@@ -345,7 +345,7 @@ describe("replaceFlashcardInReviewState", () => {
       kind: "note" as const,
       id: "n1",
       title: "Cells",
-      subjectId: "biology",
+      folderId: "biology",
     };
     const card = {
       id: "c1",
@@ -539,8 +539,8 @@ describe("gradeFlashcardLocally", () => {
   it("returns the card with its next schedule and the actual review time", () => {
     const reviewedAt = new Date("2026-03-07T12:00:00.000Z");
     const card = makeCard("a", new Date("2026-03-07T11:00:00.000Z"), {
-      subjectName: "Biology",
-      subjectPath: "Science::Biology",
+      folderName: "Biology",
+      folderPath: "Science::Biology",
     });
 
     const graded = gradeFlashcardLocally(card, "good", scheduler, reviewedAt);
@@ -554,7 +554,7 @@ describe("gradeFlashcardLocally", () => {
     expect(graded).toMatchObject({
       id: "a",
       front: testDocument(card.front),
-      subjectPath: "Science::Biology",
+      folderPath: "Science::Biology",
       state: expected.state,
       dueAt: expected.dueAt,
       reviewCount: 1,

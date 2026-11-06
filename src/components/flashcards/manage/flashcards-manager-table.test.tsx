@@ -18,12 +18,12 @@ function createFlashcard(
 ): FlashcardManageItem {
   return {
     id: "flashcard-1",
-    subjectId: "deck-1",
+    folderId: "deck-1",
     front: testDocument("Very long front content for a flashcard manager row"),
     frontExcerpt: "Very long front content for a flashcard manager row",
     frontTitle: "Very long front content for a flashcard manager row",
-    subjectName: "Biology",
-    subjectPath: "Biology / Cells",
+    folderName: "Biology",
+    folderPath: "Biology / Cells",
     updatedAt: new Date("2026-04-20T10:00:00.000Z"),
     studyLaterAt: null,
     lapseCount: 0,

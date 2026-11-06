@@ -25,12 +25,12 @@ describe("FlashcardSourceReference", () => {
       kind: "note",
       id: "doc-1",
       title: "Renamed source",
-      subjectId: "moved-subject",
+      folderId: "moved-folder",
     };
     act(() => root.render(<FlashcardSourceReference source={source} />));
     const link = container.querySelector("a");
     expect(link?.getAttribute("href")).toBe(
-      "/subjects/moved-subject/documents/notes/doc-1",
+      "/folders/moved-folder/documents/notes/doc-1",
     );
     expect(link?.textContent).toContain("Renamed source");
     expect(link?.getAttribute("aria-label")).toBe(
@@ -43,7 +43,7 @@ describe("FlashcardSourceReference", () => {
     act(() =>
       root.render(
         <FlashcardSourceReference
-          source={{ kind: "note", id: "n1", title: "Cells", subjectId: "s1" }}
+          source={{ kind: "note", id: "n1", title: "Cells", folderId: "s1" }}
           newTab
         />,
       ),

@@ -62,7 +62,7 @@ describe("PageTopBar", () => {
       root.render(
         <PageTopBar
           breadcrumb={{
-            parent: { label: "Prolog", icon: "book-open" },
+            parent: { label: "Prolog", icon: "folder" },
             current: { label: "Prolog" },
           }}
         />,

@@ -52,7 +52,7 @@ import { cn } from "@/lib/utils";
 
 interface NoteDetailProps {
   note: NoteEntity;
-  subjectName: string;
+  folderName: string;
 }
 
 function getEditValues(note: NoteEntity): EditNoteForm {
@@ -73,7 +73,7 @@ function isSameNoteEdit(left: EditNoteForm, right: EditNoteForm) {
   );
 }
 
-export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
+export function NoteDetail({ note, folderName }: Readonly<NoteDetailProps>) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [, startNavTransition] = useTransition();
@@ -94,14 +94,14 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
     form,
     id: note.id,
     title: watchedTitle,
-    subjectPath: subjectName,
+    folderPath: folderName,
     blocked: isImageUploading,
   });
   useStudyContext(
     buildDocumentContext(
       "note",
       watchedTitle,
-      subjectName,
+      folderName,
       watchedContent,
       note.id,
     ),
@@ -142,7 +142,7 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
       }
       if (form.getValues("id") === values.id)
         lastSavedValuesRef.current = values;
-      await invalidateDocumentViews(queryClient, [note.subjectId]);
+      await invalidateDocumentViews(queryClient, [note.folderId]);
       return true;
     },
     onError: () => toast.error("Couldn't save the note"),
@@ -165,7 +165,7 @@ export function NoteDetail({ note, subjectName }: Readonly<NoteDetailProps>) {
       {!isZenMode ? (
         <PageTopBar
           breadcrumb={{
-            parent: { label: subjectName, icon: "book-open" },
+            parent: { label: folderName, icon: "folder" },
             current: { label: watchedTitle || note.title || "Untitled" },
           }}
         />

@@ -11,14 +11,14 @@ import { useFlashcardReviewShortcuts } from "@/features/flashcard-review/shortcu
 import { getFlashcardsHref } from "@/lib/navigation/detail-page-back-link";
 import type {
   FlashcardReviewState,
-  SubjectEntity,
-  SubjectOption,
+  FolderEntity,
+  FolderOption,
 } from "@/lib/server/api-contracts";
 
 interface FlashcardReviewSessionProps {
   initialState: FlashcardReviewState;
-  subjects: Array<SubjectEntity | SubjectOption>;
-  subjectId?: string;
+  folders: Array<FolderEntity | FolderOption>;
+  folderId?: string;
 }
 
 /**
@@ -26,12 +26,12 @@ interface FlashcardReviewSessionProps {
  * hub it returns to reflects every grade.
  *
  * @example
- * <FlashcardReviewSession initialState={state} subjects={subjects} />
+ * <FlashcardReviewSession initialState={state} folders={folders} />
  */
 export function FlashcardReviewSession({
   initialState,
-  subjects,
-  subjectId,
+  folders,
+  folderId,
 }: Readonly<FlashcardReviewSessionProps>) {
   const router = useRouter();
   const shortcutsSuspended = useShortcutsDialogOpen();
@@ -51,7 +51,7 @@ export function FlashcardReviewSession({
 
   const controller = useFlashcardReviewController({
     initialState,
-    subjectId,
+    folderId,
     resetCardViewState,
   });
   const { reviewState, currentCard, hasPendingWrites } = controller;
@@ -59,9 +59,9 @@ export function FlashcardReviewSession({
 
   useEffect(() => {
     if (exitRequested && !hasPendingWrites) {
-      router.push(getFlashcardsHref("review", subjectId));
+      router.push(getFlashcardsHref("review", folderId));
     }
-  }, [exitRequested, hasPendingWrites, router, subjectId]);
+  }, [exitRequested, hasPendingWrites, router, folderId]);
 
   const isPending = controller.isPending || exitRequested;
   useFlashcardReviewShortcuts({
@@ -86,7 +86,7 @@ export function FlashcardReviewSession({
       <ReviewSessionScreen
         currentCard={currentCard}
         headerText={getDueReviewHeaderText(dueCount, totalCount)}
-        subjects={subjects}
+        folders={folders}
         progress={totalCount > 0 ? (totalCount - dueCount) / totalCount : 0}
         revealed={revealed}
         isPending={isPending}
@@ -115,8 +115,8 @@ export function FlashcardReviewSession({
           if (!currentCard) return;
           controller.handleFlashcardReset({
             ...updated,
-            subjectName: currentCard.subjectName,
-            subjectPath: currentCard.subjectPath,
+            folderName: currentCard.folderName,
+            folderPath: currentCard.folderPath,
           });
         }}
       />

@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { note } from "@/db/schema";
 import {
-  checkDocumentSubjectCapacity,
+  checkDocumentFolderCapacity,
   type DocumentCapacityRule,
   moveDocumentForUser,
 } from "@/features/documents/move-target";
@@ -11,7 +11,7 @@ import type {
   MoveDocumentResult,
 } from "@/features/documents/types";
 import {
-  countNotesBySubjectForUser,
+  countNotesByFolderForUser,
   getNoteByIdForUser,
 } from "@/features/notes/queries";
 import type {
@@ -27,15 +27,15 @@ import {
 } from "@/lib/server/server-action-errors";
 
 const noteCapacityRule: DocumentCapacityRule = {
-  countInSubject: countNotesBySubjectForUser,
-  max: LIMITS.maxNotesPerSubject,
+  countInFolder: countNotesByFolderForUser,
+  max: LIMITS.maxNotesPerFolder,
   limitErrorCode: "limits.noteLimit",
 };
 
 export type CreateNoteMutationResult =
   | {
       success: true;
-      subjectId: string;
+      folderId: string;
       noteId: string;
     }
   | ActionErrorResult;
@@ -43,7 +43,7 @@ export type CreateNoteMutationResult =
 export type NoteMutationResult =
   | {
       success: true;
-      subjectId: string;
+      folderId: string;
     }
   | ActionErrorResult;
 
@@ -61,9 +61,9 @@ export async function createNoteForUser(
   userId: string,
   data: CreateNoteForm,
 ): Promise<CreateNoteMutationResult> {
-  const capacityError = await checkDocumentSubjectCapacity(
+  const capacityError = await checkDocumentFolderCapacity(
     userId,
-    data.subjectId,
+    data.folderId,
     noteCapacityRule,
   );
   if (capacityError) {
@@ -77,11 +77,11 @@ export async function createNoteForUser(
     .values({
       id: noteId,
       ...getNoteMutationValues(data),
-      subjectId: data.subjectId,
+      folderId: data.folderId,
       userId,
     });
 
-  return { success: true, subjectId: data.subjectId, noteId };
+  return { success: true, folderId: data.folderId, noteId };
 }
 
 export async function editNoteForUser(
@@ -99,7 +99,7 @@ export async function editNoteForUser(
     .set(getNoteEditValues(data))
     .where(and(eq(note.id, data.id), eq(note.userId, userId)));
 
-  return { success: true, subjectId: existing.subjectId };
+  return { success: true, folderId: existing.folderId };
 }
 
 // Omitted content means a title-only rename, so the saved content is kept.
@@ -112,7 +112,7 @@ function getNoteEditValues(data: EditNoteForm) {
 }
 
 /**
- * Reparents a note to another subject (drag-and-drop in the tree), enforcing
+ * Reparents a note to another folder (drag-and-drop in the tree), enforcing
  * ownership and the target's note limit.
  */
 export function moveNoteForUser(
@@ -120,14 +120,14 @@ export function moveNoteForUser(
   data: MoveDocumentMutationInput,
 ): Promise<MoveDocumentResult> {
   return moveDocumentForUser(userId, data, {
-    findSubjectId: async (ownerId, id) =>
-      (await getNoteByIdForUser(ownerId, id))?.subjectId ?? null,
+    findFolderId: async (ownerId, id) =>
+      (await getNoteByIdForUser(ownerId, id))?.folderId ?? null,
     notFoundCode: "notes.notFound",
     rule: noteCapacityRule,
-    reparent: async (ownerId, id, subjectId) => {
+    reparent: async (ownerId, id, folderId) => {
       await getDb()
         .update(note)
-        .set({ subjectId })
+        .set({ folderId })
         .where(and(eq(note.id, id), eq(note.userId, ownerId)));
     },
   });
@@ -147,5 +147,5 @@ export async function deleteNoteForUser(
     .delete(note)
     .where(and(eq(note.id, data.id), eq(note.userId, userId)));
 
-  return { success: true, subjectId: existing.subjectId };
+  return { success: true, folderId: existing.folderId };
 }

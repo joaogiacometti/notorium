@@ -28,7 +28,7 @@ For isolated E2E services and migrations, follow [Development](docs/setup/develo
 - Document only what outlasts individual features: core concepts, setup, boundaries,
   and cross-feature decisions. Sub-features and fixes don't belong in docs; tests,
   schemas, constants, and production prompts own that detail.
-- When a change removes or replaces one of those (say, subjects or how they work),
+- When a change removes or replaces one of those (say, folders or how they work),
   update its owning doc in the same change and delete what is no longer true.
 
 ## Server Boundaries
@@ -41,7 +41,7 @@ For isolated E2E services and migrations, follow [Development](docs/setup/develo
 - Use approved-session auth helpers and scope user-owned operations by `userId`.
   UI visibility is not authorization. Use shared Zod schemas and typed results;
   construct client-safe failures with `actionError()`, never raw provider/DB errors.
-- Revalidate through `src/lib/server/revalidate-views.ts`. Subject, document-count,
+- Revalidate through `src/lib/server/revalidate-views.ts`. Folder, document-count,
   and flashcard changes refresh the app shell; review grades/undo refresh on exit.
 - Share client query keys/options and mutation invalidation through
   `src/lib/client-cache/*`; keep UI state local and server revalidation separate.
@@ -77,7 +77,7 @@ For isolated E2E services and migrations, follow [Development](docs/setup/develo
 - Keep prompts and tool/schema descriptions general. Never put fixture material,
   debugging conversations, or canned study examples into production model requests.
 - Dynamic context comes only from the current user's request, conversation, settings,
-  subjects, active material, and authorized results. Audit actual model-visible
+  folders, active material, and authorized results. Audit actual model-visible
   messages and schemas; comments and test helpers must not become model context.
 
 ## Automated Guards

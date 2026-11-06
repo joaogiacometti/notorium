@@ -23,7 +23,7 @@ type SearchFlashcard = SearchData["flashcards"][number];
 
 const RESULT_ITEM_CLASS =
   "flex cursor-pointer flex-col items-start gap-1 transition-colors";
-const SUBJECT_LABEL_CLASS =
+const FOLDER_LABEL_CLASS =
   "flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground";
 
 interface NoteResultGroupProps {
@@ -46,13 +46,13 @@ export function NoteResultGroup({
         <CommandItem
           key={n.id}
           value={n.id}
-          onSelect={() => onSelect(getNoteDetailHref(n.subjectId, n.id))}
+          onSelect={() => onSelect(getNoteDetailHref(n.folderId, n.id))}
           className={RESULT_ITEM_CLASS}
         >
           <DocumentResultHeading
             icon={DOCUMENT_KIND_ICONS.note}
             title={n.title}
-            subjectName={n.subjectName}
+            folderName={n.folderName}
             highlightQuery={highlightQuery}
           />
           {n.content && (
@@ -92,7 +92,7 @@ export function PdfResultGroup({
             onSelect(
               getDocumentDetailHref({
                 kind: "pdf",
-                subjectId: p.subjectId,
+                folderId: p.folderId,
                 id: p.id,
               }),
             )
@@ -102,7 +102,7 @@ export function PdfResultGroup({
           <DocumentResultHeading
             icon={DOCUMENT_KIND_ICONS.pdf}
             title={p.title}
-            subjectName={p.subjectName}
+            folderName={p.folderName}
             highlightQuery={highlightQuery}
           />
         </CommandItem>
@@ -148,9 +148,9 @@ export function FlashcardResultGroup({
                 bare
               />
             </span>
-            <span className={SUBJECT_LABEL_CLASS}>
+            <span className={FOLDER_LABEL_CLASS}>
               <span className="shrink-0">in</span>
-              <span className="block flex-1 truncate">{fc.subjectPath}</span>
+              <span className="block flex-1 truncate">{fc.folderPath}</span>
             </span>
           </div>
           {fc.back && (
@@ -169,14 +169,14 @@ export function FlashcardResultGroup({
 interface DocumentResultHeadingProps {
   icon: LucideIcon;
   title: string;
-  subjectName: string;
+  folderName: string;
   highlightQuery: string;
 }
 
 function DocumentResultHeading({
   icon: Icon,
   title,
-  subjectName,
+  folderName,
   highlightQuery,
 }: Readonly<DocumentResultHeadingProps>) {
   return (
@@ -185,10 +185,10 @@ function DocumentResultHeading({
       <span className="min-w-0 flex-1 truncate">
         {renderSearchHighlightedText(title, highlightQuery)}
       </span>
-      <span className={SUBJECT_LABEL_CLASS}>
+      <span className={FOLDER_LABEL_CLASS}>
         <span className="shrink-0">in</span>
         <span className="block min-w-0 flex-1 truncate">
-          {renderSearchHighlightedText(subjectName, highlightQuery)}
+          {renderSearchHighlightedText(folderName, highlightQuery)}
         </span>
       </span>
     </div>

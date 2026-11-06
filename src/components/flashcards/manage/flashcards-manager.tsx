@@ -26,7 +26,7 @@ import { getStatusToneClasses } from "@/lib/ui/status-tones";
 
 interface FlashcardsManagerProps {
   initialPageData: FlashcardManagePage;
-  initialSubjectId?: string;
+  initialFolderId?: string;
   initialSearch?: string;
   initialFilter?: FlashcardManageFilter;
   initialPageSize: number;
@@ -34,7 +34,7 @@ interface FlashcardsManagerProps {
 
 export function FlashcardsManager({
   initialPageData,
-  initialSubjectId,
+  initialFolderId,
   initialSearch,
   initialFilter,
   initialPageSize,
@@ -48,12 +48,12 @@ export function FlashcardsManager({
   const {
     dialog,
     flashcards,
-    isAtSubjectLimit,
+    isAtFolderLimit,
     managePageQuery,
     pageIndex,
     searchQuery,
     clearSelection,
-    selectedSubjectId,
+    selectedFolderId,
     selectedFlashcardIds,
     filter,
     setFilter,
@@ -66,7 +66,7 @@ export function FlashcardsManager({
     pageSize,
   } = useFlashcardsManagerController({
     initialPageData,
-    initialSubjectId,
+    initialFolderId,
     initialSearch,
     initialFilter,
     initialPageSize,
@@ -85,7 +85,7 @@ export function FlashcardsManager({
         getFlashcardDetailHref(flashcardId, {
           from: "flashcards-manage",
           view: "manage",
-          subjectId: selectedSubjectId,
+          folderId: selectedFolderId,
         }),
       ),
     );
@@ -155,13 +155,13 @@ export function FlashcardsManager({
         onOpenBulkResetDialog={() => setDialog({ kind: "bulk-reset" })}
         onClearSelection={() => setSelectedFlashcardIds([])}
       />
-      {selectedSubjectId && isAtSubjectLimit && (
+      {selectedFolderId && isAtFolderLimit && (
         <div
           className={`flex items-center gap-3 rounded-lg border px-4 py-2.5 text-sm ${warningTone.border} ${warningTone.bg}`}
         >
           <Lock className={`size-4 shrink-0 ${warningTone.text}`} />
           <p className={warningTone.text}>
-            {`You've reached the limit of ${LIMITS.maxFlashcardsPerSubject} flashcards per subject. Please delete existing ones to create more.`}
+            {`You've reached the limit of ${LIMITS.maxFlashcardsPerFolder} flashcards per folder. Please delete existing ones to create more.`}
           </p>
         </div>
       )}
@@ -170,7 +170,7 @@ export function FlashcardsManager({
         open={dialog?.kind === "create"}
         onOpenChange={(open) => setDialog(open ? { kind: "create" } : null)}
         onCreated={clearSelection}
-        subjectId={selectedSubjectId}
+        folderId={selectedFolderId}
       />
       <BulkDeleteFlashcardsDialog
         ids={selectedFlashcardIds}

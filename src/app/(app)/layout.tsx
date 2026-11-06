@@ -3,7 +3,7 @@ import { AccountSettingsProvider } from "@/components/account/account-settings-p
 import { AppLayoutClient } from "@/components/shared/app-layout-client";
 import { QueryProvider } from "@/components/shared/query-provider";
 import { ShortcutsProvider } from "@/components/shortcuts/shortcuts-provider";
-import { getSubjectTreeForUser } from "@/features/subjects/tree-queries";
+import { getFolderTreeForUser } from "@/features/folders/tree-queries";
 import { getOptionalSessionAccess } from "@/lib/auth/auth";
 
 export default async function AuthenticatedAppLayout({
@@ -11,7 +11,7 @@ export default async function AuthenticatedAppLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const authState = await getOptionalSessionAccess();
   const session = authState?.session ?? null;
-  const tree = session ? await getSubjectTreeForUser(session.user.id) : null;
+  const tree = session ? await getFolderTreeForUser(session.user.id) : null;
   const accountName =
     session?.user.name?.trim() || session?.user.email || "Account";
 

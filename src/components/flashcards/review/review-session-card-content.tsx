@@ -19,7 +19,7 @@ type ReviewCard = FlashcardReviewState["cards"][number];
 
 interface ReviewSessionCardContentProps {
   card: ReviewCard;
-  subjectLabel: string;
+  folderLabel: string;
   revealed: boolean;
   mode?: "review" | "exam";
 }
@@ -37,7 +37,7 @@ const answerEnterClassName =
  * Renders the active flashcard content for review and exam sessions.
  *
  * @example
- * <ReviewSessionCardContent card={card} subjectLabel="Biology" revealed />
+ * <ReviewSessionCardContent card={card} folderLabel="Biology" revealed />
  */
 export function ReviewSessionCardContent(
   props: Readonly<ReviewSessionCardContentProps>,
@@ -47,11 +47,11 @@ export function ReviewSessionCardContent(
 
 function ReviewSessionCardAttempt({
   card,
-  subjectLabel,
+  folderLabel,
   revealed,
   mode = "review",
 }: Readonly<ReviewSessionCardContentProps>) {
-  const context = buildReviewContext(card, subjectLabel, revealed, mode);
+  const context = buildReviewContext(card, folderLabel, revealed, mode);
   useStudyContext(context);
   const workspace = useAssistantWorkspace();
   const clearAssistedRecall = workspace?.clearAssistedRecall;
@@ -71,9 +71,9 @@ function ReviewSessionCardAttempt({
   return (
     <div ref={cardRef} className={cn("scroll-mt-4", cardEnterClassName)}>
       <div className="mb-3 flex min-w-0 items-center justify-between gap-3 empty:hidden">
-        {subjectLabel ? (
+        {folderLabel ? (
           <p className="truncate text-xs font-semibold tracking-wide text-primary/80 uppercase">
-            {subjectLabel}
+            {folderLabel}
           </p>
         ) : null}
         {card.studyLaterAt ? <StudyLaterLabel /> : null}

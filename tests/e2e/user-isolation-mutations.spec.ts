@@ -8,6 +8,12 @@ import {
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
 import {
+  createFolderForUser,
+  deleteFolderForUser,
+  editFolderForUser,
+  moveFolderForUser,
+} from "@/features/folders/mutations";
+import {
   createNoteForUser,
   deleteNoteForUser,
   editNoteForUser,
@@ -19,12 +25,6 @@ import {
   renamePdfForUser,
   savePdfReadingPageForUser,
 } from "@/features/pdfs/mutations";
-import {
-  createSubjectForUser,
-  deleteSubjectForUser,
-  editSubjectForUser,
-  moveSubjectForUser,
-} from "@/features/subjects/mutations";
 import { testDocument } from "@/test/document";
 import { snapshotIsolationData } from "./support/isolation-data";
 import { expect, test } from "./support/isolation-test";
@@ -49,7 +49,7 @@ test("note mutations reject foreign records and destinations without changing ei
       await deleteNoteForUser(userId, { id: foreign.noteId }),
       await moveNoteForUser(userId, {
         id: foreign.noteId,
-        subjectId: current.data.subjectId,
+        folderId: current.data.folderId,
       }),
     ])
       expect(result).toMatchObject({
@@ -58,17 +58,17 @@ test("note mutations reject foreign records and destinations without changing ei
       });
     for (const result of [
       await createNoteForUser(userId, {
-        subjectId: foreign.subjectId,
+        folderId: foreign.folderId,
         title: "injected",
       }),
       await moveNoteForUser(userId, {
         id: current.data.noteId,
-        subjectId: foreign.subjectId,
+        folderId: foreign.folderId,
       }),
     ])
       expect(result).toMatchObject({
         success: false,
-        errorCode: "subjects.notFound",
+        errorCode: "folders.notFound",
       });
     expect(
       await Promise.all(
@@ -92,14 +92,14 @@ test("note mutations reject foreign records and destinations without changing ei
   ).toBe("Owner renamed");
   expect(
     await createNoteForUser(owner.user.userId, {
-      subjectId: owner.data.destinationId,
+      folderId: owner.data.destinationId,
       title: "Owner created",
     }),
   ).toMatchObject({ success: true });
   expect(
     await moveNoteForUser(owner.user.userId, {
       id: owner.data.noteId,
-      subjectId: owner.data.destinationId,
+      folderId: owner.data.destinationId,
     }),
   ).toMatchObject({ success: true });
   expect(
@@ -112,7 +112,7 @@ test("note mutations reject foreign records and destinations without changing ei
   ).toBe(false);
 });
 
-test("subject mutations cannot rename, delete, nest in or move another user's subtree", async ({
+test("folder mutations cannot rename, delete, nest in or move another user's subtree", async ({
   isolation,
 }) => {
   for (const [index, current] of isolation.accounts.entries()) {
@@ -124,31 +124,31 @@ test("subject mutations cannot rename, delete, nest in or move another user's su
       ),
     );
     for (const result of [
-      await editSubjectForUser(userId, {
-        id: foreign.subjectId,
+      await editFolderForUser(userId, {
+        id: foreign.folderId,
         name: "stolen",
       }),
-      await deleteSubjectForUser(userId, { id: foreign.subjectId }),
-      await moveSubjectForUser(userId, {
-        id: foreign.subjectId,
-        parentSubjectId: current.data.subjectId,
+      await deleteFolderForUser(userId, { id: foreign.folderId }),
+      await moveFolderForUser(userId, {
+        id: foreign.folderId,
+        parentFolderId: current.data.folderId,
       }),
-      await moveSubjectForUser(userId, {
-        id: current.data.subjectId,
-        parentSubjectId: foreign.subjectId,
+      await moveFolderForUser(userId, {
+        id: current.data.folderId,
+        parentFolderId: foreign.folderId,
       }),
-      await createSubjectForUser(userId, {
+      await createFolderForUser(userId, {
         name: "injected",
-        parentSubjectId: foreign.subjectId,
+        parentFolderId: foreign.folderId,
       }),
-      await createSubjectForUser(userId, {
+      await createFolderForUser(userId, {
         name: "injected::child",
-        parentSubjectId: foreign.subjectId,
+        parentFolderId: foreign.folderId,
       }),
     ])
       expect(result).toMatchObject({
         success: false,
-        errorCode: "subjects.notFound",
+        errorCode: "folders.notFound",
       });
     expect(
       await Promise.all(
@@ -160,18 +160,18 @@ test("subject mutations cannot rename, delete, nest in or move another user's su
   }
   const owner = isolation.accounts[0];
   expect(
-    await moveSubjectForUser(owner.user.userId, {
+    await moveFolderForUser(owner.user.userId, {
       id: owner.data.destinationId,
-      parentSubjectId: owner.data.subjectId,
+      parentFolderId: owner.data.folderId,
     }),
   ).toMatchObject({ success: true });
   expect(
-    (await snapshotIsolationData(owner.user.userId)).subjects.find(
+    (await snapshotIsolationData(owner.user.userId)).folders.find(
       (row) => row.id === owner.data.destinationId,
-    )?.parentSubjectId,
-  ).toBe(owner.data.subjectId);
+    )?.parentFolderId,
+  ).toBe(owner.data.folderId);
   expect(
-    await deleteSubjectForUser(owner.user.userId, { id: owner.data.subjectId }),
+    await deleteFolderForUser(owner.user.userId, { id: owner.data.folderId }),
   ).toMatchObject({ success: true });
   const after = await snapshotIsolationData(owner.user.userId);
   expect(after.notes.some((row) => row.id === owner.data.noteId)).toBe(false);
@@ -200,7 +200,7 @@ test("PDF mutations protect foreign titles, reading progress, records and move t
       }),
       await movePdfForUser(userId, {
         id: foreign.pdfId,
-        subjectId: current.data.subjectId,
+        folderId: current.data.folderId,
       }),
     ])
       expect(result).toMatchObject({
@@ -210,9 +210,9 @@ test("PDF mutations protect foreign titles, reading progress, records and move t
     expect(
       await movePdfForUser(userId, {
         id: current.data.pdfId,
-        subjectId: foreign.subjectId,
+        folderId: foreign.folderId,
       }),
-    ).toMatchObject({ success: false, errorCode: "subjects.notFound" });
+    ).toMatchObject({ success: false, errorCode: "folders.notFound" });
     expect(
       await Promise.all(
         isolation.accounts.map((account) =>
@@ -238,7 +238,7 @@ test("PDF mutations protect foreign titles, reading progress, records and move t
   expect(
     await movePdfForUser(owner.user.userId, {
       id: owner.data.pdfId,
-      subjectId: owner.data.destinationId,
+      folderId: owner.data.destinationId,
     }),
   ).toMatchObject({ success: true });
   expect(
@@ -248,7 +248,7 @@ test("PDF mutations protect foreign titles, reading progress, records and move t
   ).toMatchObject({
     title: "Owner renamed",
     lastPage: 2,
-    subjectId: owner.data.destinationId,
+    folderId: owner.data.destinationId,
   });
   expect(
     await deletePdfForUser(owner.user.userId, { id: owner.data.pdfId }),
@@ -275,7 +275,7 @@ test("flashcard mutations reject foreign IDs, mixed-owner batches, destinations 
     for (const result of [
       await editFlashcardForUser(userId, {
         id: foreign.cardId,
-        subjectId: own.subjectId,
+        folderId: own.folderId,
         front: testDocument("stolen"),
         back: testDocument("overwritten"),
       }),
@@ -289,7 +289,7 @@ test("flashcard mutations reject foreign IDs, mixed-owner batches, destinations 
       }),
       await bulkMoveFlashcardsForUser(userId, {
         ids: [own.cardId, foreign.cardId],
-        subjectId: own.destinationId,
+        folderId: own.destinationId,
       }),
     ])
       expect(result).toMatchObject({
@@ -298,28 +298,28 @@ test("flashcard mutations reject foreign IDs, mixed-owner batches, destinations 
       });
     for (const result of [
       await createFlashcardForUser(userId, {
-        subjectId: foreign.subjectId,
+        folderId: foreign.folderId,
         front: testDocument("injected"),
         back: testDocument("answer"),
       }),
       await editFlashcardForUser(userId, {
         id: own.cardId,
-        subjectId: foreign.subjectId,
+        folderId: foreign.folderId,
         front: testDocument("injected"),
         back: testDocument("answer"),
       }),
       await bulkMoveFlashcardsForUser(userId, {
         ids: [own.cardId],
-        subjectId: foreign.subjectId,
+        folderId: foreign.folderId,
       }),
     ])
       expect(result).toMatchObject({
         success: false,
-        errorCode: "subjects.notFound",
+        errorCode: "folders.notFound",
       });
     expect(
       await createFlashcardForUser(userId, {
-        subjectId: own.subjectId,
+        folderId: own.folderId,
         front: testDocument("injected"),
         back: testDocument("answer"),
         source: { kind: "note", id: foreign.noteId },
@@ -337,7 +337,7 @@ test("flashcard mutations reject foreign IDs, mixed-owner batches, destinations 
   expect(
     await editFlashcardForUser(owner.user.userId, {
       id: owner.data.cardId,
-      subjectId: owner.data.subjectId,
+      folderId: owner.data.folderId,
       front: testDocument("Owner renamed"),
       back: testDocument("Owner answer"),
     }),
@@ -353,7 +353,7 @@ test("flashcard mutations reject foreign IDs, mixed-owner batches, destinations 
   expect(
     await bulkMoveFlashcardsForUser(owner.user.userId, {
       ids: [owner.data.cardId],
-      subjectId: owner.data.destinationId,
+      folderId: owner.data.destinationId,
     }),
   ).toMatchObject({ success: true });
   expect(
@@ -384,7 +384,7 @@ test("a forged note-edit Server Action cannot substitute another user's note or 
       ),
     );
     await current.page.goto(
-      `/subjects/${current.data.subjectId}/documents/notes/${current.data.noteId}`,
+      `/folders/${current.data.folderId}/documents/notes/${current.data.noteId}`,
     );
     const editor = current.page.locator("#form-edit-note-title");
     await expect(editor).toBeVisible();

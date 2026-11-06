@@ -15,8 +15,8 @@ const sqlMock = vi.fn((strings, ...values) => ({
   values,
   mapWith: () => ({ strings, values }),
 }));
-const getDescendantSubjectIdsMock = vi.fn();
-const getSubjectPathRowsForUserMock = vi.fn();
+const getDescendantFolderIdsMock = vi.fn();
+const getFolderPathRowsForUserMock = vi.fn();
 const readFsrsSettingsMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
@@ -38,20 +38,20 @@ vi.mock("drizzle-orm", () => ({
   sql: sqlMock,
 }));
 
-vi.mock("@/features/subjects/queries", () => ({
-  getSubjectPathMapForUser: async (userId: string) => {
+vi.mock("@/features/folders/queries", () => ({
+  getFolderPathMapForUser: async (userId: string) => {
     const rows: Array<{ id: string; path: string }> =
-      await getSubjectPathRowsForUserMock(userId);
+      await getFolderPathRowsForUserMock(userId);
     return new Map(rows.map((row) => [row.id, row.path]));
   },
-  getDescendantSubjectIds: getDescendantSubjectIdsMock,
+  getDescendantFolderIds: getDescendantFolderIdsMock,
 }));
 
 vi.mock("@/db/schema", () => ({
   flashcard: {
     id: "flashcard_id_column",
     userId: "flashcard_user_id_column",
-    subjectId: "flashcard_subject_id_column",
+    folderId: "flashcard_folder_id_column",
     dueAt: "flashcard_due_at_column",
     reviewCount: "flashcard_review_count_column",
     lapseCount: "flashcard_lapse_count_column",
@@ -64,13 +64,13 @@ vi.mock("@/db/schema", () => ({
     flashcardId: "flashcard_review_log_flashcard_id_column",
     rating: "flashcard_review_log_rating_column",
     reviewedAt: "flashcard_review_log_reviewed_at_column",
-    subjectId: "flashcard_review_log_subject_id_column",
+    folderId: "flashcard_review_log_folder_id_column",
   },
-  subject: {
-    id: "subject_id_column",
-    userId: "subject_user_id_column",
-    name: "subject_name_column",
-    archivedAt: "subject_archived_at_column",
+  folder: {
+    id: "folder_id_column",
+    userId: "folder_user_id_column",
+    name: "folder_name_column",
+    archivedAt: "folder_archived_at_column",
   },
 }));
 
@@ -95,8 +95,8 @@ describe("getFlashcardReviewActivityForUser", () => {
     vi.resetModules();
     vi.clearAllMocks();
     selectMock.mockReset();
-    getDescendantSubjectIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
-    getSubjectPathRowsForUserMock.mockResolvedValue([]);
+    getDescendantFolderIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
+    getFolderPathRowsForUserMock.mockResolvedValue([]);
     readFsrsSettingsMock.mockResolvedValue({
       desiredRetention: "0.9",
       weights: [],
@@ -164,8 +164,8 @@ describe("getFlashcardReviewStateForUser", () => {
     vi.resetModules();
     vi.clearAllMocks();
     selectMock.mockReset();
-    getDescendantSubjectIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
-    getSubjectPathRowsForUserMock.mockResolvedValue([
+    getDescendantFolderIdsMock.mockResolvedValue(["deck-1", "deck-1-child"]);
+    getFolderPathRowsForUserMock.mockResolvedValue([
       { id: "deck-1", path: "Deck 1" },
       { id: "deck-1-child", path: "Deck 1::Child" },
     ]);
@@ -194,7 +194,7 @@ describe("getFlashcardReviewStateForUser", () => {
                   {
                     flashcard: {
                       id: "flashcard-1",
-                      subjectId: "deck-1",
+                      folderId: "deck-1",
                       dueAt: new Date("2026-04-12T14:00:00.000Z"),
                       front: "Front",
                       back: "Back",
@@ -211,7 +211,7 @@ describe("getFlashcardReviewStateForUser", () => {
                       updatedAt: new Date("2026-04-12T13:00:00.000Z"),
                       frontNormalized: "front",
                     },
-                    subjectName: "Deck 1",
+                    folderName: "Deck 1",
                   },
                 ]),
               }),
@@ -223,7 +223,7 @@ describe("getFlashcardReviewStateForUser", () => {
 
     const { getFlashcardReviewStateForUser } = await import("./queries");
     const result = await getFlashcardReviewStateForUser("user-1", {
-      subjectId: "deck-1",
+      folderId: "deck-1",
       limit: 50,
     });
 
@@ -235,24 +235,21 @@ describe("getFlashcardReviewStateForUser", () => {
     expect(result.cards).toHaveLength(1);
     expect(result.cards[0]).toMatchObject({
       id: "flashcard-1",
-      subjectId: "deck-1",
-      subjectName: "Deck 1",
-      subjectPath: "Deck 1",
+      folderId: "deck-1",
+      folderName: "Deck 1",
+      folderPath: "Deck 1",
       state: "new",
     });
     expect(result.scheduler).toEqual({
       desiredRetention: "0.9",
       weights: [["w", 1]],
     });
-    expect(getDescendantSubjectIdsMock).toHaveBeenCalledWith(
-      "user-1",
-      "deck-1",
-    );
-    expect(inArrayMock).toHaveBeenCalledWith("flashcard_subject_id_column", [
+    expect(getDescendantFolderIdsMock).toHaveBeenCalledWith("user-1", "deck-1");
+    expect(inArrayMock).toHaveBeenCalledWith("flashcard_folder_id_column", [
       "deck-1",
       "deck-1-child",
     ]);
-    expect(getDescendantSubjectIdsMock).toHaveBeenCalledTimes(1);
+    expect(getDescendantFolderIdsMock).toHaveBeenCalledTimes(1);
   });
 
   it("bounds the due filter by the learn-ahead cutoff so the dueAt index range applies", async () => {

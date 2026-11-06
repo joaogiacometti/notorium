@@ -1,0 +1,34 @@
+import { redirect } from "next/navigation";
+import { NoteDetail } from "@/components/notes/note-detail";
+import { getFolderByIdForUser } from "@/features/folders/queries";
+import { getNoteByIdForUser } from "@/features/notes/queries";
+import { requireSession } from "@/lib/auth/auth";
+import { getNoteDetailHref } from "@/lib/navigation/detail-page-back-link";
+
+interface NotePageProps {
+  params: Promise<{ id: string; noteId: string }>;
+}
+
+export default async function NotePage({ params }: Readonly<NotePageProps>) {
+  const session = await requireSession();
+
+  const { id, noteId } = await params;
+  const [note, folder] = await Promise.all([
+    getNoteByIdForUser(session.user.id, noteId),
+    getFolderByIdForUser(session.user.id, id),
+  ]);
+
+  if (!note) {
+    redirect("/");
+  }
+
+  if (note.folderId !== id) {
+    redirect(getNoteDetailHref(note.folderId, note.id));
+  }
+
+  return (
+    <main>
+      <NoteDetail note={note} folderName={folder?.name ?? ""} />
+    </main>
+  );
+}

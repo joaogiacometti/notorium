@@ -25,9 +25,9 @@ export function makeCard(id: string): FlashcardReviewEntity {
     reviewCount: 0,
     lapseCount: 0,
     studyLaterAt: null,
-    subjectId: "deck-1",
-    subjectName: "Biology",
-    subjectPath: "Biology",
+    folderId: "deck-1",
+    folderName: "Biology",
+    folderPath: "Biology",
   };
 }
 

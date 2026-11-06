@@ -147,10 +147,10 @@ describe("readSearchParams", () => {
 
     expect(
       readSearchParams(
-        "https://app.test/api/x?pageIndex=2&subjectIds=a&subjectIds=b&search=cell",
-        { numberKeys: ["pageIndex"], arrayKeys: ["subjectIds"] },
+        "https://app.test/api/x?pageIndex=2&folderIds=a&folderIds=b&search=cell",
+        { numberKeys: ["pageIndex"], arrayKeys: ["folderIds"] },
       ),
-    ).toEqual({ pageIndex: 2, subjectIds: ["a", "b"], search: "cell" });
+    ).toEqual({ pageIndex: 2, folderIds: ["a", "b"], search: "cell" });
   });
 
   it("turns junk numbers into NaN so numeric schemas reject them", async () => {

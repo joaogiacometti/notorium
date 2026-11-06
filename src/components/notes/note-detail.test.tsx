@@ -125,7 +125,7 @@ vi.mock("sonner", () => ({
 const note: NoteEntity = {
   id: "note-1",
   userId: "user-1",
-  subjectId: "subject-1",
+  folderId: "folder-1",
   title: "Photosynthesis note",
   content: testDocument("<p>Chlorophyll captures light.</p>"),
   createdAt: new Date("2026-04-20T10:00:00.000Z"),
@@ -142,7 +142,7 @@ function renderNoteDetail(
 
   root.render(
     <QueryClientProvider client={queryClient}>
-      <NoteDetail note={note} subjectName="Subject 1" {...props} />
+      <NoteDetail note={note} folderName="Folder 1" {...props} />
     </QueryClientProvider>,
   );
 }
@@ -195,7 +195,7 @@ describe("NoteDetail", () => {
     vi.useFakeTimers();
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
     copyNoteContentMock.mockResolvedValue(undefined);
-    editNoteMock.mockResolvedValue({ success: true, subjectId: "subject-1" });
+    editNoteMock.mockResolvedValue({ success: true, folderId: "folder-1" });
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);

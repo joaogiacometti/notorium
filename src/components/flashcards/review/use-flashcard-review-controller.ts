@@ -31,7 +31,7 @@ const reviewBatchLimit = 50;
 
 interface UseFlashcardReviewControllerParams {
   initialState: FlashcardReviewState;
-  subjectId?: string;
+  folderId?: string;
   resetCardViewState: () => void;
 }
 
@@ -48,13 +48,13 @@ interface UndoableReview {
  * @example
  * const controller = useFlashcardReviewController({
  *   initialState,
- *   subjectId,
+ *   folderId,
  *   resetCardViewState,
  * });
  */
 export function useFlashcardReviewController({
   initialState,
-  subjectId,
+  folderId,
   resetCardViewState,
 }: UseFlashcardReviewControllerParams) {
   const [reviewState, setReviewState] = useState(initialState);
@@ -122,7 +122,7 @@ export function useFlashcardReviewController({
     const gradedCountAtStart = gradedCardIdsRef.current.length;
     const savingIdsAtStart = [...pendingSaveCardIdsRef.current.values()];
     const fetchedState = await fetchFlashcardReviewState({
-      subjectId,
+      folderId,
       limit: reviewBatchLimit,
     });
     const unsavedIds = new Set([
@@ -178,7 +178,7 @@ export function useFlashcardReviewController({
   async function handleFlashcardUpdated(
     updatedFlashcard: FlashcardReviewState["cards"][number],
   ) {
-    if (subjectId && updatedFlashcard.subjectId !== subjectId) {
+    if (folderId && updatedFlashcard.folderId !== folderId) {
       // The card moved out of this session's scope; if the scope cannot be
       // re-read, drop it locally instead of leaving it as the current card.
       const nextState = await fetchReviewStateWithoutUnsavedGrades().catch(() =>
@@ -324,8 +324,8 @@ export function useFlashcardReviewController({
     commitReviewState(
       replaceFlashcardInReviewState(reviewStateRef.current, {
         ...result.flashcard,
-        subjectName: gradedCard.subjectName,
-        subjectPath: gradedCard.subjectPath,
+        folderName: gradedCard.folderName,
+        folderPath: gradedCard.folderPath,
       }),
     );
     setUndoableReview({

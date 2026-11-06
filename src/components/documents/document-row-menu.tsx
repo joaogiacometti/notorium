@@ -27,7 +27,7 @@ interface DocumentRowMenuProps extends DocumentRowActionHandlers {
 
 /**
  * Kebab menu for one document row, mirroring the detail header menu of the same
- * document kind so every entry point (documents list, subject tree) exposes
+ * document kind so every entry point (documents list, folder tree) exposes
  * identical actions.
  *
  * @example

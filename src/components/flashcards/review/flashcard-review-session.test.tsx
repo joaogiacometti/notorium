@@ -75,7 +75,7 @@ vi.mock("@/components/flashcards/review/review-session-screen", () => ({
     editing,
     onFlashcardUpdated,
   }: {
-    currentCard?: { id: string; subjectId: string | null } | null;
+    currentCard?: { id: string; folderId: string | null } | null;
     isLoadingMoreCards?: boolean;
     canUndoReview: boolean;
     onGrade: (grade: "good") => void;
@@ -83,7 +83,7 @@ vi.mock("@/components/flashcards/review/review-session-screen", () => ({
     onEditFlashcard: () => void;
     onExit: () => void;
     editing: boolean;
-    onFlashcardUpdated: (card: { id: string; subjectId: string }) => void;
+    onFlashcardUpdated: (card: { id: string; folderId: string }) => void;
   }) => (
     <div
       data-current-card-id={currentCard?.id}
@@ -104,7 +104,7 @@ vi.mock("@/components/flashcards/review/review-session-screen", () => ({
           <button
             type="button"
             onClick={() =>
-              onFlashcardUpdated({ ...currentCard, subjectId: "deck-9" })
+              onFlashcardUpdated({ ...currentCard, folderId: "deck-9" })
             }
           >
             Save moved card
@@ -295,7 +295,7 @@ describe("FlashcardReviewSession", () => {
     await act(async () => clickButton("Exit session"));
 
     expect(router.pushedHrefs).toEqual([
-      "/flashcards?view=review&subjectId=deck-1",
+      "/flashcards?view=review&folderId=deck-1",
     ]);
   });
 
@@ -643,15 +643,15 @@ describe("FlashcardReviewSession", () => {
 
   async function renderSession(
     initialState: FlashcardReviewState,
-    subjectId?: string,
+    folderId?: string,
   ) {
     await act(async () => {
       root.render(
         <QueryProvider>
           <FlashcardReviewSession
             initialState={initialState}
-            subjects={[]}
-            subjectId={subjectId}
+            folders={[]}
+            folderId={folderId}
           />
         </QueryProvider>,
       );

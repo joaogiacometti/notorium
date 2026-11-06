@@ -3,19 +3,19 @@ import { FlashcardsViewSwitch } from "@/components/flashcards/shared/flashcards-
 import { FeaturePageShell } from "@/components/shared/feature-page-shell";
 import { getFlashcardReviewSummaryForUser } from "@/features/flashcard-review/queries";
 import { getFlashcardsManagePageForUser } from "@/features/flashcards/queries";
-import { resolveScopedSubjectId } from "@/features/flashcards/scope";
+import { resolveScopedFolderId } from "@/features/flashcards/scope";
 import {
   resolveFlashcardManageFilter,
   resolveFlashcardsView,
 } from "@/features/flashcards/view";
-import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
+import { getAllFoldersWithPathsForUser } from "@/features/folders/queries";
 import { requireSession } from "@/lib/auth/auth";
 import { resolvePageSize } from "@/lib/pagination/page-size";
 
 interface FlashcardsPageProps {
   searchParams: Promise<{
     view?: string;
-    subjectId?: string;
+    folderId?: string;
     search?: string;
     pageSize?: string;
     filter?: string;
@@ -26,12 +26,12 @@ export default async function FlashcardsPage({
   searchParams,
 }: Readonly<FlashcardsPageProps>) {
   const session = await requireSession();
-  const { view, subjectId, search, pageSize, filter } = await searchParams;
+  const { view, folderId, search, pageSize, filter } = await searchParams;
   const currentView = resolveFlashcardsView(view);
   const initialPageSize = resolvePageSize(pageSize);
-  const subjects = await getAllSubjectsWithPathsForUser(session.user.id);
+  const folders = await getAllFoldersWithPathsForUser(session.user.id);
 
-  const scopedSubjectId = resolveScopedSubjectId(subjects, subjectId);
+  const scopedFolderId = resolveScopedFolderId(folders, folderId);
   const initialManageSearch =
     currentView === "manage" ? search?.trim() : undefined;
   const initialManageFilter =
@@ -42,7 +42,7 @@ export default async function FlashcardsPage({
     {
       pageIndex: 0,
       pageSize: initialPageSize,
-      subjectId: scopedSubjectId,
+      folderId: scopedFolderId,
       search: initialManageSearch,
       filter: initialManageFilter,
     },
@@ -51,7 +51,7 @@ export default async function FlashcardsPage({
   const reviewSummary = getFlashcardReviewSummaryForUser(
     session.user.id,
     new Date(),
-    { subjectId: scopedSubjectId },
+    { folderId: scopedFolderId },
   );
 
   const [initialManagePageDataResult, reviewSummaryResult] = await Promise.all([
@@ -68,17 +68,17 @@ export default async function FlashcardsPage({
           currentView={currentView}
           manageLabel="Manage"
           reviewLabel="Review"
-          subjectId={scopedSubjectId}
+          folderId={scopedFolderId}
         />
       }
     >
       <FlashcardsPageClient
         currentView={currentView}
-        scopedSubjectId={scopedSubjectId}
+        scopedFolderId={scopedFolderId}
         initialSearch={initialManageSearch}
         initialFilter={initialManageFilter}
         initialPageSize={initialPageSize}
-        subjects={subjects}
+        folders={folders}
         initialManagePageData={initialManagePageDataResult}
         reviewSummary={reviewSummaryResult}
       />

@@ -9,7 +9,7 @@ import { resolveFlashcardsView } from "@/features/flashcards/view";
 export default function FlashcardsLoading() {
   const searchParams = useSearchParams();
   const view = searchParams.get("view");
-  const subjectId = searchParams.get("subjectId") ?? undefined;
+  const folderId = searchParams.get("folderId") ?? undefined;
 
   return (
     <FeaturePageShell
@@ -20,7 +20,7 @@ export default function FlashcardsLoading() {
           currentView={resolveFlashcardsView(view ?? undefined)}
           manageLabel="Manage"
           reviewLabel="Review"
-          subjectId={subjectId}
+          folderId={folderId}
         />
       }
     >

@@ -4,7 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CreateFlashcardDialog } from "@/components/flashcards/dialogs/create-flashcard-dialog";
-import { fetchSubjectOptions } from "@/lib/read-api/subjects";
+import { fetchFolderOptions } from "@/lib/read-api/folders";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -21,8 +21,8 @@ vi.mock("sonner", () => ({
   },
 }));
 
-vi.mock("@/lib/read-api/subjects", () => ({
-  fetchSubjectOptions: vi.fn().mockResolvedValue([]),
+vi.mock("@/lib/read-api/folders", () => ({
+  fetchFolderOptions: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("@/app/actions/flashcards", () => ({
@@ -83,8 +83,8 @@ describe("paste-image loading flows", () => {
     expect(document.body.textContent).toContain("Discard changes?");
   });
 
-  it("reports a failed subject load instead of leaving it unhandled", async () => {
-    vi.mocked(fetchSubjectOptions).mockRejectedValueOnce(
+  it("reports a failed folder load instead of leaving it unhandled", async () => {
+    vi.mocked(fetchFolderOptions).mockRejectedValueOnce(
       new Error("network down"),
     );
 
@@ -99,6 +99,6 @@ describe("paste-image loading flows", () => {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(toast.error).toHaveBeenCalledWith("Could not load subjects.");
+    expect(toast.error).toHaveBeenCalledWith("Could not load folders.");
   });
 });

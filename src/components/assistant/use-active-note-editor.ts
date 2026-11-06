@@ -16,7 +16,7 @@ interface ActiveNoteEditorOptions {
   editor: Editor | null;
   form: UseFormReturn<EditNoteForm>;
   blocked: boolean;
-  subjectPath?: string;
+  folderPath?: string;
   id: string;
   title: string;
 }
@@ -62,7 +62,7 @@ export function useActiveNoteEditor(
               values.content ?? emptyDocument(),
               selectedNoteBlocks(editor),
             ),
-            subjectPath: current.current.options.subjectPath,
+            folderPath: current.current.options.folderPath,
           },
         };
       },

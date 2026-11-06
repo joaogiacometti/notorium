@@ -90,7 +90,7 @@ export function FlashcardDetail({
     initialValue: getEditFlashcardFormValues(flashcard),
     value: {
       id: flashcard.id,
-      subjectId: flashcard.subjectId ?? "",
+      folderId: flashcard.folderId ?? "",
       front: watchedFront,
       back: watchedBack,
     },
@@ -118,9 +118,9 @@ export function FlashcardDetail({
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h1
             className="truncate text-xl leading-10 font-semibold tracking-tight"
-            title={flashcard.subjectPath}
+            title={flashcard.folderPath}
           >
-            {flashcard.subjectPath}
+            {flashcard.folderPath}
           </h1>
           <FlashcardSourceReference source={flashcard.source} />
         </div>
@@ -147,7 +147,7 @@ export function FlashcardDetail({
                     {
                       front: watchedFront,
                       back: watchedBack,
-                      subjectPath: flashcard.subjectPath,
+                      folderPath: flashcard.folderPath,
                     },
                   ])
                 }

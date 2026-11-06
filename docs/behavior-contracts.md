@@ -12,7 +12,7 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 
 ## Review and Persistence
 
-- Deleting a card or subject preserves historical review activity and FSRS optimization input. Undoing the latest regular grade restores its prior scheduling state and removes that grade's history entry.
+- Deleting a card or folder preserves historical review activity and FSRS optimization input. Undoing the latest regular grade restores its prior scheduling state and removes that grade's history entry.
 - Exam grading and study-later marks do not change regular spaced-repetition scheduling. Explicit card edits, resets, and deletes remain writes.
 - Scheduler optimization changes tuning, not existing card progress or due dates.
 - Failed background grades return the card for retry. Leaving waits for pending saves; queue refill must not report completion prematurely or reintroduce an already graded card.
@@ -21,7 +21,7 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 
 ## Documents and Sources
 
-- Subject path creation is atomic. Concurrent subject moves must not create cycles or exceed depth limits.
+- Folder path creation is atomic. Concurrent folder moves must not create cycles or exceed depth limits.
 - A proposed card's note source is captured with its originating request, not inferred from history, library search, or whichever page is open when accepted. Renames and moves resolve current link metadata; deleting a source preserves the card. PDF context does not establish a card source.
 - Failed saves retain the draft for retry. Uploads and unresolved AI suggestions block saving until their content is safe to persist. Preview decorations never become stored content.
 - PDF context is selectable text from a selection or the current page, not the entire book or OCR. Empty or failed extraction must not be presented as successfully read content. A selection stays the context until the user clears it, presses on the pages, or scrolls far enough that its text is no longer rendered. Explaining a selection is transient: it never enters the conversation.

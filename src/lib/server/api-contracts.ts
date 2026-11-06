@@ -3,30 +3,30 @@ import type {
   flashcard,
   flashcardReviewLog,
   flashcardSchedulerSettings,
+  folder,
   note,
   pdfDocument,
-  subject,
 } from "@/db/schema";
 import type { FlashcardSourceLink } from "@/features/flashcards/source-contract";
 import type { RichTextDocument } from "@/lib/editor/document";
 import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
-export type SubjectEntity = InferSelectModel<typeof subject>;
-export type SubjectAncestor = Pick<SubjectEntity, "id" | "name">;
-export interface SubjectOption extends SubjectEntity {
+export type FolderEntity = InferSelectModel<typeof folder>;
+export type FolderAncestor = Pick<FolderEntity, "id" | "name">;
+export interface FolderOption extends FolderEntity {
   path: string;
 }
-export interface SubjectTreeNode extends SubjectEntity {
+export interface FolderTreeNode extends FolderEntity {
   documentCount: number;
-  // Cards due now in this subject and all descendants. Drives the sidebar
+  // Cards due now in this folder and all descendants. Drives the sidebar
   // review indicator; 0 when nothing is due.
   dueFlashcardCount: number;
-  children: SubjectTreeNode[];
+  children: FolderTreeNode[];
   path: string;
 }
 export type NoteEntity = Omit<InferSelectModel<typeof note>, "contentText">;
 /** Enough of a note to title and link to it. */
-export type NoteLinkTarget = Pick<NoteEntity, "id" | "title" | "subjectId">;
+export type NoteLinkTarget = Pick<NoteEntity, "id" | "title" | "folderId">;
 /** Links in and out of one note. */
 export type NoteConnections = {
   backlinks: NoteLinkTarget[];
@@ -42,31 +42,31 @@ export type FlashcardWithSourceEntity = FlashcardEntity & {
   source: FlashcardSourceLink | null;
 };
 export type FlashcardDetailEntity = FlashcardWithSourceEntity & {
-  subjectName: string;
-  subjectPath: string;
+  folderName: string;
+  folderPath: string;
 };
 export type FlashcardManageItem = Pick<
   FlashcardEntity,
-  "id" | "subjectId" | "updatedAt" | "studyLaterAt" | "lapseCount"
+  "id" | "folderId" | "updatedAt" | "studyLaterAt" | "lapseCount"
 > & {
   front: RichTextDocument;
   frontExcerpt: string;
   frontTitle: string | null;
-  subjectName: string;
-  subjectPath: string;
+  folderName: string;
+  folderPath: string;
 };
-/** A card's full content plus its subject, as copy reads it. */
+/** A card's full content plus its folder, as copy reads it. */
 export type FlashcardContentItem = Pick<
   FlashcardEntity,
-  "id" | "front" | "back" | "subjectId"
+  "id" | "front" | "back" | "folderId"
 > & {
-  subjectName: string;
-  subjectPath: string;
+  folderName: string;
+  folderPath: string;
 };
 export interface FlashcardManagePage {
   items: FlashcardManageItem[];
   total: number;
-  subjectCardCount: number | null;
+  folderCardCount: number | null;
 }
 export type FlashcardReviewLogEntity = InferSelectModel<
   typeof flashcardReviewLog
@@ -79,7 +79,7 @@ export type FlashcardReviewEntity = Pick<
   | "id"
   | "front"
   | "back"
-  | "subjectId"
+  | "folderId"
   | "state"
   | "dueAt"
   | "stability"
@@ -92,8 +92,8 @@ export type FlashcardReviewEntity = Pick<
   | "studyLaterAt"
 > & {
   source?: FlashcardSourceLink | null;
-  subjectName?: string;
-  subjectPath?: string;
+  folderName?: string;
+  folderPath?: string;
 };
 
 export interface FlashcardReviewSummary {
@@ -151,24 +151,24 @@ export interface FlashcardReviewActivity {
 
 export type SearchNoteResult = Pick<
   NoteEntity,
-  "id" | "title" | "content" | "subjectId"
+  "id" | "title" | "content" | "folderId"
 > & {
-  subjectName: string;
+  folderName: string;
 };
 
 export type SearchPdfResult = Pick<
   InferSelectModel<typeof pdfDocument>,
-  "id" | "title" | "subjectId"
+  "id" | "title" | "folderId"
 > & {
-  subjectName: string;
+  folderName: string;
 };
 
 export type SearchFlashcardResult = Pick<
   FlashcardEntity,
-  "id" | "front" | "back" | "subjectId"
+  "id" | "front" | "back" | "folderId"
 > & {
-  subjectName: string;
-  subjectPath: string;
+  folderName: string;
+  folderPath: string;
 };
 
 export type SearchData = {
@@ -177,7 +177,7 @@ export type SearchData = {
   flashcards: SearchFlashcardResult[];
 };
 
-export type SubjectEditDto = Pick<SubjectEntity, "id" | "name">;
+export type FolderEditDto = Pick<FolderEntity, "id" | "name">;
 
 export type MutationResult = { success: true } | ActionErrorResult;
 export type FlashcardOptimizationResult =
@@ -194,12 +194,12 @@ export type AuthRedirectSuccessResult = {
   };
 };
 export type AuthRedirectResult = AuthRedirectSuccessResult | ActionErrorResult;
-export type MoveSubjectResult =
+export type MoveFolderResult =
   | {
       success: true;
       id: string;
-      previousParentSubjectId: string | null;
-      newParentSubjectId: string | null;
+      previousParentFolderId: string | null;
+      newParentFolderId: string | null;
     }
   | ActionErrorResult;
 export type ReviewFlashcardResult =
@@ -226,36 +226,36 @@ export type EditFlashcardResult =
   | {
       success: true;
       flashcard: FlashcardEntity;
-      previousSubjectId: string | null;
+      previousFolderId: string | null;
     }
   | ActionErrorResult;
 export type DeleteFlashcardResult =
   | {
       success: true;
       id: string;
-      subjectId: string | null;
+      folderId: string | null;
     }
   | ActionErrorResult;
 export type BulkDeleteFlashcardsResult =
   | {
       success: true;
       ids: string[];
-      subjectIds: string[];
+      folderIds: string[];
     }
   | ActionErrorResult;
 export type BulkResetFlashcardsResult =
   | {
       success: true;
       ids: string[];
-      subjectIds: string[];
+      folderIds: string[];
     }
   | ActionErrorResult;
 export type BulkMoveFlashcardsResult =
   | {
       success: true;
       ids: string[];
-      subjectId: string;
-      previousSubjectIds: string[];
+      folderId: string;
+      previousFolderIds: string[];
     }
   | ActionErrorResult;
 export type SetFlashcardStudyLaterResult =

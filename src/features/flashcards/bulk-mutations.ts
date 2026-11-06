@@ -3,7 +3,7 @@ import { getDb } from "@/db/index";
 import { flashcard } from "@/db/schema";
 import { getInitialFlashcardSchedulingState } from "@/features/flashcards/fsrs";
 import {
-  countFlashcardsBySubjectForUser,
+  countFlashcardsByFolderForUser,
   getFlashcardRecordsForUser,
 } from "@/features/flashcards/queries";
 import type {
@@ -11,7 +11,7 @@ import type {
   BulkMoveFlashcardsForm,
   BulkResetFlashcardsForm,
 } from "@/features/flashcards/validation";
-import { getSubjectRecordForUser } from "@/features/subjects/queries";
+import { getFolderRecordForUser } from "@/features/folders/queries";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   BulkDeleteFlashcardsResult,
@@ -38,9 +38,9 @@ export async function bulkDeleteFlashcardsForUser(
   return {
     success: true,
     ids: data.ids,
-    subjectIds: uniqueItems(
+    folderIds: uniqueItems(
       existingFlashcards
-        .map((flashcard) => flashcard.subjectId)
+        .map((flashcard) => flashcard.folderId)
         .filter((id): id is string => id !== null),
     ),
   };
@@ -56,41 +56,38 @@ export async function bulkMoveFlashcardsForUser(
     return actionError("flashcards.notFound");
   }
 
-  const existingSubject = await getSubjectRecordForUser(userId, data.subjectId);
+  const existingFolder = await getFolderRecordForUser(userId, data.folderId);
 
-  if (!existingSubject) {
-    return actionError("subjects.notFound");
+  if (!existingFolder) {
+    return actionError("folders.notFound");
   }
 
-  const movingToNewSubject = existingFlashcards.filter(
-    (fc) => fc.subjectId !== data.subjectId,
+  const movingToNewFolder = existingFlashcards.filter(
+    (fc) => fc.folderId !== data.folderId,
   ).length;
 
-  if (movingToNewSubject > 0) {
-    const current = await countFlashcardsBySubjectForUser(
-      userId,
-      data.subjectId,
-    );
+  if (movingToNewFolder > 0) {
+    const current = await countFlashcardsByFolderForUser(userId, data.folderId);
 
-    if (current + movingToNewSubject > LIMITS.maxFlashcardsPerSubject) {
+    if (current + movingToNewFolder > LIMITS.maxFlashcardsPerFolder) {
       return actionError("limits.flashcardLimit", {
-        errorParams: { max: LIMITS.maxFlashcardsPerSubject },
+        errorParams: { max: LIMITS.maxFlashcardsPerFolder },
       });
     }
   }
 
   await getDb()
     .update(flashcard)
-    .set({ subjectId: data.subjectId })
+    .set({ folderId: data.folderId })
     .where(and(inArray(flashcard.id, data.ids), eq(flashcard.userId, userId)));
 
   return {
     success: true,
     ids: data.ids,
-    subjectId: data.subjectId,
-    previousSubjectIds: uniqueItems(
+    folderId: data.folderId,
+    previousFolderIds: uniqueItems(
       existingFlashcards
-        .map((fc) => fc.subjectId)
+        .map((fc) => fc.folderId)
         .filter((id): id is string => id !== null),
     ),
   };
@@ -128,9 +125,9 @@ export async function bulkResetFlashcardsForUser(
   return {
     success: true,
     ids: data.ids,
-    subjectIds: uniqueItems(
+    folderIds: uniqueItems(
       existingFlashcards
-        .map((fc) => fc.subjectId)
+        .map((fc) => fc.folderId)
         .filter((id): id is string => id !== null),
     ),
   };

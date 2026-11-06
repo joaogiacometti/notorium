@@ -23,41 +23,41 @@ import {
   getFlashcardDetailHref,
 } from "@/lib/navigation/detail-page-back-link";
 
-interface SubjectPathOption {
+interface FolderPathOption {
   id: string;
   path: string;
 }
 
 /**
- * Id of the subject whose path matches the one the assistant proposed: exact
+ * Id of the folder whose path matches the one the assistant proposed: exact
  * first, then ignoring case and spaces around "::", since models sometimes
  * re-space or re-case a path. `null` when the path is missing or unknown, so
- * the user picks the subject.
+ * the user picks the folder.
  *
  * @example
- * findProposedSubjectId([{ id: "s1", path: "Biology::Cells" }], "biology :: cells"); // "s1"
+ * findProposedFolderId([{ id: "s1", path: "Biology::Cells" }], "biology :: cells"); // "s1"
  */
-export function findProposedSubjectId(
-  subjects: SubjectPathOption[],
+export function findProposedFolderId(
+  folders: FolderPathOption[],
   proposedPath: string | undefined,
 ): string | null {
   if (!proposedPath) {
     return null;
   }
 
-  const exact = subjects.find((subject) => subject.path === proposedPath);
+  const exact = folders.find((folder) => folder.path === proposedPath);
   if (exact) {
     return exact.id;
   }
 
-  const wanted = normalizeSubjectPath(proposedPath);
-  const loose = subjects.find(
-    (subject) => normalizeSubjectPath(subject.path) === wanted,
+  const wanted = normalizeFolderPath(proposedPath);
+  const loose = folders.find(
+    (folder) => normalizeFolderPath(folder.path) === wanted,
   );
   return loose?.id ?? null;
 }
 
-function normalizeSubjectPath(path: string): string {
+function normalizeFolderPath(path: string): string {
   return path
     .split("::")
     .map((segment) => segment.trim().toLowerCase())
@@ -168,7 +168,7 @@ export function readLibrarySearchParts(
  * the model or client could have written.
  *
  * @example
- * getLibraryHitHref({ kind: "note", id: "n1", subjectId: "s1", ... }); // "/subjects/s1/documents/notes/n1"
+ * getLibraryHitHref({ kind: "note", id: "n1", folderId: "s1", ... }); // "/folders/s1/documents/notes/n1"
  */
 export function getLibraryHitHref(hit: LibraryHit): string {
   return hit.kind === "flashcard"

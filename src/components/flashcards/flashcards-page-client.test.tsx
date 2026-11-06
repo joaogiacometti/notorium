@@ -25,19 +25,19 @@ const mockManagePageData: import("@/lib/server/api-contracts").FlashcardManagePa
   {
     items: [],
     total: 0,
-    subjectCardCount: null,
+    folderCardCount: null,
   };
 
 const mockReviewSummary: import("@/lib/server/api-contracts").FlashcardReviewSummary =
   { dueCount: 3, totalCount: 10 };
 
-const mockSubjects: import("@/lib/server/api-contracts").SubjectOption[] = [
+const mockFolders: import("@/lib/server/api-contracts").FolderOption[] = [
   {
-    id: "subject-1",
+    id: "folder-1",
     name: "Database 1",
     path: "CS::Database 1",
     userId: "user-1",
-    parentSubjectId: "subject-parent",
+    parentFolderId: "folder-parent",
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
   },
@@ -45,9 +45,9 @@ const mockSubjects: import("@/lib/server/api-contracts").SubjectOption[] = [
 
 const defaultProps: ComponentProps<typeof FlashcardsPageClient> = {
   currentView: "manage",
-  scopedSubjectId: undefined,
+  scopedFolderId: undefined,
   initialPageSize: 25,
-  subjects: mockSubjects,
+  folders: mockFolders,
   initialManagePageData: mockManagePageData,
   reviewSummary: mockReviewSummary,
 };
@@ -84,11 +84,11 @@ describe("FlashcardsPageClient", () => {
     vi.clearAllMocks();
   });
 
-  it("always shows the subject scope filter and no deck tree", async () => {
+  it("always shows the folder scope filter and no deck tree", async () => {
     await render();
 
     expect(
-      container.querySelector('[data-testid="subject-scope-filter"]'),
+      container.querySelector('[data-testid="folder-scope-filter"]'),
     ).toBeTruthy();
     expect(
       container.querySelector('[data-testid="deck-tree-sidebar"]'),
@@ -104,7 +104,7 @@ describe("FlashcardsPageClient", () => {
   });
 
   it("links the review hub to the scoped session pages", async () => {
-    await render({ currentView: "review", scopedSubjectId: "subject-1" });
+    await render({ currentView: "review", scopedFolderId: "folder-1" });
 
     const reviewLink = container.querySelector(
       '[data-testid="flashcard-review-start-button"]',
@@ -114,10 +114,10 @@ describe("FlashcardsPageClient", () => {
     );
 
     expect(reviewLink?.getAttribute("href")).toBe(
-      "/flashcards/review?subjectId=subject-1",
+      "/flashcards/review?folderId=folder-1",
     );
     expect(examLink?.getAttribute("href")).toBe(
-      "/flashcards/exam?subjectId=subject-1",
+      "/flashcards/exam?folderId=folder-1",
     );
   });
 

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { editToolInputObject } from "@/features/assistant/edit-guards";
 import { STUDY_CONTEXT_MAX_CHARS } from "@/features/assistant/study-context";
 import { EDITOR_HTML_MATH_RULE } from "@/lib/ai/prompt-rules";
-import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
+import { FOLDER_PATH_MAX_CHARS, LIMITS } from "@/lib/config/limits";
 
 const reference = z.string().min(1).max(100);
 const sessionFields = {
@@ -20,7 +20,7 @@ const draftFields = {
   ...sessionFields,
   title: z.string().max(200),
   partial: z.boolean(),
-  subjectPath: z.string().max(SUBJECT_PATH_MAX_CHARS).optional(),
+  folderPath: z.string().max(FOLDER_PATH_MAX_CHARS).optional(),
 };
 
 export const noteBlockSchema = z.object({

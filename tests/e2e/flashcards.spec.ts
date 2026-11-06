@@ -1,12 +1,12 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
-import { clearUserSubjectsByNames, createSubject } from "./support/db";
-import { createFlashcardForSubject } from "./support/flashcards";
+import { clearUserFoldersByNames, createFolder } from "./support/db";
+import { createFlashcardForFolder } from "./support/flashcards";
 import { breadcrumbCurrent } from "./support/page-chrome";
 
-function getUniqueSubjectName(testTitle: string) {
-  return getPrefixedValue("flashcard-subject", testTitle);
+function getUniqueFolderName(testTitle: string) {
+  return getPrefixedValue("flashcard-folder", testTitle);
 }
 
 function getUniqueFlashcardFront(testTitle: string) {
@@ -27,26 +27,26 @@ function escapeRegex(value: string) {
   return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
 
-async function openFlashcardsManagePage(page: Page, subjectId?: string) {
+async function openFlashcardsManagePage(page: Page, folderId?: string) {
   const query = new URLSearchParams({ view: "manage" });
-  if (subjectId) query.set("subjectId", subjectId);
+  if (folderId) query.set("folderId", folderId);
 
   await page.goto(`/flashcards?${query.toString()}`);
   await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
 }
 
-async function openFlashcardsReviewPage(page: Page, subjectId?: string) {
+async function openFlashcardsReviewPage(page: Page, folderId?: string) {
   const query = new URLSearchParams({ view: "review" });
-  if (subjectId) query.set("subjectId", subjectId);
+  if (folderId) query.set("folderId", folderId);
 
   await page.goto(`/flashcards?${query.toString()}`);
   await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
 }
 
-function getSessionSubjectLabel(page: Page, subjectName: string) {
+function getSessionFolderLabel(page: Page, folderName: string) {
   return page
     .locator("p")
-    .filter({ hasText: new RegExp(`^${escapeRegex(subjectName)}$`) })
+    .filter({ hasText: new RegExp(`^${escapeRegex(folderName)}$`) })
     .last();
 }
 
@@ -99,42 +99,42 @@ async function openFlashcardDetailFromManage(page: Page, front: string) {
 }
 
 test("can create and open a flashcard", async ({ page, e2eUser }) => {
-  const subjectName = getUniqueSubjectName("create-open");
+  const folderName = getUniqueFolderName("create-open");
   const flashcardFront = getUniqueFlashcardFront("create-open");
   const flashcardBack = getUniqueFlashcardBack("create-open");
 
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
 
   try {
-    const subject = await createSubject(e2eUser.userId, subjectName);
+    const folder = await createFolder(e2eUser.userId, folderName);
 
-    await openFlashcardsManagePage(page, subject.id);
+    await openFlashcardsManagePage(page, folder.id);
     await createFlashcardFromManageDialog(page, flashcardFront, flashcardBack);
 
     await openFlashcardDetailFromManage(page, flashcardFront);
     await expect(page.getByText("Front", { exact: true })).toBeVisible();
     await expect(page.getByText("Back", { exact: true })).toBeVisible();
-    await expect(breadcrumbCurrent(page, subjectName)).toBeVisible();
+    await expect(breadcrumbCurrent(page, folderName)).toBeVisible();
     await expect(page.getByText(flashcardBack).first()).toBeVisible();
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });
 
 test("can edit a flashcard", async ({ page, e2eUser }) => {
-  const subjectName = getUniqueSubjectName("edit");
+  const folderName = getUniqueFolderName("edit");
   const initialFront = getUniqueFlashcardFront("edit-initial");
   const initialBack = getUniqueFlashcardBack("edit-initial");
   const updatedFront = getUniqueFlashcardFront("edit-updated");
   const updatedBack = getUniqueFlashcardBack("edit-updated");
 
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
 
   try {
-    const subject = await createSubject(e2eUser.userId, subjectName);
-    const flashcard = await createFlashcardForSubject(
+    const folder = await createFolder(e2eUser.userId, folderName);
+    const flashcard = await createFlashcardForFolder(
       e2eUser.userId,
-      subject.id,
+      folder.id,
       initialFront,
       initialBack,
     );
@@ -169,22 +169,22 @@ test("can edit a flashcard", async ({ page, e2eUser }) => {
       updatedBack,
     );
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });
 
 test("can delete a flashcard", async ({ page, e2eUser }) => {
-  const subjectName = getUniqueSubjectName("delete");
+  const folderName = getUniqueFolderName("delete");
   const flashcardFront = getUniqueFlashcardFront("delete");
   const flashcardBack = getUniqueFlashcardBack("delete");
 
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
 
   try {
-    const subject = await createSubject(e2eUser.userId, subjectName);
-    const flashcard = await createFlashcardForSubject(
+    const folder = await createFolder(e2eUser.userId, folderName);
+    const flashcard = await createFlashcardForFolder(
       e2eUser.userId,
-      subject.id,
+      folder.id,
       flashcardFront,
       flashcardBack,
     );
@@ -205,27 +205,27 @@ test("can delete a flashcard", async ({ page, e2eUser }) => {
 
     await expect(deleteDialog).toHaveCount(0);
     await expect(page).toHaveURL(/\/flashcards\?view=manage/);
-    await openFlashcardsManagePage(page, subject.id);
+    await openFlashcardsManagePage(page, folder.id);
     await expect(page.getByText(flashcardFront, { exact: true })).toHaveCount(
       0,
     );
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });
 
-test("can switch between subject-scoped flashcards views", async ({
+test("can switch between folder-scoped flashcards views", async ({
   page,
   e2eUser,
 }) => {
-  const subjectName = getUniqueSubjectName("view-switch");
+  const folderName = getUniqueFolderName("view-switch");
 
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
 
   try {
-    const subject = await createSubject(e2eUser.userId, subjectName);
+    const folder = await createFolder(e2eUser.userId, folderName);
 
-    await openFlashcardsReviewPage(page, subject.id);
+    await openFlashcardsReviewPage(page, folder.id);
     await expect(
       page.getByRole("button", { name: "Start review", exact: true }),
     ).toBeDisabled();
@@ -237,43 +237,43 @@ test("can switch between subject-scoped flashcards views", async ({
     await expect(
       page.getByRole("button", { name: "New Flashcard", exact: true }),
     ).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`subjectId=${subject.id}`));
+    await expect(page).toHaveURL(new RegExp(`folderId=${folder.id}`));
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });
 
-test("can search subject-scoped manage flashcards without hanging", async ({
+test("can search folder-scoped manage flashcards without hanging", async ({
   page,
   e2eUser,
 }) => {
-  const subjectName = getUniqueSubjectName("manage-search");
+  const folderName = getUniqueFolderName("manage-search");
   const matchingFront = getUniqueFlashcardFront("manage-search-match");
   const matchingBack = getUniqueFlashcardBack("manage-search-match");
   const otherFront = getUniqueFlashcardFront("manage-search-other");
   const otherBack = getUniqueFlashcardBack("manage-search-other");
   const searchTerm = "manage-search-match";
 
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
 
   try {
-    const subject = await createSubject(e2eUser.userId, subjectName);
-    await createFlashcardForSubject(
+    const folder = await createFolder(e2eUser.userId, folderName);
+    await createFlashcardForFolder(
       e2eUser.userId,
-      subject.id,
+      folder.id,
       matchingFront,
       matchingBack,
     );
-    await createFlashcardForSubject(
+    await createFlashcardForFolder(
       e2eUser.userId,
-      subject.id,
+      folder.id,
       otherFront,
       otherBack,
     );
 
-    await openFlashcardsManagePage(page, subject.id);
+    await openFlashcardsManagePage(page, folder.id);
     await page
-      .getByPlaceholder("Search front, back, or subject path...")
+      .getByPlaceholder("Search front, back, or folder path...")
       .fill(searchTerm);
 
     await expect(page).toHaveURL(
@@ -285,7 +285,7 @@ test("can search subject-scoped manage flashcards without hanging", async ({
     await expect(page.getByTitle(matchingFront, { exact: true })).toBeVisible();
     await expect(page.getByTitle(otherFront, { exact: true })).toHaveCount(0);
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });
 
@@ -293,31 +293,31 @@ test("can enter, reload, and exit a review session", async ({
   page,
   e2eUser,
 }) => {
-  const subjectName = getUniqueSubjectName("review-session");
+  const folderName = getUniqueFolderName("review-session");
   const flashcardFront = getUniqueFlashcardFront("review-session");
   const flashcardBack = getUniqueFlashcardBack("review-session");
 
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
 
   try {
-    const subject = await createSubject(e2eUser.userId, subjectName);
-    await createFlashcardForSubject(
+    const folder = await createFolder(e2eUser.userId, folderName);
+    await createFlashcardForFolder(
       e2eUser.userId,
-      subject.id,
+      folder.id,
       flashcardFront,
       flashcardBack,
     );
 
-    await openFlashcardsReviewPage(page, subject.id);
+    await openFlashcardsReviewPage(page, folder.id);
     await page.getByRole("link", { name: "Start review", exact: true }).click();
 
     await expect(
       page.getByText(/due of \d+ total cards/).first(),
     ).toBeVisible();
-    await expect(getSessionSubjectLabel(page, subjectName)).toBeVisible();
+    await expect(getSessionFolderLabel(page, folderName)).toBeVisible();
     await expect(page.getByText(flashcardFront)).toBeVisible();
     await expect(page).toHaveURL(
-      new RegExp(`/flashcards/review\\?subjectId=${subject.id}`),
+      new RegExp(`/flashcards/review\\?folderId=${folder.id}`),
     );
 
     await page.reload();
@@ -326,27 +326,27 @@ test("can enter, reload, and exit a review session", async ({
     await page.getByRole("button", { name: "Exit review" }).click();
     await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });
 
 test("can complete a review session", async ({ page, e2eUser }) => {
-  const subjectName = getUniqueSubjectName("focus-review");
+  const folderName = getUniqueFolderName("focus-review");
   const flashcardFront = getUniqueFlashcardFront("focus-review");
   const flashcardBack = getUniqueFlashcardBack("focus-review");
 
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
 
   try {
-    const subject = await createSubject(e2eUser.userId, subjectName);
-    await createFlashcardForSubject(
+    const folder = await createFolder(e2eUser.userId, folderName);
+    await createFlashcardForFolder(
       e2eUser.userId,
-      subject.id,
+      folder.id,
       flashcardFront,
       flashcardBack,
     );
 
-    await openFlashcardsReviewPage(page, subject.id);
+    await openFlashcardsReviewPage(page, folder.id);
     await page.getByRole("link", { name: "Start review", exact: true }).click();
 
     await expect(page.getByText(flashcardFront)).toBeVisible();
@@ -359,57 +359,57 @@ test("can complete a review session", async ({ page, e2eUser }) => {
       page.getByText("No due flashcards in this scope right now."),
     ).toBeVisible();
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });
 
-test("review and exam actions respect subject scope", async ({
+test("review and exam actions respect folder scope", async ({
   page,
   e2eUser,
 }) => {
-  const dueSubjectName = getUniqueSubjectName("scope-actions-due");
-  const examSubjectName = getUniqueSubjectName("scope-actions-exam-only");
+  const dueFolderName = getUniqueFolderName("scope-actions-due");
+  const examFolderName = getUniqueFolderName("scope-actions-exam-only");
   const dueFront = getUniqueFlashcardFront("scope-actions-due");
   const dueBack = getUniqueFlashcardBack("scope-actions-due");
   const examFront = getUniqueFlashcardFront("scope-actions-exam-only");
   const examBack = getUniqueFlashcardBack("scope-actions-exam-only");
 
-  await clearUserSubjectsByNames(e2eUser.userId, [
-    dueSubjectName,
-    examSubjectName,
+  await clearUserFoldersByNames(e2eUser.userId, [
+    dueFolderName,
+    examFolderName,
   ]);
 
   try {
-    const dueSubject = await createSubject(e2eUser.userId, dueSubjectName);
-    const examSubject = await createSubject(e2eUser.userId, examSubjectName);
-    await createFlashcardForSubject(
+    const dueFolder = await createFolder(e2eUser.userId, dueFolderName);
+    const examFolder = await createFolder(e2eUser.userId, examFolderName);
+    await createFlashcardForFolder(
       e2eUser.userId,
-      dueSubject.id,
+      dueFolder.id,
       dueFront,
       dueBack,
     );
-    await createFlashcardForSubject(
+    await createFlashcardForFolder(
       e2eUser.userId,
-      examSubject.id,
+      examFolder.id,
       examFront,
       examBack,
       new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     );
 
-    await openFlashcardsReviewPage(page, dueSubject.id);
+    await openFlashcardsReviewPage(page, dueFolder.id);
     await page.getByRole("link", { name: "Start review", exact: true }).click();
     await expect(page.getByText(dueFront, { exact: true })).toBeVisible();
     await expect(page.getByText(examFront, { exact: true })).toHaveCount(0);
 
     await page.getByRole("button", { name: "Exit review" }).click();
-    await openFlashcardsReviewPage(page, examSubject.id);
+    await openFlashcardsReviewPage(page, examFolder.id);
     await page.getByRole("link", { name: "Start exam", exact: true }).click();
     await expect(page.getByText("Card 1 of 1", { exact: true })).toBeVisible();
-    await expect(getSessionSubjectLabel(page, examSubjectName)).toBeVisible();
+    await expect(getSessionFolderLabel(page, examFolderName)).toBeVisible();
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [
-      dueSubjectName,
-      examSubjectName,
+    await clearUserFoldersByNames(e2eUser.userId, [
+      dueFolderName,
+      examFolderName,
     ]);
   }
 });
@@ -418,30 +418,30 @@ test("study later defers a card in review and lists it in manage", async ({
   page,
   e2eUser,
 }) => {
-  const subjectName = getUniqueSubjectName("study-later");
+  const folderName = getUniqueFolderName("study-later");
   const deferredFront = getUniqueFlashcardFront("study-later-deferred");
   const otherFront = getUniqueFlashcardFront("study-later-other");
 
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
 
   try {
-    const subject = await createSubject(e2eUser.userId, subjectName);
-    await createFlashcardForSubject(
+    const folder = await createFolder(e2eUser.userId, folderName);
+    await createFlashcardForFolder(
       e2eUser.userId,
-      subject.id,
+      folder.id,
       deferredFront,
       getUniqueFlashcardBack("study-later-deferred"),
       new Date(Date.now() - 2 * 60 * 1000),
     );
-    await createFlashcardForSubject(
+    await createFlashcardForFolder(
       e2eUser.userId,
-      subject.id,
+      folder.id,
       otherFront,
       getUniqueFlashcardBack("study-later-other"),
       new Date(Date.now() - 60 * 1000),
     );
 
-    await openFlashcardsReviewPage(page, subject.id);
+    await openFlashcardsReviewPage(page, folder.id);
     await page.getByRole("link", { name: "Start review", exact: true }).click();
     await expect(page.getByText(deferredFront)).toBeVisible();
 
@@ -465,7 +465,7 @@ test("study later defers a card in review and lists it in manage", async ({
     await page.getByRole("button", { name: "Exit review" }).click();
     await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
 
-    await openFlashcardsManagePage(page, subject.id);
+    await openFlashcardsManagePage(page, folder.id);
     await page.getByRole("button", { name: "Show Study later cards" }).click();
     await expect(page).toHaveURL(/filter=studyLater/);
     const deferredRow = page
@@ -498,6 +498,6 @@ test("study later defers a card in review and lists it in manage", async ({
       0,
     );
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });

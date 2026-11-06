@@ -45,9 +45,9 @@ function toContentItem(id: string): FlashcardContentItem {
     id,
     front: testDocument(`<p>Front ${id}</p>`),
     back: testDocument(`<p>Back ${id}</p>`),
-    subjectId: "subject-1",
-    subjectName: "Biology",
-    subjectPath: "Biology",
+    folderId: "folder-1",
+    folderName: "Biology",
+    folderPath: "Biology",
   };
 }
 

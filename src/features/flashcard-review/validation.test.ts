@@ -40,9 +40,9 @@ describe("reviewFlashcardSchema", () => {
 });
 
 describe("flashcardReviewStateQuerySchema", () => {
-  it("accepts a subject scope with a batch limit", () => {
+  it("accepts a folder scope with a batch limit", () => {
     const result = flashcardReviewStateQuerySchema.safeParse({
-      subjectId: "subject-1",
+      folderId: "folder-1",
       limit: 50,
     });
 
@@ -62,9 +62,9 @@ describe("flashcardReviewStateQuerySchema", () => {
     },
   );
 
-  it("rejects an empty subject id", () => {
+  it("rejects an empty folder id", () => {
     const result = flashcardReviewStateQuerySchema.safeParse({
-      subjectId: "",
+      folderId: "",
     });
 
     expect(result.success).toBe(false);
@@ -74,15 +74,15 @@ describe("flashcardReviewStateQuerySchema", () => {
 describe("flashcardExamScopeSchema", () => {
   it("strips fields outside the exam scope", () => {
     const result = flashcardExamScopeSchema.safeParse({
-      subjectId: "subject-1",
-      subjectIds: ["subject-2"],
+      folderId: "folder-1",
+      folderIds: ["folder-2"],
     });
 
-    expect(result.success && result.data).toEqual({ subjectId: "subject-1" });
+    expect(result.success && result.data).toEqual({ folderId: "folder-1" });
   });
 
-  it("rejects a non-string subject id", () => {
-    const result = flashcardExamScopeSchema.safeParse({ subjectId: 42 });
+  it("rejects a non-string folder id", () => {
+    const result = flashcardExamScopeSchema.safeParse({ folderId: 42 });
 
     expect(result.success).toBe(false);
   });

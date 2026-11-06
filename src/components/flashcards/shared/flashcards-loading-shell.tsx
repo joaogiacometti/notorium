@@ -7,7 +7,7 @@ interface FlashcardsLoadingShellProps {
 
 /**
  * Body skeleton for the flashcards hub. Mirrors `FlashcardsPageClient`: the
- * subject scope-filter row above the active view's content. The page top bar
+ * folder scope-filter row above the active view's content. The page top bar
  * and view switch come from the route `loading.tsx` shell, so this renders only
  * the inner body — there is no in-page tree/side menu anymore.
  */

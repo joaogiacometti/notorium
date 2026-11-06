@@ -49,7 +49,7 @@ describe("DocumentRowMenu", () => {
   it("keeps note actions without generation", () => {
     const item: DocumentListItem = {
       id: "document-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       title: "Cells",
       kind: "note",
       updatedAt: new Date(),

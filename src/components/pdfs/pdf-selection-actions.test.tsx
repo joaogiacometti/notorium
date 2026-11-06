@@ -53,7 +53,7 @@ function ReaderHarness() {
   const workspace = useAssistantWorkspace();
   usePdfStudyContext({
     pdf: { id: "pdf-1", title: "Report" },
-    subjectPath: "Finance",
+    folderPath: "Finance",
     pdfDocument,
     currentPage: 1,
     pagesRef,

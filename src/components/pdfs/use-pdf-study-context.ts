@@ -22,7 +22,7 @@ export interface PdfTextSource {
 
 interface UsePdfStudyContextOptions {
   pdf: { id: string; title: string };
-  subjectPath: string;
+  folderPath: string;
   pdfDocument: PdfTextSource;
   currentPage: number;
   pagesRef: RefObject<HTMLElement | null>;
@@ -31,11 +31,11 @@ interface UsePdfStudyContextOptions {
 /**
  * Offer the assistant the user's PDF selection, else the visible page's text.
  * Text is gathered ahead of time because context snapshots are synchronous.
- * @example usePdfStudyContext({ pdf, subjectPath, pdfDocument, currentPage, pagesRef });
+ * @example usePdfStudyContext({ pdf, folderPath, pdfDocument, currentPage, pagesRef });
  */
 export function usePdfStudyContext({
   pdf,
-  subjectPath,
+  folderPath,
   pdfDocument,
   currentPage,
   pagesRef,
@@ -44,7 +44,7 @@ export function usePdfStudyContext({
   const pageText = useVisiblePageText(pdfDocument, currentPage);
   const source = selection.source ?? pageText;
   useStudyContext(
-    source ? buildPdfContext(pdf, subjectPath, source) : null,
+    source ? buildPdfContext(pdf, folderPath, source) : null,
     selection.clear,
   );
 }

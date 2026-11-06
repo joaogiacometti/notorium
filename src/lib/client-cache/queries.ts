@@ -1,20 +1,20 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
 import {
+  fetchFolderDocuments,
   fetchNoteConnections,
-  fetchSubjectDocuments,
 } from "@/lib/read-api/documents";
 import { fetchFlashcardsManagePage } from "@/lib/read-api/flashcards";
-import { fetchSubjectOptions } from "@/lib/read-api/subjects";
+import { fetchFolderOptions } from "@/lib/read-api/folders";
 
 // The authenticated layout owns a QueryClient per user. Keys describe resources,
 // not the component displaying them, so every consumer sees the same updates.
 export const libraryKeys = {
-  subjects: ["subjects"] as const,
-  subjectOptions: ["subjects", "options"] as const,
-  documents: ["subject-documents"] as const,
-  subjectDocuments: (subjectId: string) =>
-    ["subject-documents", subjectId] as const,
+  folders: ["folders"] as const,
+  folderOptions: ["folders", "options"] as const,
+  documents: ["folder-documents"] as const,
+  folderDocuments: (folderId: string) =>
+    ["folder-documents", folderId] as const,
   search: ["search-data"] as const,
   searchResults: (userId: string, query: string) =>
     ["search-data", userId, query] as const,
@@ -23,20 +23,20 @@ export const libraryKeys = {
   flashcards: ["flashcards-manage-page"] as const,
 };
 
-export function subjectOptionsQuery() {
+export function folderOptionsQuery() {
   return queryOptions({
-    queryKey: libraryKeys.subjectOptions,
-    queryFn: () => fetchSubjectOptions(),
+    queryKey: libraryKeys.folderOptions,
+    queryFn: () => fetchFolderOptions(),
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
     retry: false,
   });
 }
 
-export function subjectDocumentsQuery(subjectId: string) {
+export function folderDocumentsQuery(folderId: string) {
   return queryOptions({
-    queryKey: libraryKeys.subjectDocuments(subjectId),
-    queryFn: () => fetchSubjectDocuments(subjectId),
+    queryKey: libraryKeys.folderDocuments(folderId),
+    queryFn: () => fetchFolderDocuments(folderId),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });

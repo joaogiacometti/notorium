@@ -7,7 +7,8 @@ behavior. Update it when those boundaries or decisions change.
 ## System Context
 
 Notorium is a knowledge editor built as a Next.js application with server-rendered
-pages and interactive client editors. PostgreSQL stores user records and material
+pages and interactive client editors. Folders organize notes, PDFs, and flashcards
+in a user-owned hierarchy. PostgreSQL stores user records and material
 through Drizzle; Redis
 or Upstash supplies rate limiting. Required integrations are OpenRouter for AI,
 Vercel Blob for private media, and Resend for email. AI requests send conversation
@@ -61,8 +62,8 @@ verification gaps live in [Behavior Contracts](./behavior-contracts.md).
   them would queue independent reads behind writes.
 - **Client server data shares one cache.** The authenticated layout owns a
   QueryClient keyed by user identity. Resource keys and reusable query options
-  live in `src/lib/client-cache/`; successful subject, document, and flashcard
-  writes use its shared invalidation policies. Sidebar folders and subject
+  live in `src/lib/client-cache/`; successful folder, document, and flashcard
+  writes use its shared invalidation policies. The sidebar tree and folder
   pickers observe that cache instead of maintaining separate fetched copies or
   broadcasting refetch events. Expansion, selection, and editor drafts stay local.
   Client invalidation and server view revalidation are separate responsibilities.
@@ -90,12 +91,12 @@ Detailed contributor rules belong in [AGENTS.md](../AGENTS.md), not here.
 
 ## Cross-Cutting Constraints
 
-- **Deletion has different lifetimes.** Historical review logs survive card/subject
+- **Deletion has different lifetimes.** Historical review logs survive card/folder
   deletion. Shared media is reclaimed by a reference-aware sweep rather than deleted
   with one document; account deletion purges owned files. See [Behavior Contracts](./behavior-contracts.md).
-- **Hierarchy moves need concurrency protection.** Subject moves validate and update
+- **Hierarchy moves need concurrency protection.** Folder moves validate and update
   under a per-user transaction lock so overlapping moves cannot create cycles;
-  [subject mutations](../src/features/subjects/mutations.ts) own that coordination.
+  [folder mutations](../src/features/folders/mutations.ts) own that coordination.
 - **Rich text has one document model.** Notes and card faces store versioned
   Tiptap JSON, validated against the supported schema at write boundaries.
   Editors and autosave carry documents directly. HTML, Markdown, and plain text

@@ -10,5 +10,5 @@ export const flashcardSourceSchema = z.object({
 export type FlashcardSource = z.infer<typeof flashcardSourceSchema>;
 export type FlashcardSourceLink = FlashcardSource & {
   title: string;
-  subjectId: string;
+  folderId: string;
 };

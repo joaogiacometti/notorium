@@ -41,7 +41,7 @@ class FakePdfUploadSteps implements PdfUploadSteps {
 
   create = async (data: CreatePdfForm) => {
     this.created.push(data);
-    return { success: true as const, subjectId: data.subjectId, pdfId: "p1" };
+    return { success: true as const, folderId: data.folderId, pdfId: "p1" };
   };
 }
 
@@ -55,14 +55,14 @@ describe("uploadPdfDocument", () => {
     const onProgress = vi.fn();
 
     const result = await uploadPdfDocument(
-      { subjectId: "s1", title: "Book", file: makeFile(), onProgress },
+      { folderId: "s1", title: "Book", file: makeFile(), onProgress },
       steps,
     );
 
-    expect(result).toEqual({ success: true, subjectId: "s1", pdfId: "p1" });
+    expect(result).toEqual({ success: true, folderId: "s1", pdfId: "p1" });
     expect(steps.uploads[0]?.pathname).toBe("notorium/pdfs/u/id-book.pdf");
     expect(steps.created[0]).toEqual({
-      subjectId: "s1",
+      folderId: "s1",
       title: "Book",
       fileName: "book.pdf",
       blobPathname: "notorium/pdfs/u/id-book.pdf",
@@ -75,7 +75,7 @@ describe("uploadPdfDocument", () => {
     steps.prepareFails = true;
 
     const result = await uploadPdfDocument(
-      { subjectId: "s1", title: "Book", file: makeFile(), onProgress: vi.fn() },
+      { folderId: "s1", title: "Book", file: makeFile(), onProgress: vi.fn() },
       steps,
     );
 
@@ -88,7 +88,7 @@ describe("uploadPdfDocument", () => {
     steps.storageFails = true;
 
     const result = await uploadPdfDocument(
-      { subjectId: "s1", title: "Book", file: makeFile(), onProgress: vi.fn() },
+      { folderId: "s1", title: "Book", file: makeFile(), onProgress: vi.fn() },
       steps,
     );
 

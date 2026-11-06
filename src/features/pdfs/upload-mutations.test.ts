@@ -6,14 +6,14 @@ import type {
 
 const {
   insertedRows,
-  getSubjectRecordForUserMock,
-  countPdfsBySubjectForUserMock,
+  getFolderRecordForUserMock,
+  countPdfsByFolderForUserMock,
   getMediaStorageProviderMock,
   consumeUserDailyRateLimitMock,
 } = vi.hoisted(() => ({
   insertedRows: [] as unknown[],
-  getSubjectRecordForUserMock: vi.fn(),
-  countPdfsBySubjectForUserMock: vi.fn(),
+  getFolderRecordForUserMock: vi.fn(),
+  countPdfsByFolderForUserMock: vi.fn(),
   getMediaStorageProviderMock: vi.fn(),
   consumeUserDailyRateLimitMock: vi.fn(),
 }));
@@ -28,11 +28,11 @@ vi.mock("@/db/index", () => ({
   }),
 }));
 vi.mock("@/db/schema", () => ({ pdfDocument: "pdf_document_table" }));
-vi.mock("@/features/subjects/queries", () => ({
-  getSubjectRecordForUser: getSubjectRecordForUserMock,
+vi.mock("@/features/folders/queries", () => ({
+  getFolderRecordForUser: getFolderRecordForUserMock,
 }));
 vi.mock("@/features/pdfs/queries", () => ({
-  countPdfsBySubjectForUser: countPdfsBySubjectForUserMock,
+  countPdfsByFolderForUser: countPdfsByFolderForUserMock,
 }));
 vi.mock("@/lib/media-storage/provider", () => ({
   getMediaStorageProvider: getMediaStorageProviderMock,
@@ -65,7 +65,7 @@ const OWN_PDF = "notorium/pdfs/user-1/id-book.pdf";
 
 function createInput(blobPathname = OWN_PDF) {
   return {
-    subjectId: "subject-1",
+    folderId: "folder-1",
     title: "Book",
     fileName: "book.pdf",
     blobPathname,
@@ -79,15 +79,15 @@ beforeEach(() => {
   insertedRows.length = 0;
   storage = new PdfStorageFake();
   getMediaStorageProviderMock.mockResolvedValue(storage);
-  getSubjectRecordForUserMock.mockResolvedValue({ id: "subject-1" });
-  countPdfsBySubjectForUserMock.mockResolvedValue(0);
+  getFolderRecordForUserMock.mockResolvedValue({ id: "folder-1" });
+  countPdfsByFolderForUserMock.mockResolvedValue(0);
   consumeUserDailyRateLimitMock.mockResolvedValue({ limited: false });
 });
 
 describe("preparePdfUploadForUser", () => {
   it("issues a PDF-only token for a pathname under the user's prefix", async () => {
     const result = await preparePdfUploadForUser("user-1", {
-      subjectId: "subject-1",
+      folderId: "folder-1",
       fileName: "book.pdf",
       sizeBytes: 1024,
     });
@@ -107,7 +107,7 @@ describe("preparePdfUploadForUser", () => {
 
   it("rejects a file over the size limit before charging the quota", async () => {
     const result = await preparePdfUploadForUser("user-1", {
-      subjectId: "subject-1",
+      folderId: "folder-1",
       fileName: "big.pdf",
       sizeBytes: LIMITS.pdfMaxBytes + 1,
     });
@@ -116,18 +116,18 @@ describe("preparePdfUploadForUser", () => {
     expect(consumeUserDailyRateLimitMock).not.toHaveBeenCalled();
   });
 
-  it("rejects a subject that already holds the maximum PDFs", async () => {
-    countPdfsBySubjectForUserMock.mockResolvedValue(LIMITS.maxPdfsPerSubject);
+  it("rejects a folder that already holds the maximum PDFs", async () => {
+    countPdfsByFolderForUserMock.mockResolvedValue(LIMITS.maxPdfsPerFolder);
 
     const result = await preparePdfUploadForUser("user-1", {
-      subjectId: "subject-1",
+      folderId: "folder-1",
       fileName: "book.pdf",
       sizeBytes: 1024,
     });
 
     expect(result).toMatchObject({
       errorCode: "limits.pdfLimit",
-      errorParams: { max: LIMITS.maxPdfsPerSubject },
+      errorParams: { max: LIMITS.maxPdfsPerFolder },
     });
     expect(storage.tokens).toHaveLength(0);
   });
@@ -139,7 +139,7 @@ describe("preparePdfUploadForUser", () => {
     });
 
     const result = await preparePdfUploadForUser("user-1", {
-      subjectId: "subject-1",
+      folderId: "folder-1",
       fileName: "book.pdf",
       sizeBytes: 1024,
     });
@@ -155,7 +155,7 @@ describe("createPdfForUser", () => {
 
     const result = await createPdfForUser("user-1", createInput());
 
-    expect(result).toMatchObject({ success: true, subjectId: "subject-1" });
+    expect(result).toMatchObject({ success: true, folderId: "folder-1" });
     expect(insertedRows[0]).toMatchObject({
       title: "Book",
       blobPathname: OWN_PDF,

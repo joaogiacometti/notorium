@@ -23,14 +23,14 @@ test("read routes isolate guessed IDs and mixed-owner batches in both directions
       });
     }
     const ownDocuments = await request.get(
-      `/api/subjects/${own.subjectId}/documents`,
+      `/api/folders/${own.folderId}/documents`,
     );
     expect(ownDocuments.status()).toBe(200);
     expect(
       (await ownDocuments.json()).map((row: { id: string }) => row.id).sort(),
     ).toEqual([own.noteId, own.pdfId].sort());
     const foreignDocuments = await request.get(
-      `/api/subjects/${foreign.subjectId}/documents`,
+      `/api/folders/${foreign.folderId}/documents`,
     );
     expect(foreignDocuments.status()).toBe(200);
     expect(await foreignDocuments.json()).toEqual([]);
@@ -42,17 +42,17 @@ test("read routes isolate guessed IDs and mixed-owner batches in both directions
       own.cardId,
     ]);
     const manage = await request.get(
-      `/api/flashcards/manage-page?subjectIds=${foreign.subjectId}`,
+      `/api/flashcards/manage-page?folderIds=${foreign.folderId}`,
     );
     expect(manage.status()).toBe(200);
     expect(await manage.json()).toMatchObject({ items: [], total: 0 });
-    const options = await request.get("/api/subjects/options");
+    const options = await request.get("/api/folders/options");
     expect(options.status()).toBe(200);
     const optionIds = (await options.json()).map(
       (row: { id: string }) => row.id,
     );
-    expect(optionIds).toContain(own.subjectId);
-    expect(optionIds).not.toContain(foreign.subjectId);
+    expect(optionIds).toContain(own.folderId);
+    expect(optionIds).not.toContain(foreign.folderId);
   }
 });
 
@@ -63,13 +63,13 @@ test("server-rendered detail pages do not disclose another user's documents or c
     const foreign = isolation.accounts[1 - index].data;
     const own = current.data;
     await current.page.goto(
-      `/subjects/${own.subjectId}/documents/notes/${own.noteId}`,
+      `/folders/${own.folderId}/documents/notes/${own.noteId}`,
     );
     await expect(current.page.locator("#form-edit-note-title")).toHaveValue(
       `${isolation.term}-${index} note`,
     );
     await current.page.goto(
-      `/subjects/${own.subjectId}/documents/pdfs/${own.pdfId}`,
+      `/folders/${own.folderId}/documents/pdfs/${own.pdfId}`,
     );
     await expect(
       current.page.getByRole("heading", {
@@ -83,8 +83,8 @@ test("server-rendered detail pages do not disclose another user's documents or c
     ).toContainText(`${isolation.term}-${index} question`);
 
     for (const [url, destination] of [
-      [`/subjects/${foreign.subjectId}/documents/notes/${foreign.noteId}`, "/"],
-      [`/subjects/${foreign.subjectId}/documents/pdfs/${foreign.pdfId}`, "/"],
+      [`/folders/${foreign.folderId}/documents/notes/${foreign.noteId}`, "/"],
+      [`/folders/${foreign.folderId}/documents/pdfs/${foreign.pdfId}`, "/"],
       [`/flashcards/${foreign.cardId}`, "/flashcards"],
     ]) {
       // A streamed Next.js redirect can have status 200. Assert the result and

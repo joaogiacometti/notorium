@@ -4,13 +4,13 @@ import type { DocumentListItem } from "@/features/documents/types";
 import {
   invalidateDocumentViews,
   invalidateFlashcardViews,
-  invalidateSubjectViews,
+  invalidateFolderViews,
 } from "@/lib/client-cache/invalidation";
-import { libraryKeys, subjectDocumentsQuery } from "@/lib/client-cache/queries";
+import { folderDocumentsQuery, libraryKeys } from "@/lib/client-cache/queries";
 
 const { fetchDocuments } = vi.hoisted(() => ({ fetchDocuments: vi.fn() }));
 vi.mock("@/lib/read-api/documents", () => ({
-  fetchSubjectDocuments: fetchDocuments,
+  fetchFolderDocuments: fetchDocuments,
 }));
 
 function noteRow(title: string): DocumentListItem {
@@ -18,7 +18,7 @@ function noteRow(title: string): DocumentListItem {
     id: "note",
     title,
     kind: "note",
-    subjectId: "subject",
+    folderId: "folder",
     updatedAt: new Date("2026-01-01"),
   };
 }
@@ -33,7 +33,7 @@ afterEach(() => {
 
 it("invalidates both sides of a document move and cached backlinks, leaving unrelated folders fresh", async () => {
   for (const id of ["source", "destination", "unrelated"])
-    client.setQueryData(libraryKeys.subjectDocuments(id), []);
+    client.setQueryData(libraryKeys.folderDocuments(id), []);
   client.setQueryData(libraryKeys.connections("linked-note"), {
     backlinks: [],
   });
@@ -44,14 +44,14 @@ it("invalidates both sides of a document move and cached backlinks, leaving unre
   await invalidateDocumentViews(client, ["source", "destination"]);
 
   expect(
-    client.getQueryState(libraryKeys.subjectDocuments("source"))?.isInvalidated,
+    client.getQueryState(libraryKeys.folderDocuments("source"))?.isInvalidated,
   ).toBe(true);
   expect(
-    client.getQueryState(libraryKeys.subjectDocuments("destination"))
+    client.getQueryState(libraryKeys.folderDocuments("destination"))
       ?.isInvalidated,
   ).toBe(true);
   expect(
-    client.getQueryState(libraryKeys.subjectDocuments("unrelated"))
+    client.getQueryState(libraryKeys.folderDocuments("unrelated"))
       ?.isInvalidated,
   ).toBe(false);
   expect(
@@ -63,16 +63,16 @@ it("invalidates both sides of a document move and cached backlinks, leaving unre
   ).toBe(true);
 });
 
-it("a subject change expires pickers, document lists, search, and all cached flashcard pages", async () => {
+it("a folder change expires pickers, document lists, search, and all cached flashcard pages", async () => {
   const keys = [
-    libraryKeys.subjectOptions,
-    libraryKeys.subjectDocuments("child"),
+    libraryKeys.folderOptions,
+    libraryKeys.folderDocuments("child"),
     libraryKeys.searchResults("owner", "term"),
     [...libraryKeys.flashcards, { pageIndex: 0 }],
     [...libraryKeys.flashcards, { pageIndex: 1 }],
   ];
   for (const key of keys) client.setQueryData(key, []);
-  await invalidateSubjectViews(client);
+  await invalidateFolderViews(client);
   for (const key of keys)
     expect(client.getQueryState(key)?.isInvalidated).toBe(true);
 });
@@ -83,7 +83,7 @@ it("flashcard writes expire other cached pages without reloading document lists"
     [],
   );
   client.setQueryData(libraryKeys.searchResults("owner", "term"), []);
-  client.setQueryData(libraryKeys.subjectDocuments("subject"), []);
+  client.setQueryData(libraryKeys.folderDocuments("folder"), []);
   await invalidateFlashcardViews(client);
   expect(
     client.getQueryState([...libraryKeys.flashcards, { filter: "study-later" }])
@@ -94,8 +94,7 @@ it("flashcard writes expire other cached pages without reloading document lists"
       ?.isInvalidated,
   ).toBe(true);
   expect(
-    client.getQueryState(libraryKeys.subjectDocuments("subject"))
-      ?.isInvalidated,
+    client.getQueryState(libraryKeys.folderDocuments("folder"))?.isInvalidated,
   ).toBe(false);
 });
 
@@ -106,11 +105,11 @@ it("replaces a pre-write initial load and ignores its late response", async () =
   });
   const saved = [noteRow("Saved title")];
   fetchDocuments.mockReturnValueOnce(oldResponse).mockResolvedValueOnce(saved);
-  const options = subjectDocumentsQuery("subject");
+  const options = folderDocumentsQuery("folder");
   const observer = new QueryObserver(client, options);
   const unsubscribe = observer.subscribe(() => {});
   try {
-    await invalidateDocumentViews(client, ["subject"]);
+    await invalidateDocumentViews(client, ["folder"]);
     expect(client.getQueryData(options.queryKey)).toEqual(saved);
     resolveOld([noteRow("Old title")]);
     await oldResponse;
@@ -121,14 +120,14 @@ it("replaces a pre-write initial load and ignores its late response", async () =
 });
 
 it("leaves a retryable query error when refresh fails without rejecting the successful write", async () => {
-  const options = subjectDocumentsQuery("subject");
+  const options = folderDocumentsQuery("folder");
   client.setQueryData(options.queryKey, [noteRow("Old title")]);
   fetchDocuments.mockRejectedValue(new Error("offline"));
   const observer = new QueryObserver(client, options);
   const unsubscribe = observer.subscribe(() => {});
   try {
     await expect(
-      invalidateDocumentViews(client, ["subject"]),
+      invalidateDocumentViews(client, ["folder"]),
     ).resolves.toBeUndefined();
     expect(observer.getCurrentResult().isError).toBe(true);
     fetchDocuments.mockResolvedValue([noteRow("Saved title")]);

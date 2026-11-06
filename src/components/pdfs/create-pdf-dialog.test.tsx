@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CreatePdfDialog } from "@/components/pdfs/create-pdf-dialog";
 import type { CreatePdfResult } from "@/features/pdfs/types";
 import type { UploadPdfDocumentInput } from "@/lib/attachments/upload-pdf-document";
-import type { SubjectOption } from "@/lib/server/api-contracts";
+import type { FolderOption } from "@/lib/server/api-contracts";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -16,7 +16,7 @@ class FakePdfUploader {
 
   upload = async (input: UploadPdfDocumentInput): Promise<CreatePdfResult> => {
     this.uploads.push(input);
-    return { success: true, subjectId: input.subjectId, pdfId: "pdf-1" };
+    return { success: true, folderId: input.folderId, pdfId: "pdf-1" };
   };
 }
 
@@ -26,19 +26,19 @@ vi.mock("@/lib/attachments/upload-pdf-document", () => ({
   uploadPdfDocument: (input: UploadPdfDocumentInput) => uploader.upload(input),
 }));
 
-vi.mock("@/app/actions/subjects", () => ({
-  createSubject: vi.fn(),
+vi.mock("@/app/actions/folders", () => ({
+  createFolder: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
   toast: { error: vi.fn() },
 }));
 
-const subjects: SubjectOption[] = [
+const folders: FolderOption[] = [
   {
-    id: "subject-1",
+    id: "folder-1",
     userId: "user-1",
-    parentSubjectId: null,
+    parentFolderId: null,
     name: "Biology",
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -46,7 +46,7 @@ const subjects: SubjectOption[] = [
   },
 ];
 
-describe("CreatePdfDialog with a subject picker", () => {
+describe("CreatePdfDialog with a folder picker", () => {
   let container: HTMLDivElement;
   let root: Root;
   let queryClient: QueryClient;
@@ -66,15 +66,15 @@ describe("CreatePdfDialog with a subject picker", () => {
   });
 
   async function renderDialog(
-    subjectId: string | undefined,
-    onSuccess: (pdfId: string, subjectId: string) => void = vi.fn(),
+    folderId: string | undefined,
+    onSuccess: (pdfId: string, folderId: string) => void = vi.fn(),
   ) {
     await act(async () => {
       root.render(
         <QueryClientProvider client={queryClient}>
           <CreatePdfDialog
-            subjectId={subjectId}
-            subjects={subjects}
+            folderId={folderId}
+            folders={folders}
             open
             onOpenChange={vi.fn()}
             onSuccess={onSuccess}
@@ -104,22 +104,22 @@ describe("CreatePdfDialog with a subject picker", () => {
     });
   }
 
-  it("uploads to the preselected subject and reports it on success", async () => {
+  it("uploads to the preselected folder and reports it on success", async () => {
     const onSuccess = vi.fn();
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
-    await renderDialog("subject-1", onSuccess);
+    await renderDialog("folder-1", onSuccess);
     await pickFileAndSubmit();
 
     expect(uploader.uploads).toHaveLength(1);
     expect(uploader.uploads[0]).toMatchObject({
-      subjectId: "subject-1",
+      folderId: "folder-1",
       title: "Cell Biology",
     });
-    expect(onSuccess).toHaveBeenCalledWith("pdf-1", "subject-1");
+    expect(onSuccess).toHaveBeenCalledWith("pdf-1", "folder-1");
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ["search-data"] });
   });
 
-  it("does not upload until a subject is chosen", async () => {
+  it("does not upload until a folder is chosen", async () => {
     await renderDialog(undefined);
     await pickFileAndSubmit();
 

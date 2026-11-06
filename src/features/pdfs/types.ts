@@ -6,7 +6,7 @@ export type PdfDocumentEntity = InferSelectModel<typeof pdfDocument>;
 
 export type PdfListItem = Pick<
   PdfDocumentEntity,
-  "id" | "title" | "updatedAt" | "subjectId"
+  "id" | "title" | "updatedAt" | "folderId"
 >;
 
 /** Token and server-chosen pathname for one direct browser-to-storage upload. */
@@ -15,9 +15,9 @@ export type PreparePdfUploadResult =
   | ActionErrorResult;
 
 export type CreatePdfResult =
-  | { success: true; subjectId: string; pdfId: string }
+  | { success: true; folderId: string; pdfId: string }
   | ActionErrorResult;
 
 export type PdfMutationResult =
-  | { success: true; subjectId: string }
+  | { success: true; folderId: string }
   | ActionErrorResult;

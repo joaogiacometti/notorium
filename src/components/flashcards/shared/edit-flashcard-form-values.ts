@@ -5,14 +5,14 @@ import type { FlashcardEntity } from "@/lib/server/api-contracts";
  * Maps a stored flashcard into the edit form's default values.
  *
  * @example
- * getEditFlashcardFormValues(flashcard) // { id, subjectId, front, back }
+ * getEditFlashcardFormValues(flashcard) // { id, folderId, front, back }
  */
 export function getEditFlashcardFormValues(
-  flashcard: Pick<FlashcardEntity, "id" | "subjectId" | "front" | "back">,
+  flashcard: Pick<FlashcardEntity, "id" | "folderId" | "front" | "back">,
 ): FlashcardFormValues {
   return {
     id: flashcard.id,
-    subjectId: flashcard.subjectId ?? "",
+    folderId: flashcard.folderId ?? "",
     front: flashcard.front,
     back: flashcard.back,
   };

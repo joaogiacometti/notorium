@@ -36,7 +36,7 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.flashcards.frontMaxLength":
     "Front must be at most 1,000 characters.",
   "Validation.flashcards.frontRequired": "Front is required.",
-  "Validation.flashcards.subjectRequired": "Subject is required.",
+  "Validation.flashcards.folderRequired": "Folder is required.",
   "Validation.notes.contentMaxLength":
     "Content must be at most 100,000 characters.",
   "Validation.notes.attachmentLimit":
@@ -50,10 +50,10 @@ const VALIDATION_MESSAGES: Record<string, string> = {
   "Validation.pdfs.fileMaxSize": "PDFs can be at most {maxMb} MB.",
   "Validation.search.queryMaxLength":
     "Search query must be at most 200 characters.",
-  "Validation.subjects.nameMaxLength": "Name must be at most 100 characters.",
-  "Validation.subjects.nameReservedDelimiter":
+  "Validation.folders.nameMaxLength": "Name must be at most 100 characters.",
+  "Validation.folders.nameReservedDelimiter":
     "Name cannot contain the reserved path delimiter (::).",
-  "Validation.subjects.nameRequired": "Name is required.",
+  "Validation.folders.nameRequired": "Name is required.",
   "Validation.theme.invalid": "Invalid theme.",
 };
 

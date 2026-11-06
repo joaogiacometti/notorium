@@ -29,7 +29,7 @@ export class ReadApiError extends Error {
  * non-2xx status so React Query and `try`/`catch` callers see the failure.
  *
  * @example
- * const subjects = await fetchReadApi<SubjectOption[]>("/api/subjects/options");
+ * const folders = await fetchReadApi<FolderOption[]>("/api/folders/options");
  */
 export async function fetchReadApi<TBody>(
   path: string,

@@ -49,7 +49,7 @@ export async function editNote(data: EditNoteForm): Promise<MutationResult> {
   );
 
   if (result.success) {
-    revalidateDocumentPage("notes", result.subjectId, data.id);
+    revalidateDocumentPage("notes", result.folderId, data.id);
   }
 
   return result;

@@ -3,7 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/bulk-move-flashcards-dialog";
-import type { SubjectOption } from "@/lib/server/api-contracts";
+import type { FolderOption } from "@/lib/server/api-contracts";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -11,22 +11,22 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 
 const {
   bulkMoveFlashcardsMock,
-  createSubjectMock,
+  createFolderMock,
   getDecksMock,
   toastErrorMock,
 } = vi.hoisted(() => ({
   bulkMoveFlashcardsMock: vi.fn(),
-  createSubjectMock: vi.fn(),
+  createFolderMock: vi.fn(),
   getDecksMock: vi.fn(),
   toastErrorMock: vi.fn(),
 }));
 
-vi.mock("@/app/actions/subjects", () => ({
-  createSubject: createSubjectMock,
+vi.mock("@/app/actions/folders", () => ({
+  createFolder: createFolderMock,
 }));
 
-vi.mock("@/lib/read-api/subjects", () => ({
-  fetchSubjectOptions: getDecksMock,
+vi.mock("@/lib/read-api/folders", () => ({
+  fetchFolderOptions: getDecksMock,
 }));
 
 vi.mock("@/app/actions/flashcards", () => ({
@@ -39,11 +39,11 @@ vi.mock("sonner", () => ({
   },
 }));
 
-const subjects: SubjectOption[] = [
+const folders: FolderOption[] = [
   {
     id: "deck-1",
     userId: "user-1",
-    parentSubjectId: null,
+    parentFolderId: null,
     name: "Spanish",
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -52,7 +52,7 @@ const subjects: SubjectOption[] = [
   {
     id: "deck-2",
     userId: "user-1",
-    parentSubjectId: "deck-1",
+    parentFolderId: "deck-1",
     name: "Verbs",
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -60,10 +60,10 @@ const subjects: SubjectOption[] = [
   },
 ];
 
-const createdSubject: SubjectOption = {
-  ...subjects[0],
+const createdFolder: FolderOption = {
+  ...folders[0],
   id: "deck-3",
-  parentSubjectId: null,
+  parentFolderId: null,
   name: "Chemistry",
   path: "Chemistry",
 };
@@ -79,11 +79,11 @@ function setInputValue(input: HTMLInputElement, value: string) {
 
 function getSearchInput(): HTMLInputElement {
   const input = document.body.querySelector(
-    'input[placeholder="Search subjects by path"]',
+    'input[placeholder="Search folders by path"]',
   );
 
   if (!(input instanceof HTMLInputElement)) {
-    throw new TypeError("Expected subject search input");
+    throw new TypeError("Expected folder search input");
   }
 
   return input;
@@ -131,7 +131,7 @@ describe("BulkMoveFlashcardsDialog", () => {
     document.body.appendChild(container);
     root = createRoot(container);
     queryClient = new QueryClient();
-    getDecksMock.mockResolvedValue(subjects);
+    getDecksMock.mockResolvedValue(folders);
     bulkMoveFlashcardsMock.mockResolvedValue({
       success: true,
       ids: ["flashcard-1"],
@@ -147,7 +147,7 @@ describe("BulkMoveFlashcardsDialog", () => {
     vi.clearAllMocks();
   });
 
-  it("does not refetch decks or reset the selected subject on rerender with the same ids", async () => {
+  it("does not refetch decks or reset the selected folder on rerender with the same ids", async () => {
     const ids = ["flashcard-1"];
 
     await act(async () => {
@@ -184,8 +184,8 @@ describe("BulkMoveFlashcardsDialog", () => {
     expect(getCombobox().textContent).toContain("Languages::Spanish::Verbs");
   });
 
-  it("creates a missing subject inline, selects it, and moves into it", async () => {
-    createSubjectMock.mockResolvedValue({ success: true, subjectId: "deck-3" });
+  it("creates a missing folder inline, selects it, and moves into it", async () => {
+    createFolderMock.mockResolvedValue({ success: true, folderId: "deck-3" });
 
     await act(async () => {
       renderDialog(["flashcard-1"]);
@@ -197,7 +197,7 @@ describe("BulkMoveFlashcardsDialog", () => {
       setInputValue(getSearchInput(), "Chemistry");
     });
 
-    getDecksMock.mockResolvedValue([...subjects, createdSubject]);
+    getDecksMock.mockResolvedValue([...folders, createdFolder]);
     const createOption = getCommandItems().find(
       (item) => item.textContent === "Create Chemistry",
     );
@@ -207,7 +207,7 @@ describe("BulkMoveFlashcardsDialog", () => {
       createOption?.click();
     });
 
-    expect(createSubjectMock).toHaveBeenCalledWith({
+    expect(createFolderMock).toHaveBeenCalledWith({
       name: "Chemistry",
     });
     expect(getCombobox().textContent).toContain("Chemistry");
@@ -219,7 +219,7 @@ describe("BulkMoveFlashcardsDialog", () => {
 
     expect(bulkMoveFlashcardsMock).toHaveBeenCalledWith({
       ids: ["flashcard-1"],
-      subjectId: "deck-3",
+      folderId: "deck-3",
     });
   });
 });

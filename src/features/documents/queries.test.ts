@@ -1,71 +1,68 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const getNotesBySubjectForUserMock = vi.fn();
+const getNotesByFolderForUserMock = vi.fn();
 const getRecentNotesForUserMock = vi.fn();
 
-const getPdfsBySubjectForUserMock = vi.fn();
+const getPdfsByFolderForUserMock = vi.fn();
 const getRecentPdfsForUserMock = vi.fn();
 
 vi.mock("@/features/notes/queries", () => ({
-  getNotesBySubjectForUser: getNotesBySubjectForUserMock,
+  getNotesByFolderForUser: getNotesByFolderForUserMock,
   getRecentNotesForUser: getRecentNotesForUserMock,
 }));
 
 vi.mock("@/features/pdfs/queries", () => ({
-  getPdfsBySubjectForUser: getPdfsBySubjectForUserMock,
+  getPdfsByFolderForUser: getPdfsByFolderForUserMock,
   getRecentPdfsForUser: getRecentPdfsForUserMock,
 }));
 
 describe("document queries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getPdfsBySubjectForUserMock.mockResolvedValue([]);
+    getPdfsByFolderForUserMock.mockResolvedValue([]);
     getRecentPdfsForUserMock.mockResolvedValue([]);
   });
 
-  it("lists a subject's notes in recency order", async () => {
-    getNotesBySubjectForUserMock.mockResolvedValueOnce([
+  it("lists a folder's notes in recency order", async () => {
+    getNotesByFolderForUserMock.mockResolvedValueOnce([
       {
         id: "older",
         title: "Older",
-        subjectId: "subject",
+        folderId: "folder",
         updatedAt: new Date("2026-04-19"),
       },
       {
         id: "newer",
         title: "Newer",
-        subjectId: "subject",
+        folderId: "folder",
         updatedAt: new Date("2026-04-21"),
       },
     ]);
-    const { getSubjectDocumentsForUser } = await import(
+    const { getFolderDocumentsForUser } = await import(
       "@/features/documents/queries"
     );
 
-    const documents = await getSubjectDocumentsForUser("user", "subject");
+    const documents = await getFolderDocumentsForUser("user", "folder");
 
     expect(documents.map(({ id, kind }) => ({ id, kind }))).toEqual([
       { id: "newer", kind: "note" },
       { id: "older", kind: "note" },
     ]);
-    expect(getNotesBySubjectForUserMock).toHaveBeenCalledWith(
-      "user",
-      "subject",
-    );
+    expect(getNotesByFolderForUserMock).toHaveBeenCalledWith("user", "folder");
   });
 
-  it("limits recent notes across subjects", async () => {
+  it("limits recent notes across folders", async () => {
     getRecentNotesForUserMock.mockResolvedValueOnce([
       {
         id: "old",
         title: "Old",
-        subjectId: "one",
+        folderId: "one",
         updatedAt: new Date("2026-04-18"),
       },
       {
         id: "new",
         title: "New",
-        subjectId: "two",
+        folderId: "two",
         updatedAt: new Date("2026-04-22"),
       },
     ]);
@@ -82,27 +79,27 @@ describe("document queries", () => {
   });
 
   it("interleaves notes and PDFs by recency", async () => {
-    getNotesBySubjectForUserMock.mockResolvedValueOnce([
+    getNotesByFolderForUserMock.mockResolvedValueOnce([
       {
         id: "note",
         title: "Note",
-        subjectId: "subject",
+        folderId: "folder",
         updatedAt: new Date("2026-04-19"),
       },
     ]);
-    getPdfsBySubjectForUserMock.mockResolvedValueOnce([
+    getPdfsByFolderForUserMock.mockResolvedValueOnce([
       {
         id: "pdf",
         title: "Book",
-        subjectId: "subject",
+        folderId: "folder",
         updatedAt: new Date("2026-04-20"),
       },
     ]);
-    const { getSubjectDocumentsForUser } = await import(
+    const { getFolderDocumentsForUser } = await import(
       "@/features/documents/queries"
     );
 
-    const documents = await getSubjectDocumentsForUser("user", "subject");
+    const documents = await getFolderDocumentsForUser("user", "folder");
 
     expect(documents.map(({ id, kind }) => ({ id, kind }))).toEqual([
       { id: "pdf", kind: "pdf" },

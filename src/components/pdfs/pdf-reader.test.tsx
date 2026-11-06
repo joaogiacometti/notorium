@@ -69,7 +69,7 @@ vi.mock("react-pdf", () => ({
   pdfjs: { GlobalWorkerOptions: {} },
 }));
 async function fakeSaveReadingPage() {
-  return { success: true as const, subjectId: "subject-1" };
+  return { success: true as const, folderId: "folder-1" };
 }
 
 vi.mock("@/app/actions/pdfs", () => ({
@@ -160,7 +160,7 @@ describe("PDF reader links", () => {
         <PdfReader
           pdfId="pdf-1"
           title="Book"
-          subjectPath="Books"
+          folderPath="Books"
           fileUrl="/book.pdf"
           initialPage={1}
         />,

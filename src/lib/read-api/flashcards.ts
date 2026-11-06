@@ -51,7 +51,7 @@ export async function fetchFlashcardContents(
  * Load the due cards, counts, and scheduler settings for a review session.
  *
  * @example
- * const state = await fetchFlashcardReviewState({ subjectId, limit: 50 });
+ * const state = await fetchFlashcardReviewState({ folderId, limit: 50 });
  */
 export function fetchFlashcardReviewState(
   query: FlashcardReviewStateQueryInput = {},

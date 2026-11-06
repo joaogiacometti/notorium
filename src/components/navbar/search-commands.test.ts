@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   filterSearchCommands,
-  parseSubjectIdFromPath,
   searchCommandGroupOrder,
   searchCommands,
 } from "@/components/navbar/search-commands";
@@ -48,19 +47,5 @@ describe("filterSearchCommands", () => {
 
   it("returns nothing when no command matches", () => {
     expect(filterSearchCommands("zzzz")).toEqual([]);
-  });
-});
-
-describe("parseSubjectIdFromPath", () => {
-  it("extracts the subject id from a subject route", () => {
-    expect(parseSubjectIdFromPath("/subjects/abc/documents/notes/n1")).toBe(
-      "abc",
-    );
-    expect(parseSubjectIdFromPath("/subjects/abc")).toBe("abc");
-  });
-
-  it("returns null off subject routes", () => {
-    expect(parseSubjectIdFromPath("/")).toBeNull();
-    expect(parseSubjectIdFromPath("/flashcards")).toBeNull();
   });
 });

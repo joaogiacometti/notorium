@@ -1,29 +1,28 @@
 import { and, count, desc, eq } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { pdfDocument, subject } from "@/db/schema";
+import { folder, pdfDocument } from "@/db/schema";
 import type { PdfDocumentEntity, PdfListItem } from "@/features/pdfs/types";
-import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
 
 const pdfListColumns = {
   id: pdfDocument.id,
   title: pdfDocument.title,
   updatedAt: pdfDocument.updatedAt,
-  subjectId: pdfDocument.subjectId,
+  folderId: pdfDocument.folderId,
 };
 
-export async function getPdfsBySubjectForUser(
+export async function getPdfsByFolderForUser(
   userId: string,
-  subjectId: string,
+  folderId: string,
 ): Promise<PdfListItem[]> {
   return getDb()
     .select(pdfListColumns)
     .from(pdfDocument)
-    .innerJoin(subject, eq(pdfDocument.subjectId, subject.id))
+    .innerJoin(folder, eq(pdfDocument.folderId, folder.id))
     .where(
       and(
-        eq(pdfDocument.subjectId, subjectId),
+        eq(pdfDocument.folderId, folderId),
         eq(pdfDocument.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
+        eq(folder.userId, userId),
       ),
     )
     .orderBy(desc(pdfDocument.updatedAt));
@@ -37,13 +36,8 @@ export async function getRecentPdfsForUser(
   return getDb()
     .select(pdfListColumns)
     .from(pdfDocument)
-    .innerJoin(subject, eq(pdfDocument.subjectId, subject.id))
-    .where(
-      and(
-        eq(pdfDocument.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-      ),
-    )
+    .innerJoin(folder, eq(pdfDocument.folderId, folder.id))
+    .where(and(eq(pdfDocument.userId, userId), eq(folder.userId, userId)))
     .orderBy(desc(pdfDocument.updatedAt))
     .limit(limit);
 }
@@ -55,12 +49,12 @@ export async function getPdfByIdForUser(
   const results = await getDb()
     .select({ pdfDocument })
     .from(pdfDocument)
-    .innerJoin(subject, eq(pdfDocument.subjectId, subject.id))
+    .innerJoin(folder, eq(pdfDocument.folderId, folder.id))
     .where(
       and(
         eq(pdfDocument.id, pdfId),
         eq(pdfDocument.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
+        eq(folder.userId, userId),
       ),
     )
     .limit(1);
@@ -68,19 +62,19 @@ export async function getPdfByIdForUser(
   return results[0]?.pdfDocument ?? null;
 }
 
-export async function countPdfsBySubjectForUser(
+export async function countPdfsByFolderForUser(
   userId: string,
-  subjectId: string,
+  folderId: string,
 ): Promise<number> {
   const result = await getDb()
     .select({ total: count() })
     .from(pdfDocument)
-    .innerJoin(subject, eq(pdfDocument.subjectId, subject.id))
+    .innerJoin(folder, eq(pdfDocument.folderId, folder.id))
     .where(
       and(
-        eq(pdfDocument.subjectId, subjectId),
+        eq(pdfDocument.folderId, folderId),
         eq(pdfDocument.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
+        eq(folder.userId, userId),
       ),
     );
 

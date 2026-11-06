@@ -106,7 +106,7 @@
                       "@/features/**/mutations",
                       "@/features/**/*-mutations",
                       "@/features/**/*-mutation",
-                      "@/features/subjects/subject-write"
+                      "@/features/folders/folder-write"
                     ],
                     "message": "Read-only code (Server Components, feature queries, GET read routes) must not import write modules. Use a read function from a queries module instead (for example readFsrsSettings, not ensureFsrsSettings)."
                   }

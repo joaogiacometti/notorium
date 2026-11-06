@@ -20,7 +20,7 @@ vi.mock("@/lib/server/revalidate-views", () => ({
   revalidateAppShell: revalidateAppShellMock,
 }));
 
-const moved = { success: true, subjectId: "s2", previousSubjectId: "s1" };
+const moved = { success: true, folderId: "s2", previousFolderId: "s1" };
 
 describe("moveDocument", () => {
   beforeEach(() => {
@@ -35,13 +35,13 @@ describe("moveDocument", () => {
     const result = await moveDocument({
       kind: "pdf",
       id: "p1",
-      subjectId: "s2",
+      folderId: "s2",
     });
 
     expect(result).toEqual(moved);
     expect(movePdfForUserMock).toHaveBeenCalledWith("user-1", {
       id: "p1",
-      subjectId: "s2",
+      folderId: "s2",
     });
     expect(moveNoteForUserMock).not.toHaveBeenCalled();
     expect(revalidateAppShellMock).toHaveBeenCalledOnce();
@@ -50,11 +50,11 @@ describe("moveDocument", () => {
   it("moves a note through the note mutation", async () => {
     const { moveDocument } = await import("@/app/actions/documents");
 
-    await moveDocument({ kind: "note", id: "n1", subjectId: "s2" });
+    await moveDocument({ kind: "note", id: "n1", folderId: "s2" });
 
     expect(moveNoteForUserMock).toHaveBeenCalledWith("user-1", {
       id: "n1",
-      subjectId: "s2",
+      folderId: "s2",
     });
     expect(movePdfForUserMock).not.toHaveBeenCalled();
   });
@@ -65,7 +65,7 @@ describe("moveDocument", () => {
     const result = await moveDocument({
       kind: "video" as "pdf",
       id: "v1",
-      subjectId: "s2",
+      folderId: "s2",
     });
 
     expect(result).toMatchObject({ errorCode: "documents.invalidData" });

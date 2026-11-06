@@ -12,20 +12,20 @@ import { FakeClipboard } from "@/test/fake-clipboard";
 const atpCard = {
   front: testDocument("<p>What does <strong>ATP</strong> store?</p>"),
   back: testDocument("<ul><li><p>Chemical energy</p></li></ul>"),
-  subjectPath: "Biology::Cells",
+  folderPath: "Biology::Cells",
 };
 
 const dnaCard = {
   front: testDocument("<p>What is DNA?</p>"),
   back: testDocument("<p>Genetic material</p>"),
-  subjectPath: "Biology::Genetics",
+  folderPath: "Biology::Genetics",
 };
 
 describe("formatFlashcardsAsMarkdown", () => {
-  it("formats a single card as subject, front, and back", () => {
+  it("formats a single card as folder, front, and back", () => {
     expect(formatFlashcardsAsMarkdown([atpCard])).toBe(
       [
-        "Subject: Biology::Cells",
+        "Folder: Biology::Cells",
         "### Front",
         "What does **ATP** store?",
         "### Back",
@@ -40,14 +40,14 @@ describe("formatFlashcardsAsMarkdown", () => {
     expect(markdown).toBe(
       [
         "## Card 1",
-        "Subject: Biology::Cells",
+        "Folder: Biology::Cells",
         "### Front",
         "What does **ATP** store?",
         "### Back",
         "-   Chemical energy",
         "---",
         "## Card 2",
-        "Subject: Biology::Genetics",
+        "Folder: Biology::Genetics",
         "### Front",
         "What is DNA?",
         "### Back",
@@ -56,8 +56,8 @@ describe("formatFlashcardsAsMarkdown", () => {
     );
   });
 
-  it("omits the subject line when the subject is unknown", () => {
-    expect(formatFlashcardsAsMarkdown([{ ...dnaCard, subjectPath: "" }])).toBe(
+  it("omits the folder line when the folder is unknown", () => {
+    expect(formatFlashcardsAsMarkdown([{ ...dnaCard, folderPath: "" }])).toBe(
       "### Front\n\nWhat is DNA?\n\n### Back\n\nGenetic material",
     );
   });

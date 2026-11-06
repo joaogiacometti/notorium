@@ -1,19 +1,19 @@
 /**
- * Keeps a `subjectId` search param only when it names one of the user's
- * subjects, so a stale or foreign id falls back to the unscoped view.
+ * Keeps a `folderId` search param only when it names one of the user's
+ * folders, so a stale or foreign id falls back to the unscoped view.
  *
  * @example
- * const scopedSubjectId = resolveScopedSubjectId(subjects, params.subjectId);
+ * const scopedFolderId = resolveScopedFolderId(folders, params.folderId);
  */
-export function resolveScopedSubjectId(
-  subjects: ReadonlyArray<{ id: string }>,
-  subjectId: string | undefined,
+export function resolveScopedFolderId(
+  folders: ReadonlyArray<{ id: string }>,
+  folderId: string | undefined,
 ): string | undefined {
-  if (!subjectId) {
+  if (!folderId) {
     return undefined;
   }
 
-  return subjects.some((subject) => subject.id === subjectId)
-    ? subjectId
+  return folders.some((folder) => folder.id === folderId)
+    ? folderId
     : undefined;
 }

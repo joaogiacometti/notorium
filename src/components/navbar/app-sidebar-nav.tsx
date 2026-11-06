@@ -18,7 +18,7 @@ interface AppSidebarNavProps {
 
 /**
  * Left-menu list: the search trigger and the global section links grouped as
- * one tight list. Subjects are the tree rendered below this.
+ * one tight list. Folders are the tree rendered below this.
  */
 export function AppSidebarNav({ onOpenSearch }: Readonly<AppSidebarNavProps>) {
   return (

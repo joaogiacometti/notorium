@@ -53,7 +53,7 @@ vi.mock("@/components/shared/tiptap-formatting-toolbar", () => ({
 function Harness() {
   const form = useForm<FlashcardFormValues>({
     defaultValues: {
-      subjectId: "",
+      folderId: "",
       front: testDocument(""),
       back: testDocument(""),
     },

@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { ASSISTANT_CARD_SIDE_MAX_CHARS } from "@/features/assistant/edit-contract";
-import { SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
+import { FOLDER_PATH_MAX_CHARS } from "@/lib/config/limits";
 import { idSchema } from "@/lib/validations/schemas";
 
 export const STUDY_CONTEXT_MAX_CHARS = 12_000;
 const documentFields = {
   documentId: idSchema.optional(),
   title: z.string().max(200),
-  subjectPath: z.string().max(SUBJECT_PATH_MAX_CHARS).optional(),
+  folderPath: z.string().max(FOLDER_PATH_MAX_CHARS).optional(),
   content: z.string().max(STUDY_CONTEXT_MAX_CHARS),
   partial: z.boolean(),
 };
@@ -29,7 +29,7 @@ export const studyContextSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("review"),
     mode: z.enum(["review", "exam"]),
-    subjectPath: z.string().max(SUBJECT_PATH_MAX_CHARS).optional(),
+    folderPath: z.string().max(FOLDER_PATH_MAX_CHARS).optional(),
     front: z.string().max(ASSISTANT_CARD_SIDE_MAX_CHARS),
     back: z.string().max(ASSISTANT_CARD_SIDE_MAX_CHARS).optional(),
     // Ground hints and feedback in the card's unrevealed answer. The prompt

@@ -4,9 +4,9 @@ import { testDocument } from "@/test/document";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
 import {
-  clearUserSubjectsByNames,
+  clearUserFoldersByNames,
+  createFolder,
   createNote,
-  createSubject,
   getNoteById,
 } from "./support/db";
 import { DocumentChatFixture } from "./support/document-chat-fixture";
@@ -27,16 +27,16 @@ test("reviews note changes, applies through autosave, and preserves them after r
   e2eUser,
 }) => {
   const name = getPrefixedValue("assistant-document", "note");
-  const subject = await createSubject(e2eUser.userId, name);
+  const folder = await createFolder(e2eUser.userId, name);
   const note = await createNote(
     e2eUser.userId,
-    subject.id,
+    folder.id,
     "Original note",
     "<p>Original explanation.</p><p>Preserve this paragraph.</p>",
   );
   await new DocumentChatFixture().install(page);
   try {
-    await page.goto(`/subjects/${subject.id}/documents/notes/${note.id}`);
+    await page.goto(`/folders/${folder.id}/documents/notes/${note.id}`);
     await expect(page.locator("#form-edit-note-content")).toContainText(
       "Original explanation.",
     );
@@ -72,6 +72,6 @@ test("reviews note changes, applies through autosave, and preserves them after r
       "Preserve this paragraph.",
     );
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [name]);
+    await clearUserFoldersByNames(e2eUser.userId, [name]);
   }
 });

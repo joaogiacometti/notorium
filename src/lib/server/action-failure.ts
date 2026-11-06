@@ -34,7 +34,7 @@ export async function runCatchingActionFailure<TResult>(
  * private user content.
  *
  * @example
- * logServerFailure("read_route_failed", "subjects.documents", error);
+ * logServerFailure("read_route_failed", "folders.documents", error);
  */
 export function logServerFailure(
   event:

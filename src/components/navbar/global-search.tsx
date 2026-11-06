@@ -8,7 +8,6 @@ import { SearchCommandGroups } from "@/components/navbar/search-command-groups";
 import {
   type ContextFreeDialog,
   filterSearchCommands,
-  parseSubjectIdFromPath,
 } from "@/components/navbar/search-commands";
 import {
   type ActiveCreateDialog,
@@ -28,8 +27,9 @@ import {
   CommandInput,
   CommandList,
 } from "@/components/ui/command";
-import { subjectOptionsQuery } from "@/lib/client-cache/queries";
+import { folderOptionsQuery } from "@/lib/client-cache/queries";
 import { LIMITS } from "@/lib/config/limits";
+import { getFolderIdFromPathname } from "@/lib/navigation/folder-path";
 
 interface GlobalSearchProps {
   userId: string;
@@ -55,10 +55,10 @@ export function GlobalSearch({
   const [activeDialog, setActiveDialog] = useState<ActiveCreateDialog | null>(
     null,
   );
-  const [createSubjectId, setCreateSubjectId] = useState<string | null>(null);
+  const [createFolderId, setCreateFolderId] = useState<string | null>(null);
 
-  const { data: subjects = [] } = useQuery({
-    ...subjectOptionsQuery(),
+  const { data: folders = [] } = useQuery({
+    ...folderOptionsQuery(),
     enabled: (open || activeDialog !== null) && userId.length > 0,
   });
   const results = useSearchResults(query, userId, open);
@@ -97,7 +97,7 @@ export function GlobalSearch({
     onClose: () => handleOpenChange(false),
     onNavigate: navigate,
     onCreate: (dialog: ContextFreeDialog) => {
-      setCreateSubjectId(parseSubjectIdFromPath(pathname));
+      setCreateFolderId(getFolderIdFromPathname(pathname) ?? null);
       setActiveDialog(dialog);
     },
   });
@@ -107,8 +107,8 @@ export function GlobalSearch({
   const view = onFlashcards
     ? (searchParams.get("view") ?? undefined)
     : undefined;
-  const subjectId = onFlashcards
-    ? (searchParams.get("subjectId") ?? undefined)
+  const folderId = onFlashcards
+    ? (searchParams.get("folderId") ?? undefined)
     : undefined;
   const hasResults =
     results.notes.length + results.pdfs.length + results.flashcards.length > 0;
@@ -152,7 +152,7 @@ export function GlobalSearch({
             detailOptions={{
               from: view ? "flashcards-manage" : undefined,
               view,
-              subjectId,
+              folderId,
             }}
             onSelect={navigate}
           />
@@ -160,11 +160,11 @@ export function GlobalSearch({
       </CommandDialog>
       <SearchCreateDialogs
         activeDialog={activeDialog}
-        subjectId={createSubjectId}
-        subjects={subjects}
+        folderId={createFolderId}
+        folders={folders}
         onClose={() => {
           setActiveDialog(null);
-          setCreateSubjectId(null);
+          setCreateFolderId(null);
         }}
         onNavigate={navigate}
       />

@@ -53,7 +53,7 @@ export function NoteLinkedFrom({ connections }: Readonly<NoteLinkedFromProps>) {
         {backlinks.map((backlink) => (
           <li key={backlink.id} className="min-w-0">
             <Link
-              href={getNoteDetailHref(backlink.subjectId, backlink.id)}
+              href={getNoteDetailHref(backlink.folderId, backlink.id)}
               className="block truncate text-sm text-primary underline-offset-4 hover:underline"
             >
               {backlink.title}

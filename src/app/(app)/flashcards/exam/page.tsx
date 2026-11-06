@@ -2,39 +2,39 @@ import { redirect } from "next/navigation";
 import { FlashcardExamSession } from "@/components/flashcards/review/flashcard-exam-session";
 import { shuffleExamCards } from "@/features/flashcard-review/exam";
 import { getAllFlashcardsForExam } from "@/features/flashcard-review/queries";
-import { resolveScopedSubjectId } from "@/features/flashcards/scope";
-import { getAllSubjectsWithPathsForUser } from "@/features/subjects/queries";
+import { resolveScopedFolderId } from "@/features/flashcards/scope";
+import { getAllFoldersWithPathsForUser } from "@/features/folders/queries";
 import { requireSession } from "@/lib/auth/auth";
 import { getFlashcardsHref } from "@/lib/navigation/detail-page-back-link";
 
 interface FlashcardExamPageProps {
-  searchParams: Promise<{ subjectId?: string }>;
+  searchParams: Promise<{ folderId?: string }>;
 }
 
 export default async function FlashcardExamPage({
   searchParams,
 }: Readonly<FlashcardExamPageProps>) {
   const session = await requireSession();
-  const { subjectId } = await searchParams;
-  const subjects = await getAllSubjectsWithPathsForUser(session.user.id);
-  const scopedSubjectId = resolveScopedSubjectId(subjects, subjectId);
+  const { folderId } = await searchParams;
+  const folders = await getAllFoldersWithPathsForUser(session.user.id);
+  const scopedFolderId = resolveScopedFolderId(folders, folderId);
 
   const cards = await getAllFlashcardsForExam(session.user.id, {
-    subjectId: scopedSubjectId,
+    folderId: scopedFolderId,
   });
 
   if (cards.length === 0) {
-    redirect(getFlashcardsHref("review", scopedSubjectId));
+    redirect(getFlashcardsHref("review", scopedFolderId));
   }
 
   // Shuffled here, not in the client, so the server-rendered and hydrated
   // card order match.
   return (
     <FlashcardExamSession
-      key={scopedSubjectId ?? "all"}
+      key={scopedFolderId ?? "all"}
       initialCards={shuffleExamCards(cards)}
-      subjects={subjects}
-      subjectId={scopedSubjectId}
+      folders={folders}
+      folderId={scopedFolderId}
     />
   );
 }

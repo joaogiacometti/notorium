@@ -199,14 +199,14 @@ describe("shortcutRegistry", () => {
 
 describe("getActiveShortcutCategories", () => {
   it("always includes Global", () => {
-    expect(getActiveShortcutCategories("/subjects")).toEqual([
+    expect(getActiveShortcutCategories("/folders")).toEqual([
       ShortcutCategory.Global,
     ]);
   });
 
   it("marks the notes editor active on note detail pages", () => {
     expect(
-      getActiveShortcutCategories("/subjects/s1/documents/notes/n1"),
+      getActiveShortcutCategories("/folders/s1/documents/notes/n1"),
     ).toEqual([ShortcutCategory.Global, ShortcutCategory.NotesEditor]);
   });
 
@@ -221,8 +221,8 @@ describe("getActiveShortcutCategories", () => {
     ]);
   });
 
-  it("does not mark document categories active on the subject dashboard", () => {
-    expect(getActiveShortcutCategories("/subjects/s1")).toEqual([
+  it("does not mark document categories active on the folder dashboard", () => {
+    expect(getActiveShortcutCategories("/folders/s1")).toEqual([
       ShortcutCategory.Global,
     ]);
   });

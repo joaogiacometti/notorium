@@ -29,7 +29,7 @@ export const createNoteSchema = z.object({
       validationMessage("Validation.notes.titleMaxLength"),
     ),
   content: noteContentSchema.optional(),
-  subjectId: z.string().min(1),
+  folderId: z.string().min(1),
 });
 
 export type CreateNoteForm = z.infer<typeof createNoteSchema>;

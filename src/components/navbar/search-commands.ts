@@ -1,7 +1,7 @@
 import {
-  BookOpen,
   FileText,
   FileType,
+  FolderPlus,
   Home,
   Keyboard,
   LaptopMinimal,
@@ -17,7 +17,7 @@ import type { AppTheme } from "@/lib/theme";
 export type SearchCommandGroup = "Create" | "Go to" | "Settings";
 
 /** Dialogs that open straight from a search command. */
-export type ContextFreeDialog = "subject" | "flashcard" | "note" | "pdf";
+export type ContextFreeDialog = "folder" | "flashcard" | "note" | "pdf";
 
 export type SearchCommandAction =
   | { kind: "navigate"; href: string }
@@ -37,12 +37,12 @@ export interface SearchCommand {
 
 export const searchCommands: SearchCommand[] = [
   {
-    id: "create-subject",
-    label: "Create Subject",
+    id: "create-folder",
+    label: "Create Folder",
     group: "Create",
-    keywords: ["new", "add", "create", "subject", "course"],
-    icon: BookOpen,
-    action: { kind: "create", dialog: "subject" },
+    keywords: ["new", "add", "create", "folder", "directory", "organize"],
+    icon: FolderPlus,
+    action: { kind: "create", dialog: "folder" },
   },
   {
     id: "create-flashcard",
@@ -80,7 +80,7 @@ export const searchCommands: SearchCommand[] = [
     id: "goto-flashcards",
     label: "Go to Flashcards",
     group: "Go to",
-    keywords: ["flashcards", "review", "cards", "subjects"],
+    keywords: ["flashcards", "review", "cards", "folders"],
     icon: Layers,
     action: { kind: "navigate", href: "/flashcards" },
   },
@@ -150,20 +150,4 @@ export function filterSearchCommands(query: string): SearchCommand[] {
       includesFoldedText(text, trimmed),
     ),
   );
-}
-
-/**
- * Resolve the active subject id from a route so subject-scoped creates can skip
- * the picker. Returns null off subject pages.
- *
- * @example
- * parseSubjectIdFromPath("/subjects/abc/documents/notes/n1"); // "abc"
- */
-export function parseSubjectIdFromPath(pathname: string): string | null {
-  const match = pathname.match(/^\/subjects\/([^/]+)/);
-  const segment = match?.[1];
-  if (!segment) {
-    return null;
-  }
-  return segment;
 }

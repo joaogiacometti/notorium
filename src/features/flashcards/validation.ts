@@ -35,9 +35,9 @@ export const flashcardBackSchema = richTextDocumentSchema
     validationMessage("Validation.flashcards.backMaxLength"),
   );
 
-const subjectIdField = z
+const folderIdField = z
   .string()
-  .min(1, validationMessage("Validation.flashcards.subjectRequired"));
+  .min(1, validationMessage("Validation.flashcards.folderRequired"));
 
 function withFlashcardAttachmentLimit<
   TSchema extends z.ZodType<{
@@ -60,7 +60,7 @@ function withFlashcardAttachmentLimit<
 }
 
 const createFlashcardObject = z.object({
-  subjectId: subjectIdField,
+  folderId: folderIdField,
   source: flashcardSourceSchema.optional(),
   front: flashcardFrontSchema,
   back: flashcardBackSchema,
@@ -110,7 +110,7 @@ export type BulkResetFlashcardsForm = z.infer<typeof bulkResetFlashcardsSchema>;
 
 export const bulkMoveFlashcardsSchema = z.object({
   ids: bulkIdsSchema,
-  subjectId: subjectIdField,
+  folderId: folderIdField,
 });
 
 export type BulkMoveFlashcardsForm = z.infer<typeof bulkMoveFlashcardsSchema>;
@@ -142,8 +142,8 @@ export const flashcardsManageQuerySchema = z.object({
     .min(LIMITS.pageSizeMin)
     .max(LIMITS.pageSizeMax)
     .default(25),
-  subjectId: idSchema.optional(),
-  subjectIds: optionalBulkIdsSchema,
+  folderId: idSchema.optional(),
+  folderIds: optionalBulkIdsSchema,
   search: z.string().trim().max(LIMITS.searchQueryMax).optional(),
   filter: flashcardManageFilterSchema.optional(),
 });

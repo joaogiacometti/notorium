@@ -11,7 +11,7 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 interface CreateFlashcardDialogProps {
-  subjectId?: string;
+  folderId?: string;
   trigger?: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -21,21 +21,20 @@ interface CreateFlashcardDialogProps {
 }
 
 export function CreateFlashcardDialog({
-  subjectId,
+  folderId,
   trigger,
   open,
   onOpenChange,
   onCreated,
   initialCard,
 }: Readonly<CreateFlashcardDialogProps>) {
-  const { subjects, form, dialog, handleCreateSubject } =
-    useCreateFlashcardForm({
-      open,
-      onOpenChange,
-      onCreated,
-      subjectId,
-      initialCard,
-    });
+  const { folders, form, dialog, handleCreateFolder } = useCreateFlashcardForm({
+    open,
+    onOpenChange,
+    onCreated,
+    folderId,
+    initialCard,
+  });
 
   return (
     <>
@@ -47,8 +46,8 @@ export function CreateFlashcardDialog({
             form={form}
             formId="form-create-flashcard"
             editorResetVersion={dialog.editorResetVersion}
-            subjects={subjects}
-            onCreateSubject={handleCreateSubject}
+            folders={folders}
+            onCreateFolder={handleCreateFolder}
             onSubmit={dialog.handleSubmit}
             isSubmitting={dialog.isSubmitting}
             isSaved={dialog.isSaved}

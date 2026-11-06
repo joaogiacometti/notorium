@@ -6,8 +6,8 @@ import { type ChangeEvent, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
-import { SubjectSelect } from "@/components/shared/subject-select";
-import { useCreateInlineSubjectPicker } from "@/components/shared/use-create-inline-subject-picker";
+import { FolderSelect } from "@/components/shared/folder-select";
+import { useCreateInlineFolderPicker } from "@/components/shared/use-create-inline-folder-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,29 +33,29 @@ import {
 import { uploadPdfDocument } from "@/lib/attachments/upload-pdf-document";
 import { invalidateDocumentViews } from "@/lib/client-cache/invalidation";
 import { LIMITS } from "@/lib/config/limits";
-import type { SubjectOption } from "@/lib/server/api-contracts";
+import type { FolderOption } from "@/lib/server/api-contracts";
 import { t } from "@/lib/server/server-action-errors";
 import { validationMessage } from "@/lib/validations/validation-messages";
 
 interface CreatePdfDialogProps {
-  subjectId?: string;
-  /** When set, the dialog shows a subject picker preselected to `subjectId`. */
-  subjects?: SubjectOption[];
+  folderId?: string;
+  /** When set, the dialog shows a folder picker preselected to `folderId`. */
+  folders?: FolderOption[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (pdfId: string, subjectId: string) => void;
+  onSuccess: (pdfId: string, folderId: string) => void;
 }
 
 /**
  * Picks a PDF, uploads it straight to media storage with progress, and adds it
- * to the subject as a document.
+ * to the folder as a document.
  *
  * @example
- * <CreatePdfDialog subjectId={id} open onOpenChange={setOpen} onSuccess={openPdf} />
+ * <CreatePdfDialog folderId={id} open onOpenChange={setOpen} onSuccess={openPdf} />
  */
 export function CreatePdfDialog({
-  subjectId,
-  subjects: initialSubjects,
+  folderId,
+  folders: initialFolders,
   open,
   onOpenChange,
   onSuccess,
@@ -64,28 +64,28 @@ export function CreatePdfDialog({
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const isUploading = progress !== null;
-  const emptyValues = { subjectId: subjectId ?? "", title: "" };
+  const emptyValues = { folderId: folderId ?? "", title: "" };
   const form = useForm<CreatePdfFormValues>({
     resolver: zodResolver(createPdfFormSchema),
     defaultValues: emptyValues,
   });
-  const { subjects, handleCreateSubject } = useCreateInlineSubjectPicker({
-    initialSubjects,
+  const { folders, handleCreateFolder } = useCreateInlineFolderPicker({
+    initialFolders,
     open,
-    onSubjectCreated: (createdSubjectId) =>
-      form.setValue("subjectId", createdSubjectId, {
+    onFolderCreated: (createdFolderId) =>
+      form.setValue("folderId", createdFolderId, {
         shouldDirty: true,
         shouldValidate: true,
       }),
   });
 
   // The search palette keeps this dialog mounted, so pick up the current
-  // subject each time it opens.
+  // folder each time it opens.
   useEffect(() => {
     if (open) {
-      form.reset({ subjectId: subjectId ?? "", title: "" });
+      form.reset({ folderId: folderId ?? "", title: "" });
     }
-  }, [form, open, subjectId]);
+  }, [form, open, folderId]);
   const fileProblem = file
     ? getPdfFileProblem(file)
     : form.formState.isSubmitted
@@ -106,7 +106,7 @@ export function CreatePdfDialog({
     setProgress(0);
     try {
       const result = await uploadPdfDocument({
-        subjectId: values.subjectId,
+        folderId: values.folderId,
         title: values.title,
         file,
         onProgress: setProgress,
@@ -115,9 +115,9 @@ export function CreatePdfDialog({
         toast.error(t(result.errorCode, result.errorParams));
         return;
       }
-      await invalidateDocumentViews(queryClient, [result.subjectId]);
+      await invalidateDocumentViews(queryClient, [result.folderId]);
       onOpenChange(false);
-      onSuccess(result.pdfId, result.subjectId);
+      onSuccess(result.pdfId, result.folderId);
     } finally {
       setProgress(null);
     }
@@ -138,25 +138,25 @@ export function CreatePdfDialog({
         <DialogHeader>
           <DialogTitle>Add PDF</DialogTitle>
           <DialogDescription className="sr-only">
-            Upload a PDF to read in this subject.
+            Upload a PDF to read in this folder.
           </DialogDescription>
         </DialogHeader>
         <form id="form-create-pdf" onSubmit={form.handleSubmit(handleSubmit)}>
           <FieldGroup className="gap-4">
-            {initialSubjects ? (
+            {initialFolders ? (
               <Controller
-                name="subjectId"
+                name="folderId"
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <SubjectSelect
+                  <FolderSelect
                     value={field.value}
                     onChange={(value) => field.onChange(value ?? "")}
-                    subjects={subjects}
-                    id="form-create-pdf-subject"
+                    folders={folders}
+                    id="form-create-pdf-folder"
                     error={fieldState.error?.message}
                     ariaInvalid={fieldState.invalid}
                     disabled={isUploading}
-                    onCreateSubject={handleCreateSubject}
+                    onCreateFolder={handleCreateFolder}
                   />
                 )}
               />

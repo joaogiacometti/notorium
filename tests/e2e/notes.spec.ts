@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import {
-  countFlashcardsBySubjectForUser,
+  countFlashcardsByFolderForUser,
   getFlashcardsManagePageForUser,
 } from "@/features/flashcards/queries";
 import { getNoteConnectionsForUser } from "@/features/notes/queries";
@@ -10,25 +10,25 @@ import { AssistantChatFixture } from "./support/assistant-chat-fixture";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
 import {
-  clearUserSubjectsByNames,
+  clearUserFoldersByNames,
+  createFolder,
   createNote,
-  createSubject,
   ensureApprovedE2EWorkerUser,
   getNoteById,
   updateNoteContent,
 } from "./support/db";
 import {
-  clickSubjectDocumentsMenuItem,
-  expandSubjectSidebarRow,
-  openSubjectInSidebar,
-} from "./support/subjects";
+  clickFolderDocumentsMenuItem,
+  expandFolderSidebarRow,
+  openFolderInSidebar,
+} from "./support/folders";
 
 function escapeRegex(value: string) {
   return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
 
-function getUniqueSubjectName(testTitle: string) {
-  return getPrefixedValue("note-subject", testTitle);
+function getUniqueFolderName(testTitle: string) {
+  return getPrefixedValue("note-folder", testTitle);
 }
 
 function getUniqueNoteTitle(testTitle: string) {
@@ -65,17 +65,17 @@ async function openNoteActions(page: Page) {
     .click();
 }
 
-async function clickSubjectNewNote(page: Page, subjectName: string) {
-  await clickSubjectDocumentsMenuItem(page, subjectName, "Add note");
+async function clickFolderNewNote(page: Page, folderName: string) {
+  await clickFolderDocumentsMenuItem(page, folderName, "Add note");
 }
 
 async function createSidebarNote(
   page: Page,
-  subjectName: string,
+  folderName: string,
   title: string,
 ) {
-  // Notes are created from the left-menu subject tree.
-  await clickSubjectNewNote(page, subjectName);
+  // Notes are created from the left-menu folder tree.
+  await clickFolderNewNote(page, folderName);
   const createDialog = page.getByRole("dialog", { name: "Create Note" });
   await createDialog.locator("#form-create-note-title-input").fill(title);
   await createDialog.getByRole("button", { name: "Create Note" }).click();
@@ -85,50 +85,50 @@ async function createSidebarNote(
 
 test("can create and open a note", async ({ page, e2eUser }) => {
   const user = e2eUser;
-  const subjectName = getUniqueSubjectName("create-open");
+  const folderName = getUniqueFolderName("create-open");
   const noteTitle = getUniqueNoteTitle("create-open");
   const noteContent = "Cell membranes regulate transport and communication.";
 
-  await clearUserSubjectsByNames(user.userId, [subjectName]);
+  await clearUserFoldersByNames(user.userId, [folderName]);
 
   try {
-    await createSubject(user.userId, subjectName);
-    await openSubjectInSidebar(page, subjectName);
+    await createFolder(user.userId, folderName);
+    await openFolderInSidebar(page, folderName);
 
-    await clickSubjectNewNote(page, subjectName);
+    await clickFolderNewNote(page, folderName);
     await createNoteFromDialog(page, noteTitle);
 
-    await expect(page).toHaveURL(/\/subjects\/.+\/documents\/notes\/.+$/);
+    await expect(page).toHaveURL(/\/folders\/.+\/documents\/notes\/.+$/);
     await expect(page.locator("#form-edit-note-title")).toHaveValue(noteTitle);
     await page.locator("#form-edit-note-content").click();
     await page.keyboard.type(noteContent);
     await expect(page.getByText(noteContent)).toBeVisible();
   } finally {
-    await clearUserSubjectsByNames(user.userId, [subjectName]);
+    await clearUserFoldersByNames(user.userId, [folderName]);
   }
 });
 
 test("can edit a note", async ({ page, e2eUser }) => {
   const user = e2eUser;
-  const subjectName = getUniqueSubjectName("edit");
+  const folderName = getUniqueFolderName("edit");
   const initialTitle = getUniqueNoteTitle("edit-initial");
   const updatedTitle = getUniqueNoteTitle("edit-updated");
   const updatedContent = "Updated content for note edit validation.";
 
-  await clearUserSubjectsByNames(user.userId, [subjectName]);
+  await clearUserFoldersByNames(user.userId, [folderName]);
 
   try {
-    const createdSubject = await createSubject(user.userId, subjectName);
+    const createdFolder = await createFolder(user.userId, folderName);
 
     const createdNote = await createNote(
       user.userId,
-      createdSubject.id,
+      createdFolder.id,
       initialTitle,
       "Initial",
     );
 
-    await openSubjectInSidebar(page, subjectName);
-    await expandSubjectSidebarRow(page, subjectName);
+    await openFolderInSidebar(page, folderName);
+    await expandFolderSidebarRow(page, folderName);
     await openNoteDetailByTitle(page, initialTitle);
 
     await page.locator("#form-edit-note-title").fill(updatedTitle);
@@ -155,7 +155,7 @@ test("can edit a note", async ({ page, e2eUser }) => {
     );
     await expect(page.getByText(updatedContent)).toBeVisible();
   } finally {
-    await clearUserSubjectsByNames(user.userId, [subjectName]);
+    await clearUserFoldersByNames(user.userId, [folderName]);
   }
 });
 
@@ -164,48 +164,48 @@ test("can create a title-only note from detail sidebar", async ({
   e2eUser,
 }) => {
   const user = e2eUser;
-  const subjectName = getUniqueSubjectName("sidebar-create");
+  const folderName = getUniqueFolderName("sidebar-create");
   const initialTitle = getUniqueNoteTitle("sidebar-create-initial");
   const newTitle = getUniqueNoteTitle("sidebar-create-new");
 
-  await clearUserSubjectsByNames(user.userId, [subjectName]);
+  await clearUserFoldersByNames(user.userId, [folderName]);
 
   try {
-    const createdSubject = await createSubject(user.userId, subjectName);
+    const createdFolder = await createFolder(user.userId, folderName);
 
-    await createNote(user.userId, createdSubject.id, initialTitle, "Initial");
+    await createNote(user.userId, createdFolder.id, initialTitle, "Initial");
 
-    await openSubjectInSidebar(page, subjectName);
-    await expandSubjectSidebarRow(page, subjectName);
+    await openFolderInSidebar(page, folderName);
+    await expandFolderSidebarRow(page, folderName);
     await openNoteDetailByTitle(page, initialTitle);
-    await createSidebarNote(page, subjectName, newTitle);
+    await createSidebarNote(page, folderName, newTitle);
 
-    await expect(page).toHaveURL(/\/subjects\/.+\/documents\/notes\/.+$/);
+    await expect(page).toHaveURL(/\/folders\/.+\/documents\/notes\/.+$/);
     await expect(page.locator("#form-edit-note-content")).toBeVisible();
   } finally {
-    await clearUserSubjectsByNames(user.userId, [subjectName]);
+    await clearUserFoldersByNames(user.userId, [folderName]);
   }
 });
 
 test("can delete a note", async ({ page, e2eUser }) => {
   const user = e2eUser;
-  const subjectName = getUniqueSubjectName("delete");
+  const folderName = getUniqueFolderName("delete");
   const noteTitle = getUniqueNoteTitle("delete");
 
-  await clearUserSubjectsByNames(user.userId, [subjectName]);
+  await clearUserFoldersByNames(user.userId, [folderName]);
 
   try {
-    const createdSubject = await createSubject(user.userId, subjectName);
+    const createdFolder = await createFolder(user.userId, folderName);
 
     await createNote(
       user.userId,
-      createdSubject.id,
+      createdFolder.id,
       noteTitle,
       "Delete from detail page",
     );
 
-    await openSubjectInSidebar(page, subjectName);
-    await expandSubjectSidebarRow(page, subjectName);
+    await openFolderInSidebar(page, folderName);
+    await expandFolderSidebarRow(page, folderName);
     await openNoteDetailByTitle(page, noteTitle);
 
     await openNoteActions(page);
@@ -219,7 +219,7 @@ test("can delete a note", async ({ page, e2eUser }) => {
       page.getByRole("link", { name: noteTitle, exact: true }),
     ).toHaveCount(0);
   } finally {
-    await clearUserSubjectsByNames(user.userId, [subjectName]);
+    await clearUserFoldersByNames(user.userId, [folderName]);
   }
 });
 
@@ -227,25 +227,25 @@ test("creates a flashcard from the open note through the assistant after confirm
   page,
   e2eUser,
 }) => {
-  const subjectName = getUniqueSubjectName("assistant-flashcards");
+  const folderName = getUniqueFolderName("assistant-flashcards");
   const noteTitle = getUniqueNoteTitle("assistant-flashcards");
   const content =
     "Active recall and spaced repetition are core study practices.";
   const front = "What does active recall strengthen?";
-  const subject = await createSubject(e2eUser.userId, subjectName);
+  const folder = await createFolder(e2eUser.userId, folderName);
   const assistant = new AssistantChatFixture([
-    { front, back: "Retrieval through practice.", subjectPath: subjectName },
+    { front, back: "Retrieval through practice.", folderPath: folderName },
   ]);
   await assistant.install(page);
 
   try {
     const note = await createNote(
       e2eUser.userId,
-      subject.id,
+      folder.id,
       noteTitle,
       content,
     );
-    await page.goto(`/subjects/${subject.id}/documents/notes/${note.id}`);
+    await page.goto(`/folders/${folder.id}/documents/notes/${note.id}`);
     await page
       .locator("#form-edit-note-content")
       .fill(`${content} Retrieval improves with practice.`);
@@ -260,7 +260,7 @@ test("creates a flashcard from the open note through the assistant after confirm
     expect(assistant.requests.at(-1)?.documentDraft).toMatchObject({
       kind: "note",
       title: noteTitle,
-      subjectPath: subjectName,
+      folderPath: folderName,
       blocks: [
         {
           id: "b0",
@@ -270,7 +270,7 @@ test("creates a flashcard from the open note through the assistant after confirm
       partial: false,
     });
     expect(
-      await countFlashcardsBySubjectForUser(e2eUser.userId, subject.id),
+      await countFlashcardsByFolderForUser(e2eUser.userId, folder.id),
     ).toBe(0);
 
     await page.getByRole("button", { name: "Create", exact: true }).click();
@@ -278,14 +278,14 @@ test("creates a flashcard from the open note through the assistant after confirm
       page.getByText("Flashcard created:", { exact: true }),
     ).toBeVisible();
     expect(
-      await countFlashcardsBySubjectForUser(e2eUser.userId, subject.id),
+      await countFlashcardsByFolderForUser(e2eUser.userId, folder.id),
     ).toBe(1);
-    await page.goto(`/flashcards?view=manage&subjectId=${subject.id}`);
+    await page.goto(`/flashcards?view=manage&folderId=${folder.id}`);
     await expect(page.getByTitle(front, { exact: true })).toBeVisible();
     const savedCards = await getFlashcardsManagePageForUser(e2eUser.userId, {
       pageIndex: 0,
       pageSize: 25,
-      subjectId: subject.id,
+      folderId: folder.id,
     });
     const cardUrl = `/flashcards/${savedCards.items[0].id}`;
     await page.goto(cardUrl);
@@ -295,7 +295,7 @@ test("creates a flashcard from the open note through the assistant after confirm
     });
     await expect(sourceLink).toHaveAttribute(
       "href",
-      `/subjects/${subject.id}/documents/notes/${note.id}`,
+      `/folders/${folder.id}/documents/notes/${note.id}`,
     );
     await page.reload();
     await sourceLink.click();
@@ -311,7 +311,7 @@ test("creates a flashcard from the open note through the assistant after confirm
     );
     await expect(sourceLink).toHaveCount(0);
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });
 
@@ -319,32 +319,22 @@ test("links notes with [[, follows the link, and tracks backlinks and renames", 
   page,
   e2eUser,
 }) => {
-  const subjectName = getUniqueSubjectName("note-links");
+  const folderName = getUniqueFolderName("note-links");
   const sourceTitle = getUniqueNoteTitle("link-source");
   const targetTitle = getUniqueNoteTitle("link-target");
   const renamedTitle = getUniqueNoteTitle("link-renamed");
   const otherUser = await ensureApprovedE2EWorkerUser(900);
-  const otherSubjectName = getUniqueSubjectName("note-links-other");
+  const otherFolderName = getUniqueFolderName("note-links-other");
 
-  await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
-  await clearUserSubjectsByNames(otherUser.userId, [otherSubjectName]);
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
+  await clearUserFoldersByNames(otherUser.userId, [otherFolderName]);
 
   try {
-    const subject = await createSubject(e2eUser.userId, subjectName);
-    const source = await createNote(
-      e2eUser.userId,
-      subject.id,
-      sourceTitle,
-      "",
-    );
-    const target = await createNote(
-      e2eUser.userId,
-      subject.id,
-      targetTitle,
-      "",
-    );
+    const folder = await createFolder(e2eUser.userId, folderName);
+    const source = await createNote(e2eUser.userId, folder.id, sourceTitle, "");
+    const target = await createNote(e2eUser.userId, folder.id, targetTitle, "");
 
-    await page.goto(getNoteDetailHref(subject.id, source.id));
+    await page.goto(getNoteDetailHref(folder.id, source.id));
     await page.locator("#form-edit-note-content").click();
     await page.keyboard.type(`[[${targetTitle}`);
     await page.getByRole("option", { name: targetTitle }).click();
@@ -362,7 +352,7 @@ test("links notes with [[, follows the link, and tracks backlinks and renames", 
 
     await chip.click();
     await expect(page).toHaveURL(
-      new RegExp(`${escapeRegex(getNoteDetailHref(subject.id, target.id))}$`),
+      new RegExp(`${escapeRegex(getNoteDetailHref(folder.id, target.id))}$`),
     );
     const linkedFrom = page.getByRole("region", { name: "Linked from" });
     await expect(
@@ -380,8 +370,8 @@ test("links notes with [[, follows the link, and tracks backlinks and renames", 
           (await getNoteConnectionsForUser(e2eUser.userId, source.id))
             ?.outgoing,
       )
-      .toEqual([{ id: target.id, title: renamedTitle, subjectId: subject.id }]);
-    await page.goto(getNoteDetailHref(subject.id, source.id));
+      .toEqual([{ id: target.id, title: renamedTitle, folderId: folder.id }]);
+    await page.goto(getNoteDetailHref(folder.id, source.id));
     await expect(
       page
         .locator("#form-edit-note-content")
@@ -392,19 +382,16 @@ test("links notes with [[, follows the link, and tracks backlinks and renames", 
     // mentions the attribute must not count as backlinks.
     const linkTo = (noteId: string) =>
       `<p><a data-note-id="${noteId}" data-note-link="" href="/notes/${noteId}">x</a></p>`;
-    const otherSubject = await createSubject(
-      otherUser.userId,
-      otherSubjectName,
-    );
+    const otherFolder = await createFolder(otherUser.userId, otherFolderName);
     const foreign = await createNote(
       otherUser.userId,
-      otherSubject.id,
+      otherFolder.id,
       "foreign",
       linkTo(target.id),
     );
     await createNote(
       e2eUser.userId,
-      subject.id,
+      folder.id,
       "plain mention",
       "<p>data-note-id</p>",
     );
@@ -425,7 +412,7 @@ test("links notes with [[, follows the link, and tracks backlinks and renames", 
       await getNoteConnectionsForUser(otherUser.userId, target.id),
     ).toBeNull();
   } finally {
-    await clearUserSubjectsByNames(e2eUser.userId, [subjectName]);
-    await clearUserSubjectsByNames(otherUser.userId, [otherSubjectName]);
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
+    await clearUserFoldersByNames(otherUser.userId, [otherFolderName]);
   }
 });

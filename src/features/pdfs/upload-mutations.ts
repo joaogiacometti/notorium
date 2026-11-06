@@ -1,7 +1,7 @@
 import { getDb } from "@/db/index";
 import { pdfDocument } from "@/db/schema";
 import { parseOwnedAttachmentPathname } from "@/features/attachments/pathname";
-import { checkDocumentSubjectCapacity } from "@/features/documents/move-target";
+import { checkDocumentFolderCapacity } from "@/features/documents/move-target";
 import { pdfCapacityRule } from "@/features/pdfs/capacity";
 import type {
   CreatePdfResult,
@@ -37,7 +37,7 @@ function pdfSizeLimitError(): ActionErrorResult {
  * storage, which enforces the size and type baked into the token.
  *
  * @example
- * await preparePdfUploadForUser(userId, { subjectId, fileName: "book.pdf", sizeBytes });
+ * await preparePdfUploadForUser(userId, { folderId, fileName: "book.pdf", sizeBytes });
  */
 export async function preparePdfUploadForUser(
   userId: string,
@@ -47,9 +47,9 @@ export async function preparePdfUploadForUser(
     return pdfSizeLimitError();
   }
 
-  const capacityError = await checkDocumentSubjectCapacity(
+  const capacityError = await checkDocumentFolderCapacity(
     userId,
-    data.subjectId,
+    data.folderId,
     pdfCapacityRule,
   );
   if (capacityError) {
@@ -101,10 +101,10 @@ async function issuePdfUploadToken(
 
 /**
  * Registers an uploaded PDF as a document after re-checking ownership of the
- * stored file, its real size and type, and the subject's PDF limit.
+ * stored file, its real size and type, and the folder's PDF limit.
  *
  * @example
- * await createPdfForUser(userId, { subjectId, title, fileName, blobPathname });
+ * await createPdfForUser(userId, { folderId, title, fileName, blobPathname });
  */
 export async function createPdfForUser(
   userId: string,
@@ -116,7 +116,7 @@ export async function createPdfForUser(
   }
 
   const [capacityError, stored] = await Promise.all([
-    checkDocumentSubjectCapacity(userId, data.subjectId, pdfCapacityRule),
+    checkDocumentFolderCapacity(userId, data.folderId, pdfCapacityRule),
     readStoredPdf(parsedPath.pathname),
   ]);
   if (capacityError) {
@@ -133,11 +133,11 @@ export async function createPdfForUser(
     fileName: data.fileName,
     blobPathname: parsedPath.pathname,
     sizeBytes: stored.size,
-    subjectId: data.subjectId,
+    folderId: data.folderId,
     userId,
   });
 
-  return { success: true, subjectId: data.subjectId, pdfId };
+  return { success: true, folderId: data.folderId, pdfId };
 }
 
 async function readStoredPdf(

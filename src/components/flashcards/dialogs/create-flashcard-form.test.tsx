@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CreateFlashcardForm } from "@/components/flashcards/dialogs/create-flashcard-form";
 import type { FlashcardFormValues } from "@/features/flashcards/validation";
-import type { SubjectOption } from "@/lib/server/api-contracts";
+import type { FolderOption } from "@/lib/server/api-contracts";
 import { testDocument } from "@/test/document";
 
 type ReactActEnvironmentGlobal = typeof globalThis & {
@@ -30,17 +30,17 @@ vi.mock("@/components/shared/lazy-tiptap-editor", () => ({
 }));
 
 function Harness({
-  subjects = [],
-  onCreateSubject,
+  folders = [],
+  onCreateFolder,
   isDuplicate = false,
 }: Readonly<{
   isDuplicate?: boolean;
-  subjects?: SubjectOption[];
-  onCreateSubject?: (name: string) => Promise<boolean>;
+  folders?: FolderOption[];
+  onCreateFolder?: (name: string) => Promise<boolean>;
 }>) {
   const form = useForm<FlashcardFormValues>({
     defaultValues: {
-      subjectId: "",
+      folderId: "",
       front: testDocument(""),
       back: testDocument(""),
     },
@@ -51,8 +51,8 @@ function Harness({
       open
       form={form}
       formId="form-create-flashcard"
-      subjects={subjects}
-      onCreateSubject={onCreateSubject}
+      folders={folders}
+      onCreateFolder={onCreateFolder}
       onSubmit={async () => {}}
       isSubmitting={false}
       duplicateFrontMessage={
@@ -68,13 +68,13 @@ function Harness({
   );
 }
 
-function getSubjectOption(name: string): SubjectOption {
+function getFolderOption(name: string): FolderOption {
   const now = new Date();
   return {
     id: name.toLowerCase(),
     name,
     path: name,
-    parentSubjectId: null,
+    parentFolderId: null,
     userId: "user-1",
     createdAt: now,
     updatedAt: now,
@@ -161,40 +161,40 @@ describe("CreateFlashcardForm", () => {
 
   it("renders the deck selector while decks are still loading", async () => {
     await act(async () => {
-      root.render(<Harness subjects={[]} />);
+      root.render(<Harness folders={[]} />);
     });
 
     const deckSelect = container.querySelector(
-      "#form-create-flashcard-subject",
+      "#form-create-flashcard-folder",
     ) as HTMLButtonElement;
 
     expect(deckSelect).not.toBeNull();
     expect(deckSelect.disabled).toBe(true);
-    expect(deckSelect.textContent).toContain("Select a subject");
+    expect(deckSelect.textContent).toContain("Select a folder");
   });
 
-  it("creates a subject from the filtered create row", async () => {
-    const onCreateSubject = vi.fn().mockResolvedValue(true);
+  it("creates a folder from the filtered create row", async () => {
+    const onCreateFolder = vi.fn().mockResolvedValue(true);
     await act(async () => {
       root.render(
         <Harness
-          subjects={[getSubjectOption("CS")]}
-          onCreateSubject={onCreateSubject}
+          folders={[getFolderOption("CS")]}
+          onCreateFolder={onCreateFolder}
         />,
       );
     });
 
-    const subjectSelect = container.querySelector(
-      "#form-create-flashcard-subject",
+    const folderSelect = container.querySelector(
+      "#form-create-flashcard-folder",
     ) as HTMLButtonElement;
-    expect(subjectSelect.disabled).toBe(false);
+    expect(folderSelect.disabled).toBe(false);
 
     await act(async () => {
-      subjectSelect.click();
+      folderSelect.click();
     });
 
     const searchInput = document.body.querySelector(
-      'input[placeholder="Search subjects by path"]',
+      'input[placeholder="Search folders by path"]',
     ) as HTMLInputElement;
     await act(async () => {
       setInputValue(searchInput, "Biology");
@@ -209,6 +209,6 @@ describe("CreateFlashcardForm", () => {
       (createItem as HTMLElement).click();
     });
 
-    expect(onCreateSubject).toHaveBeenCalledWith("Biology");
+    expect(onCreateFolder).toHaveBeenCalledWith("Biology");
   });
 });

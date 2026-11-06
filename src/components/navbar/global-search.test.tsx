@@ -46,8 +46,8 @@ vi.mock("@/lib/read-api/search", () => ({
   fetchSearchData: (query: string) => api.fetchSearchData(query),
 }));
 
-vi.mock("@/lib/read-api/subjects", () => ({
-  fetchSubjectOptions: async () => [],
+vi.mock("@/lib/read-api/folders", () => ({
+  fetchFolderOptions: async () => [],
 }));
 
 vi.mock("@/components/account/account-settings-provider", () => ({
@@ -68,13 +68,13 @@ function note(id: string, title: string): SearchData["notes"][number] {
     id,
     title,
     content: testDocument(""),
-    subjectId: "subject-1",
-    subjectName: "Biology",
+    folderId: "folder-1",
+    folderName: "Biology",
   };
 }
 
 function pdf(id: string, title: string): SearchData["pdfs"][number] {
-  return { id, title, subjectId: "subject-1", subjectName: "Biology" };
+  return { id, title, folderId: "folder-1", folderName: "Biology" };
 }
 
 function flashcard(
@@ -85,9 +85,9 @@ function flashcard(
     id,
     front: testDocument(front),
     back: testDocument(""),
-    subjectId: "subject-1",
-    subjectName: "Biology",
-    subjectPath: "Biology",
+    folderId: "folder-1",
+    folderName: "Biology",
+    folderPath: "Biology",
   };
 }
 
@@ -176,7 +176,7 @@ describe("GlobalSearch", () => {
   it("shows only commands before typing, without loading anything", async () => {
     await renderSearch();
     const labels = optionLabels();
-    expect(labels).toContain("Create Subject");
+    expect(labels).toContain("Create Folder");
     expect(labels).toContain("Show Keyboard Shortcuts");
     expect(api.searchedQueries).toEqual([]);
     expect(document.body.textContent).not.toContain("Searching");
@@ -203,25 +203,23 @@ describe("GlobalSearch", () => {
     await typeQuery("m");
 
     expect(optionLabels()).toContain("Theme: Dark");
-    expect(optionLabels()).not.toContain("Create Subject");
+    expect(optionLabels()).not.toContain("Create Folder");
     expect(api.searchedQueries).toEqual([]);
   });
 
   it("lists matching commands together with server results", async () => {
     api.matches = {
-      notes: [note("n1", "Subject notes")],
+      notes: [note("n1", "Folder notes")],
       pdfs: [],
       flashcards: [],
     };
     await renderSearch();
-    await typeQuery("subject");
+    await typeQuery("folder");
 
     const labels = optionLabels();
-    expect(api.searchedQueries).toEqual(["subject"]);
-    expect(labels).toContain("Create Subject");
-    expect(labels.some((label) => label.startsWith("Subject notes"))).toBe(
-      true,
-    );
+    expect(api.searchedQueries).toEqual(["folder"]);
+    expect(labels).toContain("Create Folder");
+    expect(labels.some((label) => label.startsWith("Folder notes"))).toBe(true);
     expect(labels).not.toContain("Theme: Dark");
   });
 
@@ -286,7 +284,7 @@ describe("GlobalSearch", () => {
     clickOption("Cell biology textbook");
 
     expect(routerPushMock).toHaveBeenCalledWith(
-      "/subjects/subject-1/documents/pdfs/p1",
+      "/folders/folder-1/documents/pdfs/p1",
     );
   });
 

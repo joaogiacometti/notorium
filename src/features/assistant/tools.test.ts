@@ -24,17 +24,17 @@ describe("flashcardProposalInputSchema", () => {
       }).success,
     ).toBe(false);
   });
-  it("accepts several cards with optional subject paths", () => {
+  it("accepts several cards with optional folder paths", () => {
     const parsed = flashcardProposalInputSchema.parse({
       cards: [
         { front: " What is ATP? ", back: "Energy carrier." },
-        { ...atpCard, subjectPath: "Biology::Cells" },
+        { ...atpCard, folderPath: "Biology::Cells" },
       ],
     });
 
     expect(parsed.cards).toEqual([
       atpCard,
-      { ...atpCard, subjectPath: "Biology::Cells" },
+      { ...atpCard, folderPath: "Biology::Cells" },
     ]);
   });
 

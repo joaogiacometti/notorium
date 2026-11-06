@@ -36,7 +36,7 @@ function makeCard(): FlashcardReviewEntity {
     reviewCount: 0,
     lapseCount: 0,
     studyLaterAt: null,
-    subjectId: "subject-1",
+    folderId: "folder-1",
     userId: "user-1",
     createdAt: new Date("2026-03-07T11:00:00.000Z"),
     updatedAt: new Date("2026-03-07T11:00:00.000Z"),
@@ -76,7 +76,7 @@ describe("ReviewCardEditor", () => {
         <QueryProvider>
           <ReviewCardEditor
             card={makeCard()}
-            subjectLabel="Biology"
+            folderLabel="Biology"
             onSaved={onSaved}
             onClose={onClose}
             renderSession={renderSession}

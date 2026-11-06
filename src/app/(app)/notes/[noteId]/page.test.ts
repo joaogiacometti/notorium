@@ -25,11 +25,11 @@ async function visit(noteId: string) {
 describe("note link page", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("redirects an owned note to its current subject", async () => {
-    getNoteByIdForUser.mockResolvedValue({ id: "n1", subjectId: "s2" });
+  it("redirects an owned note to its current folder", async () => {
+    getNoteByIdForUser.mockResolvedValue({ id: "n1", folderId: "s2" });
 
     await expect(visit("n1")).rejects.toThrow(
-      "redirect:/subjects/s2/documents/notes/n1",
+      "redirect:/folders/s2/documents/notes/n1",
     );
     expect(getNoteByIdForUser).toHaveBeenCalledWith("user-1", "n1");
   });

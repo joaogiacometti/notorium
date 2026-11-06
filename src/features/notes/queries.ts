@@ -1,7 +1,6 @@
 import { and, count, desc, eq, inArray, ne, type SQL, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { note, subject } from "@/db/schema";
-import { getOwnedActiveSubjectFilters } from "@/features/subjects/query-helpers";
+import { folder, note } from "@/db/schema";
 import { extractNoteLinkIds } from "@/lib/editor/note-links";
 import type {
   NoteConnections,
@@ -9,19 +8,19 @@ import type {
   NoteLinkTarget,
 } from "@/lib/server/api-contracts";
 
-export async function getNotesBySubjectForUser(
+export async function getNotesByFolderForUser(
   userId: string,
-  subjectId: string,
+  folderId: string,
 ): Promise<NoteEntity[]> {
   return getDb()
     .select({ note })
     .from(note)
-    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .innerJoin(folder, eq(note.folderId, folder.id))
     .where(
       and(
-        eq(note.subjectId, subjectId),
+        eq(note.folderId, folderId),
         eq(note.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
+        eq(folder.userId, userId),
       ),
     )
     .orderBy(desc(note.updatedAt))
@@ -29,7 +28,7 @@ export async function getNotesBySubjectForUser(
 }
 
 /**
- * Most recently updated notes across all of a user's active subjects, used by
+ * Most recently updated notes across all of a user's folders, used by
  * the home dashboard's "recent documents" card. Selects only list-preview
  * columns (never the `content` blob).
  *
@@ -39,19 +38,17 @@ export async function getNotesBySubjectForUser(
 export async function getRecentNotesForUser(
   userId: string,
   limit: number,
-): Promise<Pick<NoteEntity, "id" | "title" | "updatedAt" | "subjectId">[]> {
+): Promise<Pick<NoteEntity, "id" | "title" | "updatedAt" | "folderId">[]> {
   return getDb()
     .select({
       id: note.id,
       title: note.title,
       updatedAt: note.updatedAt,
-      subjectId: note.subjectId,
+      folderId: note.folderId,
     })
     .from(note)
-    .innerJoin(subject, eq(note.subjectId, subject.id))
-    .where(
-      and(eq(note.userId, userId), ...getOwnedActiveSubjectFilters(userId)),
-    )
+    .innerJoin(folder, eq(note.folderId, folder.id))
+    .where(and(eq(note.userId, userId), eq(folder.userId, userId)))
     .orderBy(desc(note.updatedAt))
     .limit(limit);
 }
@@ -63,12 +60,12 @@ export async function getNoteByIdForUser(
   const results = await getDb()
     .select({ note })
     .from(note)
-    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .innerJoin(folder, eq(note.folderId, folder.id))
     .where(
       and(
         eq(note.id, noteId),
         eq(note.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
+        eq(folder.userId, userId),
       ),
     )
     .limit(1);
@@ -118,32 +115,26 @@ function selectNoteLinkTargets(
   condition: SQL | undefined,
 ): Promise<NoteLinkTarget[]> {
   return getDb()
-    .select({ id: note.id, title: note.title, subjectId: note.subjectId })
+    .select({ id: note.id, title: note.title, folderId: note.folderId })
     .from(note)
-    .innerJoin(subject, eq(note.subjectId, subject.id))
-    .where(
-      and(
-        eq(note.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
-        condition,
-      ),
-    )
+    .innerJoin(folder, eq(note.folderId, folder.id))
+    .where(and(eq(note.userId, userId), eq(folder.userId, userId), condition))
     .orderBy(desc(note.updatedAt));
 }
 
-export async function countNotesBySubjectForUser(
+export async function countNotesByFolderForUser(
   userId: string,
-  subjectId: string,
+  folderId: string,
 ): Promise<number> {
   const result = await getDb()
     .select({ total: count() })
     .from(note)
-    .innerJoin(subject, eq(note.subjectId, subject.id))
+    .innerJoin(folder, eq(note.folderId, folder.id))
     .where(
       and(
-        eq(note.subjectId, subjectId),
+        eq(note.folderId, folderId),
         eq(note.userId, userId),
-        ...getOwnedActiveSubjectFilters(userId),
+        eq(folder.userId, userId),
       ),
     );
 

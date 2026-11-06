@@ -127,15 +127,15 @@ export const verification = pgTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
-export const subject = pgTable(
-  "subject",
+export const folder = pgTable(
+  "folder",
   {
     id: text("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
-    parentSubjectId: text("parent_subject_id").references(
-      (): AnyPgColumn => subject.id,
+    parentFolderId: text("parent_folder_id").references(
+      (): AnyPgColumn => folder.id,
       { onDelete: "cascade" },
     ),
     userId: text("user_id")
@@ -148,14 +148,14 @@ export const subject = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("subject_userId_parentSubjectId_name_unique").on(
+    uniqueIndex("folder_userId_parentFolderId_name_unique").on(
       table.userId,
-      sql`coalesce(${table.parentSubjectId}, '__root_subject__')`,
+      sql`coalesce(${table.parentFolderId}, '__root_folder__')`,
       table.name,
     ),
-    index("subject_parentSubjectId_idx").on(table.parentSubjectId),
-    index("subject_userId_idx").on(table.userId),
-    unaccentTrigramIndex("subject_name_unaccent_trgm_idx", table.name),
+    index("folder_parentFolderId_idx").on(table.parentFolderId),
+    index("folder_userId_idx").on(table.userId),
+    unaccentTrigramIndex("folder_name_unaccent_trgm_idx", table.name),
   ],
 );
 
@@ -168,9 +168,9 @@ export const note = pgTable(
     title: text("title").notNull(),
     content: jsonb("content_document").$type<RichTextDocument>().notNull(),
     contentText: text("content_text").notNull().default(""),
-    subjectId: text("subject_id")
+    folderId: text("folder_id")
       .notNull()
-      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
+      .references((): AnyPgColumn => folder.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -181,7 +181,7 @@ export const note = pgTable(
       .notNull(),
   },
   (table) => [
-    index("note_subjectId_idx").on(table.subjectId),
+    index("note_folderId_idx").on(table.folderId),
     index("note_userId_idx").on(table.userId),
     index("note_userId_updatedAt_idx").on(table.userId, table.updatedAt),
     unaccentTrigramIndex("note_title_unaccent_trgm_idx", table.title),
@@ -204,9 +204,9 @@ export const pdfDocument = pgTable(
     sizeBytes: integer("size_bytes").notNull(),
     pageCount: integer("page_count"),
     lastPage: integer("last_page").notNull().default(1),
-    subjectId: text("subject_id")
+    folderId: text("folder_id")
       .notNull()
-      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
+      .references((): AnyPgColumn => folder.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -217,7 +217,7 @@ export const pdfDocument = pgTable(
       .notNull(),
   },
   (table) => [
-    index("pdf_document_subjectId_idx").on(table.subjectId),
+    index("pdf_document_folderId_idx").on(table.folderId),
     index("pdf_document_userId_idx").on(table.userId),
     index("pdf_document_userId_updatedAt_idx").on(
       table.userId,
@@ -252,9 +252,9 @@ export const flashcard = pgTable(
     // Set when the user defers the card to the end of review sessions; null
     // means unmarked. Cleared only by the user.
     studyLaterAt: timestamp("study_later_at"),
-    subjectId: text("subject_id")
+    folderId: text("folder_id")
       .notNull()
-      .references((): AnyPgColumn => subject.id, { onDelete: "cascade" }),
+      .references((): AnyPgColumn => folder.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -269,16 +269,16 @@ export const flashcard = pgTable(
       table.userId,
       table.frontNormalized,
     ),
-    index("flashcard_subjectId_idx").on(table.subjectId),
+    index("flashcard_folderId_idx").on(table.folderId),
     index("flashcard_userId_idx").on(table.userId),
     index("flashcard_dueAt_idx").on(table.dueAt),
     index("flashcard_userId_dueAt_idx").on(table.userId, table.dueAt),
     // ON DELETE SET NULL looks up cards by source; unindexed it scans flashcard.
     index("flashcard_sourceNoteId_idx").on(table.sourceNoteId),
     index("flashcard_userId_updatedAt_idx").on(table.userId, table.updatedAt),
-    index("flashcard_userId_subjectId_updatedAt_idx").on(
+    index("flashcard_userId_folderId_updatedAt_idx").on(
       table.userId,
-      table.subjectId,
+      table.folderId,
       table.updatedAt,
     ),
     unaccentTrigramIndex("flashcard_front_unaccent_trgm_idx", table.frontText),
@@ -329,7 +329,7 @@ export const flashcardReviewLog = pgTable(
     // Historical identifier, intentionally not a foreign key: deleting a card
     // must not erase review activity or optimization input.
     flashcardId: text("flashcard_id").notNull(),
-    subjectId: text("subject_id"),
+    folderId: text("folder_id"),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -350,7 +350,7 @@ export const flashcardReviewLog = pgTable(
   (table) => [
     index("flashcard_review_log_flashcardId_idx").on(table.flashcardId),
     index("flashcard_review_log_userId_idx").on(table.userId),
-    index("flashcard_review_log_subjectId_idx").on(table.subjectId),
+    index("flashcard_review_log_folderId_idx").on(table.folderId),
     index("flashcard_review_log_userId_reviewedAt_idx").on(
       table.userId,
       table.reviewedAt,
@@ -369,7 +369,7 @@ export const flashcardReviewLog = pgTable(
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
-  subjects: many(subject),
+  folders: many(folder),
   notes: many(note),
   pdfDocuments: many(pdfDocument),
   flashcards: many(flashcard),
@@ -390,15 +390,15 @@ export const accountRelations = relations(account, ({ one }) => ({
   }),
 }));
 
-export const subjectRelations = relations(subject, ({ one, many }) => ({
-  parentSubject: one(subject, {
-    fields: [subject.parentSubjectId],
-    references: [subject.id],
-    relationName: "subjectHierarchy",
+export const folderRelations = relations(folder, ({ one, many }) => ({
+  parentFolder: one(folder, {
+    fields: [folder.parentFolderId],
+    references: [folder.id],
+    relationName: "folderHierarchy",
   }),
-  childSubjects: many(subject, { relationName: "subjectHierarchy" }),
+  childFolders: many(folder, { relationName: "folderHierarchy" }),
   user: one(user, {
-    fields: [subject.userId],
+    fields: [folder.userId],
     references: [user.id],
   }),
   notes: many(note),
@@ -407,9 +407,9 @@ export const subjectRelations = relations(subject, ({ one, many }) => ({
 }));
 
 export const noteRelations = relations(note, ({ one }) => ({
-  subject: one(subject, {
-    fields: [note.subjectId],
-    references: [subject.id],
+  folder: one(folder, {
+    fields: [note.folderId],
+    references: [folder.id],
   }),
   user: one(user, {
     fields: [note.userId],
@@ -418,9 +418,9 @@ export const noteRelations = relations(note, ({ one }) => ({
 }));
 
 export const pdfDocumentRelations = relations(pdfDocument, ({ one }) => ({
-  subject: one(subject, {
-    fields: [pdfDocument.subjectId],
-    references: [subject.id],
+  folder: one(folder, {
+    fields: [pdfDocument.folderId],
+    references: [folder.id],
   }),
   user: one(user, {
     fields: [pdfDocument.userId],
@@ -433,9 +433,9 @@ export const flashcardRelations = relations(flashcard, ({ one }) => ({
     fields: [flashcard.sourceNoteId],
     references: [note.id],
   }),
-  subject: one(subject, {
-    fields: [flashcard.subjectId],
-    references: [subject.id],
+  folder: one(folder, {
+    fields: [flashcard.folderId],
+    references: [folder.id],
   }),
   user: one(user, {
     fields: [flashcard.userId],

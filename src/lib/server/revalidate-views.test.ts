@@ -36,7 +36,7 @@ describe("revalidate-views", () => {
     revalidateDocumentPage("notes", "math", "note-1");
 
     expect(revalidationLog.calls).toEqual([
-      ["/subjects/math/documents/notes/note-1", undefined],
+      ["/folders/math/documents/notes/note-1", undefined],
     ]);
   });
 });

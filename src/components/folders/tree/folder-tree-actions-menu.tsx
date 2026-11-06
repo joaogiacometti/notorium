@@ -1,0 +1,175 @@
+"use client";
+
+import {
+  Files,
+  FileText,
+  FileType,
+  FolderPlus,
+  GraduationCap,
+  Layers,
+  ListChecks,
+  MoreHorizontal,
+  Pencil,
+  SquarePen,
+  Trash2,
+} from "lucide-react";
+import Link from "next/link";
+import { useRef } from "react";
+import type {
+  FolderDeleteTarget,
+  FolderEditTarget,
+} from "@/components/folders/tree/folder-tree-types";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  getFlashcardReviewSessionHref,
+  getFlashcardsHref,
+} from "@/lib/navigation/detail-page-back-link";
+import type { FolderTreeNode } from "@/lib/server/api-contracts";
+
+interface FolderActionsMenuProps {
+  node: FolderTreeNode;
+  onCreateChild: (parentFolderId: string) => void;
+  onCreateNote: (folderId: string) => void;
+  onCreatePdf: (folderId: string) => void;
+  onCreateFlashcard: (folderId: string) => void;
+  onEdit: (folder: FolderEditTarget) => void;
+  onDelete: (folder: FolderDeleteTarget) => void;
+}
+
+/**
+ * The per-folder kebab menu in the tree row. Subfolder is a direct action;
+ * document and flashcard actions each share a submenu.
+ */
+export function FolderActionsMenu({
+  node,
+  onCreateChild,
+  onCreateNote,
+  onCreatePdf,
+  onCreateFlashcard,
+  onEdit,
+  onDelete,
+}: Readonly<FolderActionsMenuProps>) {
+  // Each create/edit item opens a dialog. Defer the dialog open until the menu
+  // has fully closed: while the dropdown plays its close animation it still
+  // traps focus, so opening the dialog now would let that trap steal focus back
+  // from the dialog's autofocused input. Running the action in onCloseAutoFocus
+  // (and preventing the default trigger refocus) opens the dialog only once the
+  // menu is gone, so its input keeps focus.
+  const pendingActionRef = useRef<(() => void) | null>(null);
+  function openDialog(action: () => void) {
+    pendingActionRef.current = action;
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-6 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+          aria-label={`Actions for ${node.name}`}
+        >
+          <MoreHorizontal className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        onCloseAutoFocus={(event) => {
+          const action = pendingActionRef.current;
+          if (action) {
+            pendingActionRef.current = null;
+            event.preventDefault();
+            action();
+          }
+        }}
+      >
+        <DropdownMenuItem
+          onClick={() => openDialog(() => onCreateChild(node.id))}
+        >
+          <FolderPlus className="size-4" />
+          Subfolder
+        </DropdownMenuItem>
+
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Files className="size-4" />
+            Documents
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem
+              onClick={() => openDialog(() => onCreateNote(node.id))}
+            >
+              <FileText className="size-4" />
+              Add note
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => openDialog(() => onCreatePdf(node.id))}
+            >
+              <FileType className="size-4" />
+              Add PDF
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Layers className="size-4" />
+            Flashcards
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem
+              onClick={() => openDialog(() => onCreateFlashcard(node.id))}
+            >
+              <SquarePen className="size-4" />
+              Add flashcard
+            </DropdownMenuItem>
+            {node.dueFlashcardCount > 0 && (
+              <DropdownMenuItem asChild>
+                <Link href={getFlashcardReviewSessionHref(node.id)}>
+                  <GraduationCap className="size-4" />
+                  Review flashcards
+                </Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem asChild>
+              <Link href={getFlashcardsHref("manage", node.id)}>
+                <ListChecks className="size-4" />
+                Manage flashcards
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() =>
+            openDialog(() => onEdit({ id: node.id, name: node.name }))
+          }
+        >
+          <Pencil className="size-4" />
+          Rename
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onClick={() =>
+            openDialog(() => onDelete({ id: node.id, name: node.path }))
+          }
+        >
+          <Trash2 className="size-4" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

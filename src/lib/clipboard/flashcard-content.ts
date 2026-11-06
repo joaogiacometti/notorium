@@ -6,7 +6,7 @@ import type { RichTextDocument } from "@/lib/editor/document";
 export interface FlashcardCopySource {
   front: RichTextDocument;
   back: RichTextDocument;
-  subjectPath: string;
+  folderPath: string;
 }
 
 type FlashcardCopySources = readonly FlashcardCopySource[];
@@ -21,12 +21,12 @@ export class NoFlashcardsToCopyError extends Error {
 
 /**
  * Formats flashcards as one Markdown document for an AI chat or a message. A
- * single card is its subject, front, and back; several cards get numbered
+ * single card is its folder, front, and back; several cards get numbered
  * headings and `---` separators so each stays distinct.
  *
  * @example
  * formatFlashcardsAsMarkdown([
- *   { front: questionDocument, back: answerDocument, subjectPath: "Bio" },
+ *   { front: questionDocument, back: answerDocument, folderPath: "Bio" },
  * ]);
  */
 export function formatFlashcardsAsMarkdown(
@@ -72,9 +72,9 @@ export async function copyFlashcardsToClipboard(
 }
 
 function formatFlashcardBody(card: FlashcardCopySource): string {
-  const subjectLine = card.subjectPath ? `Subject: ${card.subjectPath}` : "";
+  const folderLine = card.folderPath ? `Folder: ${card.folderPath}` : "";
   return [
-    subjectLine,
+    folderLine,
     "### Front",
     richTextToMarkdown(card.front),
     "### Back",

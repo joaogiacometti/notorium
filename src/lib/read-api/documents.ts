@@ -20,16 +20,16 @@ export function fetchNoteConnections(
 }
 
 /**
- * Load one subject's notes for the tree sidebar.
+ * Load one folder's notes for the tree sidebar.
  *
  * @example
- * const documents = await fetchSubjectDocuments(subjectId);
+ * const documents = await fetchFolderDocuments(folderId);
  */
-export function fetchSubjectDocuments(
-  subjectId: string,
+export function fetchFolderDocuments(
+  folderId: string,
 ): Promise<DocumentListItem[]> {
   return fetchReadApi<DocumentListItem[]>(
-    `/api/subjects/${encodeURIComponent(subjectId)}/documents`,
+    `/api/folders/${encodeURIComponent(folderId)}/documents`,
   );
 }
 

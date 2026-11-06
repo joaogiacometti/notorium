@@ -16,7 +16,7 @@ const emptyManageItems: FlashcardManagePage["items"] = [];
 
 interface UseFlashcardsManagerControllerOptions {
   initialPageData: FlashcardManagePage;
-  initialSubjectId?: string;
+  initialFolderId?: string;
   initialSearch?: string;
   initialFilter?: FlashcardManageFilter;
   initialPageSize: number;
@@ -33,19 +33,19 @@ type FlashcardManagerDialog =
   | null;
 
 function buildManageParams({
-  subjectId,
+  folderId,
   pageSize,
   search,
   filter,
 }: Readonly<{
-  subjectId?: string;
+  folderId?: string;
   pageSize: number;
   search: string;
   filter?: FlashcardManageFilter;
 }>) {
   const query = new URLSearchParams({ view: "manage" });
 
-  if (subjectId) query.set("subjectId", subjectId);
+  if (folderId) query.set("folderId", folderId);
   if (search) query.set("search", search);
   if (filter) query.set("filter", filter);
   if (pageSize !== DEFAULT_PAGE_SIZE) query.set("pageSize", String(pageSize));
@@ -55,7 +55,7 @@ function buildManageParams({
 
 export function useFlashcardsManagerController({
   initialPageData,
-  initialSubjectId,
+  initialFolderId,
   initialSearch,
   initialFilter,
   initialPageSize,
@@ -67,17 +67,17 @@ export function useFlashcardsManagerController({
   const [selectedFlashcardIds, setSelectedFlashcardIds] = useState<string[]>(
     [],
   );
-  const [selectedSubjectId, setSelectedSubjectId] = useState<
-    string | undefined
-  >(initialSubjectId);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
+    initialFolderId,
+  );
   const [pageSizeState, setPageSizeState] = useState(initialPageSize);
   const pathnameRef = useRef(pathname);
   const routerRef = useRef(router);
   const hasSyncedUrlRef = useRef(false);
   pathnameRef.current = pathname;
   routerRef.current = router;
-  const selectedSubjectIdRef = useRef(selectedSubjectId);
-  selectedSubjectIdRef.current = selectedSubjectId;
+  const selectedFolderIdRef = useRef(selectedFolderId);
+  selectedFolderIdRef.current = selectedFolderId;
   const {
     filter,
     pageIndex,
@@ -105,7 +105,7 @@ export function useFlashcardsManagerController({
     }
 
     const query = buildManageParams({
-      subjectId: selectedSubjectIdRef.current,
+      folderId: selectedFolderIdRef.current,
       pageSize: pageSizeState,
       search: resolvedSearchQuery,
       filter,
@@ -116,12 +116,12 @@ export function useFlashcardsManagerController({
     });
   }, [pageSizeState, resolvedSearchQuery, filter]);
 
-  function handleSubjectChange(nextSubjectId: string | undefined) {
+  function handleFolderChange(nextFolderId: string | undefined) {
     setSelectedFlashcardIds([]);
-    setSelectedSubjectId(nextSubjectId);
+    setSelectedFolderId(nextFolderId);
 
     const query = buildManageParams({
-      subjectId: nextSubjectId,
+      folderId: nextFolderId,
       pageSize: pageSizeState,
       search: resolvedSearchQuery,
       filter,
@@ -142,13 +142,13 @@ export function useFlashcardsManagerController({
     ...flashcardsManageQuery({
       pageIndex,
       pageSize: pageSizeState,
-      subjectId: selectedSubjectId,
+      folderId: selectedFolderId,
       search: resolvedSearchQuery,
       filter,
     }),
     initialData:
       pageIndex === 0 &&
-      (selectedSubjectId ?? undefined) === (initialSubjectId ?? undefined) &&
+      (selectedFolderId ?? undefined) === (initialFolderId ?? undefined) &&
       pageSizeState === initialPageSize &&
       resolvedSearchQuery === (initialSearch ?? "") &&
       filter === initialFilter
@@ -159,11 +159,11 @@ export function useFlashcardsManagerController({
 
   const flashcards = managePageQuery.data?.items ?? emptyManageItems;
   const total = managePageQuery.data?.total ?? 0;
-  const subjectCardCount = managePageQuery.data?.subjectCardCount ?? 0;
-  const isAtSubjectLimit =
+  const folderCardCount = managePageQuery.data?.folderCardCount ?? 0;
+  const isAtFolderLimit =
     !managePageQuery.isError &&
-    selectedSubjectId !== undefined &&
-    subjectCardCount >= LIMITS.maxFlashcardsPerSubject;
+    selectedFolderId !== undefined &&
+    folderCardCount >= LIMITS.maxFlashcardsPerFolder;
 
   useEffect(() => {
     const pageIds = new Set(flashcards.map((flashcard) => flashcard.id));
@@ -191,14 +191,14 @@ export function useFlashcardsManagerController({
   return {
     dialog,
     flashcards,
-    isAtSubjectLimit,
-    subjectCardCount,
+    isAtFolderLimit,
+    folderCardCount,
     managePageQuery,
     pageIndex,
     clearSelection,
     resolvedSearchQuery,
     searchQuery,
-    selectedSubjectId,
+    selectedFolderId,
     selectedFlashcardIds,
     filter,
     setFilter,
@@ -206,9 +206,9 @@ export function useFlashcardsManagerController({
     setPageIndex,
     setPageSize,
     setSearchQuery,
-    setSelectedSubjectId,
+    setSelectedFolderId,
     setSelectedFlashcardIds,
-    handleSubjectChange,
+    handleFolderChange,
     total,
     pageSize: pageSizeState,
   };

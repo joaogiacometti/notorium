@@ -21,7 +21,7 @@ export const undoFlashcardReviewSchema = z.object({
 export type UndoFlashcardReviewForm = z.infer<typeof undoFlashcardReviewSchema>;
 
 export const flashcardExamScopeSchema = z.object({
-  subjectId: idSchema.optional(),
+  folderId: idSchema.optional(),
 });
 
 export const flashcardReviewStateQuerySchema = flashcardExamScopeSchema.extend({

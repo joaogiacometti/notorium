@@ -14,12 +14,12 @@ import { SidebarCollapseProvider } from "@/components/shared/sidebar-collapse-co
 import { SidebarCollapseToggle } from "@/components/shared/sidebar-collapse-toggle";
 import { useSidebarCollapsed } from "@/components/shared/use-sidebar-collapsed";
 import { isFlashcardSessionPath } from "@/lib/navigation/detail-page-back-link";
-import type { SubjectTreeNode } from "@/lib/server/api-contracts";
+import type { FolderTreeNode } from "@/lib/server/api-contracts";
 import { isEditableTarget } from "@/lib/shortcuts/registry";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutClientProps {
-  tree: SubjectTreeNode[] | null;
+  tree: FolderTreeNode[] | null;
   accountName: string;
   email: string;
   isAdmin: boolean;

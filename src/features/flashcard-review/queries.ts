@@ -1,6 +1,6 @@
 import { and, asc, count, eq, gte, inArray, type SQL, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { flashcard, flashcardReviewLog, subject } from "@/db/schema";
+import { flashcard, flashcardReviewLog, folder } from "@/db/schema";
 import {
   buildDueAtFilter,
   studyLaterLastOrder,
@@ -9,9 +9,9 @@ import { computeReviewStreaks } from "@/features/flashcard-review/streaks";
 import { readFsrsSettings } from "@/features/flashcards/fsrs/settings-queries";
 import { attachFlashcardSources } from "@/features/flashcards/source-queries";
 import {
-  getDescendantSubjectIds,
-  getSubjectPathMapForUser,
-} from "@/features/subjects/queries";
+  getDescendantFolderIds,
+  getFolderPathMapForUser,
+} from "@/features/folders/queries";
 import { LIMITS } from "@/lib/config/limits";
 import type {
   FlashcardReviewActivity,
@@ -24,7 +24,7 @@ import type {
 type ReviewableFlashcard = Pick<
   FlashcardReviewEntity,
   | "id"
-  | "subjectId"
+  | "folderId"
   | "state"
   | "dueAt"
   | "stability"
@@ -37,8 +37,8 @@ type ReviewableFlashcard = Pick<
 >;
 
 export interface GetDueFlashcardsOptions {
-  subjectId?: string;
-  subjectIds?: string[];
+  folderId?: string;
+  folderIds?: string[];
   limit?: number;
 }
 
@@ -46,34 +46,34 @@ const heatmapDays = 365;
 
 type ReviewEntityRow = {
   flashcard: typeof flashcard.$inferSelect;
-  subjectName: string;
+  folderName: string;
 };
 
 function toReviewEntity(
   row: ReviewEntityRow,
-  subjectPathMap: Map<string, string>,
+  folderPathMap: Map<string, string>,
 ): ReviewEntityRow["flashcard"] & FlashcardReviewEntity {
   return {
     ...row.flashcard,
-    subjectName: row.subjectName,
-    subjectPath: subjectPathMap.get(row.flashcard.subjectId) ?? row.subjectName,
+    folderName: row.folderName,
+    folderPath: folderPathMap.get(row.flashcard.folderId) ?? row.folderName,
   };
 }
 
 async function getScopedFilters(
   userId: string,
-  options: Pick<GetDueFlashcardsOptions, "subjectId" | "subjectIds"> = {},
+  options: Pick<GetDueFlashcardsOptions, "folderId" | "folderIds"> = {},
 ): Promise<SQL<unknown>[]> {
   const filters: SQL<unknown>[] = [eq(flashcard.userId, userId)];
 
-  if (options.subjectIds && options.subjectIds.length > 0) {
-    filters.push(inArray(flashcard.subjectId, options.subjectIds));
-  } else if (options.subjectId) {
-    const descendantSubjectIds = await getDescendantSubjectIds(
+  if (options.folderIds && options.folderIds.length > 0) {
+    filters.push(inArray(flashcard.folderId, options.folderIds));
+  } else if (options.folderId) {
+    const descendantFolderIds = await getDescendantFolderIds(
       userId,
-      options.subjectId,
+      options.folderId,
     );
-    filters.push(inArray(flashcard.subjectId, descendantSubjectIds));
+    filters.push(inArray(flashcard.folderId, descendantFolderIds));
   }
 
   return filters;
@@ -88,14 +88,14 @@ function resolveDueLimit(limit: number | undefined): number {
 async function selectDueFlashcards(
   userId: string,
   scopeFilters: SQL<unknown>[],
-  subjectPathMap: Map<string, string>,
+  folderPathMap: Map<string, string>,
   now: Date,
   limit: number,
 ): Promise<FlashcardReviewEntity[]> {
   const rows = await getDb()
-    .select({ flashcard, subjectName: subject.name })
+    .select({ flashcard, folderName: folder.name })
     .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .innerJoin(folder, eq(flashcard.folderId, folder.id))
     .where(and(...scopeFilters, buildDueAtFilter(now)))
     .orderBy(
       studyLaterLastOrder(),
@@ -106,7 +106,7 @@ async function selectDueFlashcards(
 
   return attachFlashcardSources(
     userId,
-    rows.map((row) => toReviewEntity(row, subjectPathMap)),
+    rows.map((row) => toReviewEntity(row, folderPathMap)),
   );
 }
 
@@ -128,7 +128,7 @@ async function countScopedFlashcards(
 }
 
 /**
- * Due and total card counts for the user, optionally scoped to a subject
+ * Due and total card counts for the user, optionally scoped to a folder
  * subtree. Feeds the home dashboard and the review hub badges.
  *
  * @example
@@ -137,7 +137,7 @@ async function countScopedFlashcards(
 export async function getFlashcardReviewSummaryForUser(
   userId: string,
   now: Date,
-  options: Pick<GetDueFlashcardsOptions, "subjectId" | "subjectIds"> = {},
+  options: Pick<GetDueFlashcardsOptions, "folderId" | "folderIds"> = {},
 ): Promise<FlashcardReviewSummary> {
   return countScopedFlashcards(await getScopedFilters(userId, options), now);
 }
@@ -204,16 +204,16 @@ export async function getFlashcardReviewStateForUser(
   options: GetDueFlashcardsOptions = {},
 ): Promise<FlashcardReviewState> {
   const now = new Date();
-  const [settings, scopeFilters, subjectPathMap] = await Promise.all([
+  const [settings, scopeFilters, folderPathMap] = await Promise.all([
     readFsrsSettings(userId),
     getScopedFilters(userId, options),
-    getSubjectPathMapForUser(userId),
+    getFolderPathMapForUser(userId),
   ]);
   const [cards, summary] = await Promise.all([
     selectDueFlashcards(
       userId,
       scopeFilters,
-      subjectPathMap,
+      folderPathMap,
       now,
       resolveDueLimit(options.limit),
     ),
@@ -231,9 +231,9 @@ export async function getFlashcardReviewStateForUser(
 }
 
 /**
- * Load only the columns a grade needs: ownership, subject, and scheduling
- * state. The client already holds the card's subject name and path, so no
- * subject join or path lookup runs on the grading hot path.
+ * Load only the columns a grade needs: ownership, folder, and scheduling
+ * state. The client already holds the card's folder name and path, so no
+ * folder join or path lookup runs on the grading hot path.
  *
  * @example
  * const card = await getReviewableFlashcardForUser(userId, flashcardId);
@@ -245,7 +245,7 @@ export async function getReviewableFlashcardForUser(
   const rows = await getDb()
     .select({
       id: flashcard.id,
-      subjectId: flashcard.subjectId,
+      folderId: flashcard.folderId,
       state: flashcard.state,
       dueAt: flashcard.dueAt,
       stability: flashcard.stability,
@@ -265,23 +265,23 @@ export async function getReviewableFlashcardForUser(
 
 export async function getAllFlashcardsForExam(
   userId: string,
-  options: Pick<GetDueFlashcardsOptions, "subjectId" | "subjectIds"> = {},
+  options: Pick<GetDueFlashcardsOptions, "folderId" | "folderIds"> = {},
 ): Promise<FlashcardReviewEntity[]> {
-  const [filters, subjectPathMap] = await Promise.all([
+  const [filters, folderPathMap] = await Promise.all([
     getScopedFilters(userId, options),
-    getSubjectPathMapForUser(userId),
+    getFolderPathMapForUser(userId),
   ]);
 
   return getDb()
-    .select({ flashcard, subjectName: subject.name })
+    .select({ flashcard, folderName: folder.name })
     .from(flashcard)
-    .innerJoin(subject, eq(flashcard.subjectId, subject.id))
+    .innerJoin(folder, eq(flashcard.folderId, folder.id))
     .where(and(...filters))
     .orderBy(asc(flashcard.createdAt))
     .then((rows) =>
       attachFlashcardSources(
         userId,
-        rows.map((row) => toReviewEntity(row, subjectPathMap)),
+        rows.map((row) => toReviewEntity(row, folderPathMap)),
       ),
     );
 }

@@ -33,7 +33,7 @@ function makeLog(
   return {
     id,
     flashcardId,
-    subjectId: "subject-1",
+    folderId: "folder-1",
     userId: "user-1",
     clientReviewId: null,
     reviewCountAfter: null,

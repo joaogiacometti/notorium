@@ -81,7 +81,7 @@ function LibraryHitLink({
           {hit.title || "Untitled"}
         </span>
         <span className="block truncate text-xs text-muted-foreground">
-          {hit.subjectPath}
+          {hit.folderPath}
         </span>
         {hit.snippet ? (
           <span className="line-clamp-2 text-xs text-muted-foreground">

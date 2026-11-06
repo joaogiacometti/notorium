@@ -34,11 +34,11 @@ export async function renamePdfForUser(
     .set({ title: data.title })
     .where(ownedPdfFilter(userId, data.id));
 
-  return { success: true, subjectId: existing.subjectId };
+  return { success: true, folderId: existing.folderId };
 }
 
 /**
- * Reparents a PDF to another subject (tree drag-and-drop), enforcing ownership
+ * Reparents a PDF to another folder (tree drag-and-drop), enforcing ownership
  * and the destination's PDF limit.
  */
 export function movePdfForUser(
@@ -46,14 +46,14 @@ export function movePdfForUser(
   data: MoveDocumentMutationInput,
 ): Promise<MoveDocumentResult> {
   return moveDocumentForUser(userId, data, {
-    findSubjectId: async (ownerId, id) =>
-      (await getPdfByIdForUser(ownerId, id))?.subjectId ?? null,
+    findFolderId: async (ownerId, id) =>
+      (await getPdfByIdForUser(ownerId, id))?.folderId ?? null,
     notFoundCode: "pdfs.notFound",
     rule: pdfCapacityRule,
-    reparent: async (ownerId, id, subjectId) => {
+    reparent: async (ownerId, id, folderId) => {
       await getDb()
         .update(pdfDocument)
-        .set({ subjectId })
+        .set({ folderId })
         .where(ownedPdfFilter(ownerId, id));
     },
   });
@@ -71,7 +71,7 @@ export async function deletePdfForUser(
 
   await getDb().delete(pdfDocument).where(ownedPdfFilter(userId, data.id));
 
-  return { success: true, subjectId: existing.subjectId };
+  return { success: true, folderId: existing.folderId };
 }
 
 /**
@@ -93,10 +93,10 @@ export async function savePdfReadingPageForUser(
       updatedAt: sql`${pdfDocument.updatedAt}`,
     })
     .where(ownedPdfFilter(userId, data.id))
-    .returning({ subjectId: pdfDocument.subjectId });
+    .returning({ folderId: pdfDocument.folderId });
 
   const row = saved[0];
   return row
-    ? { success: true, subjectId: row.subjectId }
+    ? { success: true, folderId: row.folderId }
     : actionError("pdfs.notFound");
 }

@@ -7,7 +7,7 @@ interface NoteLinkPageProps {
   params: Promise<{ noteId: string }>;
 }
 
-/** Stable target for note links, whose subject can change after they are made. */
+/** Stable target for note links, whose folder can change after they are made. */
 export default async function NoteLinkPage({
   params,
 }: Readonly<NoteLinkPageProps>) {
@@ -19,5 +19,5 @@ export default async function NoteLinkPage({
     notFound();
   }
 
-  redirect(getNoteDetailHref(note.subjectId, note.id));
+  redirect(getNoteDetailHref(note.folderId, note.id));
 }

@@ -306,9 +306,9 @@ describe("assistantChatRequestSchema", () => {
     const hit = {
       kind: "flashcard",
       id: "card-1",
-      subjectId: "subject-1",
+      folderId: "folder-1",
       title: "What is mitosis?",
-      subjectPath: "Biology",
+      folderPath: "Biology",
       snippet: "Cell division.",
     };
 
@@ -381,7 +381,7 @@ describe("assistantChatRequestSchema", () => {
       const result = assistantChatRequestSchema.safeParse(
         chatWithReplyParts([
           searchPart("output-available", {
-            output: { hits: [{ ...hit, kind: "subject" }] },
+            output: { hits: [{ ...hit, kind: "folder" }] },
           }),
         ]),
       );

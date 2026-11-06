@@ -1,5 +1,5 @@
 import type { LibraryHit } from "@/features/assistant/library-search-contract";
-import { LIMITS, SUBJECT_PATH_MAX_CHARS } from "@/lib/config/limits";
+import { FOLDER_PATH_MAX_CHARS, LIMITS } from "@/lib/config/limits";
 import { foldSearchText } from "@/lib/search/fold";
 import { buildSearchMatchSnippet } from "@/lib/search/highlight";
 
@@ -7,7 +7,7 @@ import { buildSearchMatchSnippet } from "@/lib/search/highlight";
 export interface LibraryHitSource {
   kind: LibraryHit["kind"];
   id: string;
-  subjectId: string;
+  folderId: string;
   title: string;
   /** Plain text the excerpt is cut from: note body, card back, node label. */
   body: string;
@@ -19,19 +19,19 @@ export interface LibraryHitSource {
  * reaches the model.
  *
  * @example
- * buildLibraryHit({ kind: "note", id: "n1", subjectId: "s1", title: "Mitose", body: "..." }, ["mitose"], "Biologia");
+ * buildLibraryHit({ kind: "note", id: "n1", folderId: "s1", title: "Mitose", body: "..." }, ["mitose"], "Biologia");
  */
 export function buildLibraryHit(
   source: LibraryHitSource,
   terms: string[],
-  subjectPath: string,
+  folderPath: string,
 ): LibraryHit {
   return {
     kind: source.kind,
     id: source.id,
-    subjectId: source.subjectId,
+    folderId: source.folderId,
     title: buildTermExcerpt(source.title, terms),
-    subjectPath: subjectPath.slice(0, SUBJECT_PATH_MAX_CHARS),
+    folderPath: folderPath.slice(0, FOLDER_PATH_MAX_CHARS),
     snippet: buildTermExcerpt(source.body, terms),
   };
 }
