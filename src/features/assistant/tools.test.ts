@@ -156,22 +156,20 @@ describe("assistant tool availability", () => {
       revision: 0,
       title: "Note",
       partial: false,
-      blocks: [{ id: "b0", html: "<p>Text</p>" }],
+      blocks: [{ id: "b0", markdown: "Text" }],
     };
     const tools = buildAssistantTools(new EmptyToolLibrary().search, {
       documentDraft: note,
     });
     const schema = tools.proposeNoteEdits.inputSchema as z.ZodType;
-    const edit = (html: string) => ({
+    const edit = (markdown: string) => ({
       sessionId: "note",
       revision: 0,
-      replacements: [{ firstBlockId: "b0", lastBlockId: "b0", html }],
+      replacements: [{ firstBlockId: "b0", lastBlockId: "b0", markdown }],
     });
-    expect(schema.safeParse(edit("<p>New</p>")).success).toBe(true);
-    expect(
-      schema.safeParse(edit("<p>Text</p>")).error?.issues[0]?.message,
-    ).toBe(
-      "replacement b0:b0 keeps the current content; expected changed HTML",
+    expect(schema.safeParse(edit("New")).success).toBe(true);
+    expect(schema.safeParse(edit("Text")).error?.issues[0]?.message).toBe(
+      "replacement b0:b0 keeps the current content; expected changed Markdown",
     );
   });
 });

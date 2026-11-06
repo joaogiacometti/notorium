@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { editToolInputObject } from "@/features/assistant/edit-guards";
 import { STUDY_CONTEXT_MAX_CHARS } from "@/features/assistant/study-context";
-import { EDITOR_HTML_MATH_RULE } from "@/lib/ai/prompt-rules";
+import { EDITOR_MARKDOWN_RULE } from "@/lib/ai/prompt-rules";
 import { FOLDER_PATH_MAX_CHARS, LIMITS } from "@/lib/config/limits";
 
 const reference = z.string().min(1).max(100);
@@ -25,7 +25,7 @@ const draftFields = {
 
 export const noteBlockSchema = z.object({
   id: reference,
-  html: z.string().max(STUDY_CONTEXT_MAX_CHARS),
+  markdown: z.string().max(STUDY_CONTEXT_MAX_CHARS),
 });
 export const documentDraftSchema = z
   .object({
@@ -62,11 +62,11 @@ export const noteEditsInputSchema = editToolInputObject(
         lastBlockId: reference.describe(
           "Last visible block id, inclusive. All blocks in the range must be visible.",
         ),
-        html: z
+        markdown: z
           .string()
           .max(LIMITS.assistantReplyMaxChars)
           .describe(
-            `Replacement supported editor HTML; empty deletes the range. Preserve unrelated formatting, math, tables, and all image placeholders; never invent attachments. ${EDITOR_HTML_MATH_RULE}`,
+            `Replacement Markdown; empty deletes the range. Preserve unrelated formatting, math, tables, and all image placeholders; never invent attachments. ${EDITOR_MARKDOWN_RULE}`,
           ),
       }),
     ),
@@ -79,12 +79,12 @@ export const noteEditsInputSchema = editToolInputObject(
             "Visible block to insert beside; omit only for an empty note.",
           ),
         side: z.enum(["before", "after"]),
-        html: z
+        markdown: z
           .string()
           .min(1)
           .max(LIMITS.assistantReplyMaxChars)
           .describe(
-            `Inserted editor HTML with paragraphs, headings, lists, strong/em, pre/code, or tables. ${EDITOR_HTML_MATH_RULE} Preserve image placeholders exactly.`,
+            `Inserted Markdown. ${EDITOR_MARKDOWN_RULE} Preserve image placeholders exactly.`,
           ),
       }),
     ),

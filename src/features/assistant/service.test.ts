@@ -481,7 +481,7 @@ describe("streamAssistantReplyForUser", () => {
     const { streamAssistantReplyForUser } = await import(
       "@/features/assistant/service"
     );
-    for (const html of ["<p>Original note</p>", "<p>Updated note</p>"]) {
+    for (const markdown of ["Original note", "Updated note"]) {
       const result = await streamAssistantReplyForUser({
         userId: "user-1",
         messages,
@@ -491,7 +491,7 @@ describe("streamAssistantReplyForUser", () => {
           revision: 0,
           title: "Title",
           partial: true,
-          blocks: [{ id: "b0", html }],
+          blocks: [{ id: "b0", markdown }],
         },
         loadFolderPaths: new FakeFolderPathStore([]).load,
       });
@@ -516,11 +516,11 @@ describe("streamAssistantReplyForUser", () => {
     const { streamAssistantReplyForUser } = await import(
       "@/features/assistant/service"
     );
-    for (const back of ["<p>First draft</p>", "<p>Second draft</p>"]) {
+    for (const back of ["First draft", "Second draft"]) {
       const result = await streamAssistantReplyForUser({
         userId: "user-1",
         messages,
-        draft: { sessionId: "d", revision: 0, front: "<p>Question</p>", back },
+        draft: { sessionId: "d", revision: 0, front: "Question", back },
         loadFolderPaths: new FakeFolderPathStore([]).load,
       });
       if (result.success) await result.response.text();
@@ -556,7 +556,7 @@ describe("streamAssistantReplyForUser", () => {
       draft: {
         sessionId: "d",
         revision: 0,
-        front: "<p>Explain alpha</p>",
+        front: "Explain alpha",
         back: "",
       },
       loadFolderPaths: new FakeFolderPathStore([]).load,
@@ -595,7 +595,7 @@ describe("streamAssistantReplyForUser", () => {
                   {
                     firstBlockId: "block-1",
                     lastBlockId: "block-1",
-                    html: "<p>Updated content</p>",
+                    markdown: "Updated content",
                   },
                 ],
               },

@@ -49,4 +49,7 @@ export const NoteLink = Node.create({
   renderText({ node }) {
     return node.attrs.label;
   },
+
+  renderMarkdown: (node) =>
+    `[${String(node.attrs?.label ?? "").replaceAll(/[[\]\\]/g, "\\$&")}](${getNoteLinkHref(node.attrs?.noteId)})`,
 });

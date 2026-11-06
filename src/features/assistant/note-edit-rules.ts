@@ -3,14 +3,14 @@ import type {
   NoteEditsInput,
 } from "@/features/assistant/document-edit-contract";
 import {
+  compactMarkdown,
   findAddedSide,
   findDraftIdentityProblems,
   findImageReferenceProblems,
   findUnknownIdProblems,
   imagePlaceholdersIn,
-  isUnchangedHtml,
+  isUnchangedMarkdown,
   repeatsMostWords,
-  visibleHtmlText,
 } from "@/features/assistant/edit-guards";
 import {
   type LocatedNoteEdit,
@@ -68,16 +68,18 @@ function findEditContentProblems(
   draft: NoteDraft,
 ): string[] {
   const range = draft.blocks.slice(edit.from, edit.to);
-  const current = range.map((block) => block.html).join("");
+  const current = range.map((block) => block.markdown).join("\n\n");
   const images = findImageReferenceProblems(
-    edit.html,
+    edit.markdown,
     imagePlaceholdersIn(current),
   );
   if (edit.kind === "insertion")
     return [...images, ...findCopiedBlocks(edit, edits, draft)];
-  if (isUnchangedHtml(edit.html, current))
-    return [`${edit.label} keeps the current content; expected changed HTML`];
-  const side = findAddedSide(edit.html, current);
+  if (isUnchangedMarkdown(edit.markdown, current))
+    return [
+      `${edit.label} keeps the current content; expected changed Markdown`,
+    ];
+  const side = findAddedSide(edit.markdown, current);
   if (!side) return images;
   const anchor = side === "after" ? range.at(-1) : range[0];
   return [
@@ -92,9 +94,9 @@ function findCopiedBlocks(
   edits: LocatedNoteEdit[],
   draft: NoteDraft,
 ): string[] {
-  const segments = htmlBlockTexts(insertion.html);
+  const segments = markdownLines(insertion.markdown);
   return draft.blocks.flatMap((block, index) => {
-    const text = visibleHtmlText(block.html);
+    const text = compactMarkdown(block.markdown);
     const replaced = edits.some(
       (edit) =>
         edit.kind === "replacement" && edit.from <= index && index < edit.to,
@@ -121,13 +123,10 @@ function repeatsText(existing: string, inserted: string): boolean {
   );
 }
 
-// Each inserted block is compared on its own, so a long insertion does not
-// count as a copy merely by covering many words.
-function htmlBlockTexts(html: string): string[] {
-  return html
-    .split(/<\/(?:p|h[1-6]|li|pre|blockquote|td|th)>/i)
-    .map(visibleHtmlText)
-    .filter(Boolean);
+// Each inserted line (paragraph, item, row) is compared on its own, so a long
+// insertion does not count as a copy merely by covering many words.
+function markdownLines(markdown: string): string[] {
+  return markdown.split("\n").map(compactMarkdown).filter(Boolean);
 }
 
 function findEmptyProposalProblems(

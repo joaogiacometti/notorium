@@ -29,7 +29,7 @@ describe("formatFlashcardsAsMarkdown", () => {
         "### Front",
         "What does **ATP** store?",
         "### Back",
-        "-   Chemical energy",
+        "- Chemical energy",
       ].join("\n\n"),
     );
   });
@@ -44,7 +44,7 @@ describe("formatFlashcardsAsMarkdown", () => {
         "### Front",
         "What does **ATP** store?",
         "### Back",
-        "-   Chemical energy",
+        "- Chemical energy",
         "---",
         "## Card 2",
         "Folder: Biology::Genetics",

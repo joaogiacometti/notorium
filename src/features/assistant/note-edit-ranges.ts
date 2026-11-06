@@ -8,7 +8,7 @@ export interface LocatedNoteEdit {
   kind: "replacement" | "insertion";
   from: number;
   to: number;
-  html: string;
+  markdown: string;
   label: string;
 }
 
@@ -60,7 +60,13 @@ function locateReplacement(
     blockIds.slice(from, last + 1).some((id) => !visible.has(id))
   )
     return `Invalid ${label}; expected contiguous visible blocks, first not after last`;
-  return { kind: "replacement", from, to: last + 1, html: edit.html, label };
+  return {
+    kind: "replacement",
+    from,
+    to: last + 1,
+    markdown: edit.markdown,
+    label,
+  };
 }
 
 function locateInsertion(
@@ -71,14 +77,20 @@ function locateInsertion(
   const label = `insertion ${edit.side} ${edit.anchorBlockId ?? "no anchor"}`;
   if (edit.anchorBlockId === undefined) {
     if (blockIds.length === 0)
-      return { kind: "insertion", from: 0, to: 0, html: edit.html, label };
+      return {
+        kind: "insertion",
+        from: 0,
+        to: 0,
+        markdown: edit.markdown,
+        label,
+      };
     return "Insertion without anchorBlockId; expected the visible block id to insert beside";
   }
   const anchor = blockIds.indexOf(edit.anchorBlockId);
   if (anchor < 0 || !visible.has(edit.anchorBlockId))
     return `Invalid ${label}; expected a visible anchor block`;
   const from = anchor + (edit.side === "after" ? 1 : 0);
-  return { kind: "insertion", from, to: from, html: edit.html, label };
+  return { kind: "insertion", from, to: from, markdown: edit.markdown, label };
 }
 
 // An insertion may sit right before a replacement starting at the same block;

@@ -17,7 +17,7 @@ import type {
 } from "@/features/assistant/types";
 import type { FlashcardSource } from "@/features/flashcards/source-contract";
 import type { RichTextDocument } from "@/lib/editor/document";
-import { documentToHtml } from "@/lib/editor/document-html";
+import { documentToMarkdown } from "@/lib/editor/document-markdown";
 import {
   getDocumentDetailHref,
   getFlashcardDetailHref,
@@ -65,9 +65,9 @@ function normalizeFolderPath(path: string): string {
 }
 
 /**
- * A code example as a fenced block. The tag keeps only the characters
- * `plainTextToDocument` accepts, so an odd tag such as "c++" cannot leave the
- * fence unrecognized and spill the code into paragraphs.
+ * A code example as a fenced block. The tag keeps only characters a
+ * highlighter language name uses, so an odd tag such as "c++" stays a plain
+ * fence instead of an unknown language.
  *
  * @example
  * formatFlashcardExample({ language: "sql", code: "SELECT 1;" }); // "```sql\nSELECT 1;\n```"
@@ -100,16 +100,16 @@ export function prepareDraftForAssistant(
 ): FlashcardDraft {
   return {
     ...draft,
-    front: draftHtmlForAssistant(draft.front),
-    back: draftHtmlForAssistant(draft.back),
+    front: draftMarkdownForAssistant(draft.front),
+    back: draftMarkdownForAssistant(draft.back),
   };
 }
 
-/** Model-visible editor HTML: image placeholders and math in the `$` format
- * the model writes, so it never copies math elements with misplaced LaTeX.
- * @example draftHtmlForAssistant("<p>Hi</p>"); // "<p>Hi</p>"
+/** Model-visible Markdown, the same format the model writes back; images
+ * become `{{IMAGE_n}}` placeholders so their locations never reach the model.
+ * @example draftMarkdownForAssistant(document); // "**Why?**\n\n{{IMAGE_0}}"
  */
-export function draftHtmlForAssistant(value: RichTextDocument): string {
+export function draftMarkdownForAssistant(value: RichTextDocument): string {
   let image = 0;
   function redact(node: JSONContent): JSONContent {
     if (node.type === "image")
@@ -117,19 +117,13 @@ export function draftHtmlForAssistant(value: RichTextDocument): string {
         type: "paragraph",
         content: [{ type: "text", text: `{{IMAGE_${image++}}}` }],
       };
-    if (node.type === "inlineMath" || node.type === "blockMath") {
-      const delimiter = node.type === "blockMath" ? "$$" : "$";
-      const text = {
-        type: "text",
-        text: `${delimiter}${node.attrs?.latex ?? ""}${delimiter}`,
-      };
-      return node.type === "blockMath"
-        ? { type: "paragraph", content: [text] }
-        : text;
-    }
     return node.content ? { ...node, content: node.content.map(redact) } : node;
   }
-  return documentToHtml({ ...value, content: value.content.map(redact) });
+  // Placeholders are copied verbatim, so they stay free of Markdown escapes.
+  return documentToMarkdown({
+    ...value,
+    content: value.content.map(redact),
+  }).replaceAll(/\{\{IMAGE\\_(\d+)\}\}/g, "{{IMAGE_$1}}");
 }
 
 /** True while a reply is requested or streaming; sends and tool outputs wait.

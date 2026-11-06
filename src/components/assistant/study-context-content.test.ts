@@ -24,7 +24,7 @@ describe("study context snapshots", () => {
     );
     expect(context.content).toContain("x^2");
     expect(context.content).toMatch(/-\s+Spread/);
-    expect(context.content).toContain("[Image]");
+    expect(context.content).toContain("(image)");
     expect(context.content).not.toContain("https://private");
     expect(context.partial).toBe(false);
   });
@@ -39,7 +39,7 @@ describe("study context snapshots", () => {
     );
     expect(note.content).toContain("https://example.com/figure.png");
     expect(card.front).toContain("https://example.com/figure.png");
-    expect(note.content).not.toContain("[Image]");
+    expect(note.content).not.toContain("(image)");
   });
   it("caps documents and advertises partial context", () => {
     const context = buildDocumentContext(

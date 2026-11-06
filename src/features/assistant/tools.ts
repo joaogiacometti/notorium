@@ -55,8 +55,8 @@ export const flashcardExampleSchema = z.object({
 });
 
 /**
- * One model-written card: plain text with the assistant's list, code fence,
- * and LaTeX conventions, converted to rich text only when the user creates it.
+ * One model-written card in Markdown, converted to rich text only when the
+ * user creates it.
  * The optional code `example` is appended to the back on create, so the two
  * together must fit the back limit.
  *
@@ -75,7 +75,7 @@ export const proposedFlashcardSchema = z
           "Control character in front; expected literal LaTeX backslashes escaped for JSON, not backspace or form feed",
       })
       .describe(
-        "The front as plain text, never HTML. Use backticks for inline code or language-tagged fences for code blocks; dollar-delimited LaTeX for math.",
+        "The front as Markdown, never HTML. Use backticks for inline code or language-tagged fences for code blocks; dollar-delimited LaTeX for math.",
       ),
     back: z
       .string()
@@ -87,7 +87,7 @@ export const proposedFlashcardSchema = z
           "Control character in back; expected literal LaTeX backslashes escaped for JSON, not backspace or form feed",
       })
       .describe(
-        'The back as plain text, never HTML. Start each bullet with "- "; use backticks for inline code and dollar-delimited LaTeX for math. A short prose or inline-code illustration belongs in a final back bullet, not the separate code example field.',
+        'The back as Markdown, never HTML. Start each bullet with "- " and indent a block equation under the bullet it belongs to; use backticks for inline code and dollar-delimited LaTeX for math. A short prose or inline-code illustration belongs in a final back bullet, not the separate code example field.',
       ),
     example: flashcardExampleSchema
       .optional()

@@ -7,7 +7,7 @@ import {
   findDraftIdentityProblems,
   findImageReferenceProblems,
   imagePlaceholdersIn,
-  isUnchangedHtml,
+  isUnchangedMarkdown,
 } from "@/features/assistant/edit-guards";
 
 const FLASHCARD_EDIT_FIELDS: FlashcardEditField[] = ["front", "back"];
@@ -37,9 +37,9 @@ function findFieldProblems(
   current: string,
 ): string[] {
   if (proposed === undefined) return [];
-  if (isUnchangedHtml(proposed, current))
+  if (isUnchangedMarkdown(proposed, current))
     return [
-      `${field} keeps the current content; expected changed HTML, or omit ${field}`,
+      `${field} keeps the current content; expected changed Markdown, or omit ${field}`,
     ];
   return findImageReferenceProblems(proposed, imagePlaceholdersIn(current)).map(
     (problem) => `${field}: ${problem}`,

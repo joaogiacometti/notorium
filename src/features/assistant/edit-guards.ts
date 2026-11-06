@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { documentNodes } from "@/lib/editor/document";
+import { documentFromMarkdown } from "@/lib/editor/document-markdown";
 
 // Edit tools check proposals in code against the draft the model was shown,
 // not only through instructions. A failed check makes the tool call invalid;
@@ -101,34 +103,45 @@ export function findUnknownIdProblems(
 }
 
 /**
- * Whether proposed editor HTML keeps the current content, ignoring formatting
- * whitespace between tags.
+ * Whether proposed Markdown keeps the current content, ignoring whitespace.
  *
  * @example
- * isUnchangedHtml("<p>A</p>\n", "<p>A</p>"); // true
+ * isUnchangedMarkdown("- A\n", "- A"); // true
  */
-export function isUnchangedHtml(proposed: string, current: string): boolean {
-  return compactHtml(proposed) === compactHtml(current);
+export function isUnchangedMarkdown(
+  proposed: string,
+  current: string,
+): boolean {
+  return compactMarkdown(proposed) === compactMarkdown(current);
 }
 
 /**
- * Side on which proposed HTML only adds blocks around the unchanged current
- * HTML; such a replacement is an insertion and should be proposed as one, so
- * the review does not show kept content as removed and re-added.
+ * Side on which proposed Markdown only adds blocks around the unchanged
+ * current Markdown; such a replacement is an insertion and should be proposed
+ * as one, so the review does not show kept content as removed and re-added.
  *
  * @example
- * findAddedSide("<p>A</p><p>B</p>", "<p>A</p>"); // "after"
+ * findAddedSide("A\n\nB", "A"); // "after"
  */
 export function findAddedSide(
   proposed: string,
   current: string,
 ): "before" | "after" | undefined {
-  const next = compactHtml(proposed);
-  const kept = compactHtml(current);
-  if (!kept || next === kept) return undefined;
-  if (next.startsWith(kept)) return "after";
-  if (next.endsWith(kept)) return "before";
+  const next = markdownBlocks(proposed);
+  const kept = markdownBlocks(current);
+  if (!kept.length || next.length <= kept.length) return undefined;
+  const same = (offset: number) =>
+    kept.every((block, index) => next[offset + index] === block);
+  if (same(0)) return "after";
+  if (same(next.length - kept.length)) return "before";
   return undefined;
+}
+
+function markdownBlocks(markdown: string): string[] {
+  return markdown
+    .split(/\n\s*\n/)
+    .map(compactMarkdown)
+    .filter(Boolean);
 }
 
 // A reworded copy keeps most of the original's words.
@@ -170,44 +183,32 @@ export function hasSameWords(first: string, second: string): boolean {
 }
 
 /**
- * Visible text of editor HTML with whitespace collapsed, for content checks.
- *
- * @example
- * visibleHtmlText("<p>A <b>b</b></p>"); // "A b"
- */
-export function visibleHtmlText(html: string): string {
-  return html
-    .replaceAll(/<[^>]*>/g, " ")
-    .replaceAll(/\s+/g, " ")
-    .trim();
-}
-
-/**
  * Image placeholders the model was shown are the only images it may use;
  * real image tags or attachment URLs would be invented images.
  *
  * @example
- * findImageReferenceProblems("<p>{{IMAGE_3}}</p>", ["{{IMAGE_0}}"]);
+ * findImageReferenceProblems("{{IMAGE_3}}", ["{{IMAGE_0}}"]);
  */
 export function findImageReferenceProblems(
-  html: string,
+  markdown: string,
   allowed: readonly string[],
 ): string[] {
-  const invented = /<img\b|\/api\/attachments\//i.test(html)
-    ? [
-        "Image tag or attachment URL in HTML; expected only image placeholders from the draft",
-      ]
+  // Parsed, so image syntax inside code (e.g. a note about HTML) is allowed.
+  const invented = documentNodes(documentFromMarkdown(markdown)).some(
+    (node) => node.type === "image",
+  )
+    ? ["Image in Markdown; expected only image placeholders from the draft"]
     : [];
   return [
     ...invented,
-    ...imagePlaceholdersIn(html).flatMap((placeholder) =>
-      placeholderProblems(html, placeholder, allowed),
+    ...imagePlaceholdersIn(markdown).flatMap((placeholder) =>
+      placeholderProblems(markdown, placeholder, allowed),
     ),
   ];
 }
 
 function placeholderProblems(
-  html: string,
+  markdown: string,
   placeholder: string,
   allowed: readonly string[],
 ): string[] {
@@ -215,7 +216,7 @@ function placeholderProblems(
     return [
       `Unknown image placeholder ${placeholder}; ${expectedOneOf(allowed, "image placeholder")}`,
     ];
-  if (html.split(placeholder).length > 2)
+  if (markdown.split(placeholder).length > 2)
     return [
       `Image placeholder ${placeholder} repeats; expected each image at most once`,
     ];
@@ -223,13 +224,13 @@ function placeholderProblems(
 }
 
 /**
- * Image placeholders present in draft HTML.
+ * Image placeholders present in draft Markdown.
  *
  * @example
- * imagePlaceholdersIn("<p>{{IMAGE_0}}</p>"); // ["{{IMAGE_0}}"]
+ * imagePlaceholdersIn("Answer\n\n{{IMAGE_0}}"); // ["{{IMAGE_0}}"]
  */
-export function imagePlaceholdersIn(html: string): string[] {
-  return [...new Set(html.match(IMAGE_PLACEHOLDER_PATTERN) ?? [])];
+export function imagePlaceholdersIn(markdown: string): string[] {
+  return [...new Set(markdown.match(IMAGE_PLACEHOLDER_PATTERN) ?? [])];
 }
 
 function expectedOneOf(values: readonly string[], noun: string): string {
@@ -242,6 +243,12 @@ function wordSet(text: string): Set<string> {
   return new Set(text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []);
 }
 
-function compactHtml(html: string): string {
-  return html.replaceAll(/>\s+</g, "><").trim();
+/**
+ * Markdown with whitespace collapsed, for content comparisons.
+ *
+ * @example
+ * compactMarkdown("- A\n- B "); // "- A - B"
+ */
+export function compactMarkdown(markdown: string): string {
+  return markdown.replaceAll(/\s+/g, " ").trim();
 }

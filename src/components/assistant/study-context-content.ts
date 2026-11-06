@@ -1,8 +1,8 @@
 import type { JSONContent } from "@tiptap/core";
 import type { StudyContext } from "@/features/assistant/study-context";
 import { STUDY_CONTEXT_MAX_CHARS } from "@/features/assistant/study-context";
-import { richTextToMarkdown } from "@/lib/clipboard/rich-text-markdown";
 import type { RichTextDocument } from "@/lib/editor/document";
+import { documentToMarkdown } from "@/lib/editor/document-markdown";
 
 /** Build a bounded, image-safe snapshot of an unsaved note.
  * @example buildDocumentContext("note", title, folderPath, content);
@@ -77,13 +77,13 @@ function studyRichText(content: RichTextDocument): string {
     if (node.type === "image")
       return {
         type: "paragraph",
-        content: [{ type: "text", text: "[Image]" }],
+        content: [{ type: "text", text: "(image)" }],
       };
     return node.content
       ? { ...node, content: node.content.map(hideImages) }
       : node;
   }
-  return richTextToMarkdown({
+  return documentToMarkdown({
     ...content,
     content: content.content.map(hideImages),
   });

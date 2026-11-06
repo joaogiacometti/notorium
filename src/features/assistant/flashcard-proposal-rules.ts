@@ -1,7 +1,6 @@
 import {
   hasSameWords,
   repeatsMostWords,
-  visibleHtmlText,
 } from "@/features/assistant/edit-guards";
 import type { StudyContext } from "@/features/assistant/study-context";
 
@@ -24,7 +23,7 @@ export function findFlashcardProposalProblems(
   input: { cards: ProposedCard[] },
   review: ReviewContext,
 ): string[] {
-  const reviewed = visibleHtmlText(review.front);
+  const reviewed = review.front; // Markdown; word comparison ignores syntax.
   return input.cards.flatMap((card, index) =>
     hasSameWords(reviewed, card.front) ||
     repeatsMostWords(reviewed, card.front, REWORDED_FRONT_MIN_WORDS)

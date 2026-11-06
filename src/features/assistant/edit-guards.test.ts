@@ -7,9 +7,8 @@ import {
   findUnknownIdProblems,
   guardEditSchema,
   hasSameWords,
-  isUnchangedHtml,
+  isUnchangedMarkdown,
   repeatsMostWords,
-  visibleHtmlText,
 } from "@/features/assistant/edit-guards";
 
 describe("edit guards", () => {
@@ -51,18 +50,16 @@ describe("edit guards", () => {
     ]);
   });
 
-  it("compares HTML and text ignoring layout whitespace", () => {
-    expect(isUnchangedHtml("<p>A</p>\n<p>B</p>", "<p>A</p><p>B</p>")).toBe(
-      true,
-    );
-    expect(isUnchangedHtml("<p>A.</p>", "<p>A</p>")).toBe(false);
-    expect(visibleHtmlText("<p>A <b>b</b></p>\n<p>c</p>")).toBe("A b c");
+  it("compares Markdown ignoring layout whitespace", () => {
+    expect(isUnchangedMarkdown("- A\n\n- B\n", "- A\n- B")).toBe(true);
+    expect(isUnchangedMarkdown("A.", "A")).toBe(false);
   });
 
-  it("finds HTML that only adds blocks around unchanged content", () => {
-    expect(findAddedSide("<p>A</p>\n<p>B</p>", "<p>A</p>")).toBe("after");
-    expect(findAddedSide("<p>B</p><p>A</p>", "<p>A</p>")).toBe("before");
-    expect(findAddedSide("<p>A!</p>", "<p>A</p>")).toBeUndefined();
+  it("finds Markdown that only adds blocks around unchanged content", () => {
+    expect(findAddedSide("A\n\nB", "A")).toBe("after");
+    expect(findAddedSide("B\n\nA", "A")).toBe("before");
+    expect(findAddedSide("A!", "A")).toBeUndefined();
+    expect(findAddedSide("A and more\n\nB", "A")).toBeUndefined();
   });
 
   it("detects copies by words, reworded or reordered", () => {
@@ -76,6 +73,17 @@ describe("edit guards", () => {
       ),
     ).toBe(true);
     expect(repeatsMostWords("What is ATP?", "What is ATP?", 4)).toBe(false);
+  });
+
+  it("rejects images other than known placeholders", () => {
+    expect(
+      findImageReferenceProblems("![x](https://example.com/x.png)", []),
+    ).toEqual([
+      "Image in Markdown; expected only image placeholders from the draft",
+    ]);
+    expect(
+      findImageReferenceProblems('Use `<img src="x">` or `![alt](url)`', []),
+    ).toEqual([]);
   });
 
   it("allows each known image placeholder once", () => {

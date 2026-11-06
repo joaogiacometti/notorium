@@ -3,59 +3,64 @@
 import { describe, expect, it } from "vitest";
 import { restoreDraftReplacement as importReplacement } from "@/components/assistant/flashcard-draft-content";
 import { prepareDraftForAssistant as exportDraft } from "@/features/assistant/utils";
-import { documentToNode as parseDocument } from "@/lib/editor/document";
-
 import { testDocument, testDocumentHtml } from "@/test/document";
 
 const restoreDraftReplacement = (replacement: string, original: string) =>
   testDocumentHtml(importReplacement(replacement, testDocument(original)));
-const normalizeReviewedRichText = (html: string) =>
-  testDocumentHtml(testDocument(html));
-const parseReviewedRichText = (html: string) =>
-  parseDocument(testDocument(html));
-const prepareDraftForAssistant = (draft: {
-  sessionId: string;
-  revision: number;
-  front: string;
-  back: string;
-}) =>
+const prepareDraftForAssistant = (front: string, back: string) =>
   exportDraft({
-    ...draft,
-    front: testDocument(draft.front),
-    back: testDocument(draft.back),
+    sessionId: "d",
+    revision: 0,
+    front: testDocument(front),
+    back: testDocument(back),
   });
 
 const originalImage =
   '<img src="/api/attachments/blob?pathname=private-image.webp" alt="diagram">';
 
 describe("flashcard draft rich text", () => {
-  it("sends rich text with opaque image placeholders", () => {
-    const result = prepareDraftForAssistant({
-      sessionId: "d",
-      revision: 0,
-      front: "<p><strong>Why?</strong></p>",
-      back: `<p>Answer</p>${originalImage}`,
-    });
-    expect(result.front).toContain("<strong>");
-    expect(result.back).toContain("{{IMAGE_0}}");
+  it("sends Markdown with opaque image placeholders", () => {
+    const result = prepareDraftForAssistant(
+      "<p><strong>Why?</strong></p>",
+      `<ul><li><p>Answer</p></li></ul>${originalImage}`,
+    );
+    expect(result.front).toBe("**Why?**");
+    expect(result.back).toBe("- Answer\n\n{{IMAGE_0}}");
     expect(result.back).not.toContain("private-image");
   });
 
-  it("sends math as dollar-delimited LaTeX, matching the model's math format", () => {
-    const result = prepareDraftForAssistant({
-      sessionId: "d",
-      revision: 0,
-      front:
-        '<p>Define <span data-type="inline-math" data-latex="\\sigma"></span></p>',
-      back: '<div data-type="block-math" data-latex="x^2"></div>',
-    });
-    expect(result.front).toBe("<p>Define $\\sigma$</p>");
-    expect(result.back).toBe("<p>$$x^2$$</p>");
+  it("sends math as dollar-delimited LaTeX and escapes literal dollars", () => {
+    const result = prepareDraftForAssistant(
+      '<p>Define <span data-type="inline-math" data-latex="\\sigma"></span> for $5</p>',
+      '<div data-type="block-math" data-latex="x^2"></div>',
+    );
+    expect(result.front).toBe("Define $\\sigma$ for \\$5");
+    expect(result.back).toBe("$$\nx^2\n$$");
   });
 
-  it("retains existing images even when the model omits them and rejects invented images", () => {
+  it("round-trips an unchanged draft", () => {
+    const back =
+      '<ul><li><p>When <strong>this</strong> holds:</p><div data-type="block-math" data-latex="\\lim_{h\\to 0} f(h)"></div></li><li><p>Costs $5 or $10</p></li></ul>' +
+      originalImage;
+    expect(
+      restoreDraftReplacement(prepareDraftForAssistant("", back).back, back),
+    ).toBe(testDocumentHtml(testDocument(back)));
+  });
+
+  it("keeps a block equation inside the bullet it follows", () => {
     const result = restoreDraftReplacement(
-      '<p>New answer</p><img src="https://evil.example/tracker">',
+      "- When this limit exists:\n$$f'(a) = \\lim_{h\\to 0} \\frac{f(a+h)-f(a)}{h}$$\n- Both one-sided limits must agree",
+      "",
+    );
+    expect(result.match(/<li>/g)).toHaveLength(2);
+    expect(result).toMatch(
+      /^<ul><li><p>When this limit exists:<\/p><div data-latex="[^"]+" data-type="block-math"><\/div><\/li><li>/,
+    );
+  });
+
+  it("retains existing images even when the model omits them and drops invented images", () => {
+    const result = restoreDraftReplacement(
+      "New answer\n\n![x](https://evil.example/tracker)",
       originalImage,
     );
     expect(result).toContain("private-image.webp");
@@ -63,103 +68,39 @@ describe("flashcard draft rich text", () => {
     expect(result.match(/<img/g) ?? []).toHaveLength(1);
   });
 
-  it("strips executable and unsupported HTML", () => {
+  it("places a restored image where its placeholder was", () => {
     const result = restoreDraftReplacement(
-      '<p onclick="alert(1)">Safe<script>alert(1)</script></p><iframe src="https://evil.example"></iframe>',
-      "",
+      "Before {{IMAGE_0}} after",
+      originalImage,
     );
-    expect(result).toBe("<p>Safe</p>");
+    expect(result).toMatch(/^<p>Before <\/p><img [^>]+><p> after<\/p>$/);
+    expect(() =>
+      restoreDraftReplacement("{{IMAGE_0}} {{IMAGE_0}}", originalImage),
+    ).toThrow("duplicate image placeholder");
   });
 
-  it("converts dollar-delimited legend math inside HTML without losing existing content", () => {
+  it("preserves code, escaped currency, and inline formatting", () => {
     const result = restoreDraftReplacement(
-      '<p>Measures the spread.</p><div data-type="block-math" data-latex="v"></div><ul><li><p>$\\sigma^2$: Population variance</p></li><li><p>$N$: Number of values</p></li></ul>',
-      "",
-    );
-    expect(result).toContain('data-latex="\\sigma^2"');
-    expect(result).toContain('data-latex="N"');
-    expect(result).toContain('data-type="block-math"');
-    expect(result).toContain("Measures the spread.");
-    expect(result).toContain("<ul>");
-    expect(result).not.toContain("$");
-  });
-
-  it("supports plain-text legend output with math and bullet points", () => {
-    const result = restoreDraftReplacement(
-      "Legend:\n\n- $\\sigma$: Standard deviation\n- $N$: Number of values",
-      "",
-    );
-    expect(result).toContain("<ul>");
-    expect(result).toContain('data-latex="\\sigma"');
-    expect(result).not.toContain("$");
-  });
-
-  it("preserves code, currency, existing math nodes, and surrounding inline formatting", () => {
-    const result = restoreDraftReplacement(
-      '<p><strong>Symbol</strong> $x$ is useful. Price: $100.</p><pre><code>$x$</code></pre><p><code>$y$</code> <span data-type="inline-math" data-latex="z"></span></p>',
+      "**Symbol** $x$ is useful. Price: \\$100.\n\n```\n$x$\n```\n\n`$y$`",
       "",
     );
     expect(result).toContain("<strong>Symbol</strong>");
     expect(result).toContain('data-latex="x"');
-    expect(result).toContain("</span> is useful.");
-    expect(result).toContain("$100.");
-    expect(result).toContain("$x$</code>");
+    expect(result).toContain("</span> is useful. Price: $100.");
+    expect(result).toContain("$x$</code></pre>");
     expect(result).toContain("<code>$y$</code>");
-    expect(result.match(/data-latex="z"/g)).toHaveLength(1);
   });
 
   it("converts a dollar-delimited numeric answer rather than treating it as currency", () => {
-    const result = restoreDraftReplacement("<p>$12$</p>", "");
-    expect(result).toContain('data-latex="12"');
-    expect(result).not.toContain("$12$");
-  });
-
-  it("converts a standalone block equation without adding blank paragraphs", () => {
-    const result = restoreDraftReplacement("<p>$$x^2$$</p><p>Legend</p>", "");
-    expect(result).toContain('data-type="block-math"');
-    expect(result).not.toContain("$");
-    expect(result).not.toContain("<p></p>");
-    expect(result).toContain("<p>Legend</p>");
-  });
-
-  it("keeps LaTeX written as math node text instead of producing empty equations", () => {
-    const result = restoreDraftReplacement(
-      '<div data-type="block-math">$$\\hat{y} = h_w(x)$$</div><p>Where <span data-type="inline-math" data-latex="">w_0</span> is the bias.</p>',
-      "",
-    );
-    expect(result).toContain('data-latex="\\hat{y} = h_w(x)"');
-    expect(result).toContain('data-latex="w_0"');
-    expect(result).not.toContain('data-latex=""');
+    expect(restoreDraftReplacement("$12$", "")).toContain('data-latex="12"');
   });
 
   it("undoes double-escaped LaTeX commands inside math only", () => {
     const result = restoreDraftReplacement(
-      "<p>$$\\\\hat{y} = h_w(x)$$</p><p>Path C:\\\\temp</p>",
+      "$$\\\\hat{y} = h_w(x)$$\n\nPath `C:\\\\temp`",
       "",
     );
     expect(result).toContain('data-latex="\\hat{y} = h_w(x)"');
     expect(result).toContain("C:\\\\temp");
-  });
-
-  it("drops math nodes that carry no LaTeX at all", () => {
-    const result = restoreDraftReplacement(
-      '<p>Before</p><div data-type="block-math"></div><p>After</p>',
-      "",
-    );
-    expect(result).not.toContain("block-math");
-    expect(result).toContain("<p>Before</p><p>After</p>");
-  });
-
-  it("preserves math, lists, tables, code, and formatting through schema normalization", () => {
-    const html =
-      '<p><strong>Recall</strong> <span data-type="inline-math" data-latex="x^2"></span></p><ul><li><p>Point</p></li></ul><pre><code class="language-sql">SELECT 1;</code></pre><table><tbody><tr><td><p>Value</p></td></tr></tbody></table>';
-    const normalized = normalizeReviewedRichText(html);
-    const document = parseReviewedRichText(normalized);
-    expect(document.textContent).toContain("Recall");
-    expect(normalized).toContain('data-latex="x^2"');
-    expect(normalized).toContain("<strong>");
-    expect(normalized).toContain("<table");
-    expect(normalized).toContain("<pre>");
-    expect(normalized).toContain("<ul>");
   });
 });

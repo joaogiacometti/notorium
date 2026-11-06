@@ -1,21 +1,13 @@
 import type { JSONContent } from "@tiptap/core";
-import DOMPurify from "dompurify";
-import {
-  inlineNodes,
-  plainTextToDocument,
-} from "@/lib/ai/plain-text-rich-text";
+import { modelMarkdownToDocument } from "@/lib/ai/model-markdown";
 import {
   documentFromJSON,
   documentNodes,
-  documentSchema,
   type RichTextDocument,
   richTextDocumentSchema,
 } from "@/lib/editor/document";
-import { documentFromHtml } from "@/lib/editor/document-html";
-import { normalizeOverEscapedLatex } from "@/lib/math/dollar-math";
-import { MATH_NODE_SELECTOR, readMathNode } from "@/lib/math/math-nodes";
 
-/** Import untrusted assistant HTML once; original images remain native nodes. */
+/** Import untrusted assistant Markdown once; original images remain native nodes. */
 export function restoreDraftReplacement(
   replacement: string,
   original: RichTextDocument,
@@ -23,10 +15,6 @@ export function restoreDraftReplacement(
   const images = documentNodes(original).filter(
     (node) => node.type === "image",
   );
-  const latex = normalizeOverEscapedLatex(replacement);
-  const parsed = /<\/?[a-z][^>]*>/i.test(latex)
-    ? importAssistantHtml(latex)
-    : plainTextToDocument(latex);
   const used = new Set<number>();
   function restore(node: JSONContent): JSONContent[] {
     if (node.type === "text") {
@@ -49,82 +37,28 @@ export function restoreDraftReplacement(
     if (!node.content) return [node];
     const children = node.content.flatMap(restore);
     if (node.type !== "paragraph") return [{ ...node, content: children }];
+    // Images are blocks, so a placeholder splits its paragraph.
     const result: JSONContent[] = [];
     let inline: JSONContent[] = [];
     for (const child of children) {
-      if (child.type === "image" || child.type === "blockMath") {
-        if (inline.length) result.push({ type: "paragraph", content: inline });
+      if (child.type === "image") {
+        if (inline.some(hasText))
+          result.push({ type: "paragraph", content: inline });
         inline = [];
         result.push(child);
       } else inline.push(child);
     }
-    if (inline.length || !result.length)
+    if (inline.some(hasText) || !result.length)
       result.push({ type: "paragraph", content: inline });
     return result;
   }
-  const content = parsed.content.flatMap(restore);
+  const content = modelMarkdownToDocument(replacement).content.flatMap(restore);
   content.push(...images.filter((_, index) => !used.has(index)));
   return richTextDocumentSchema.parse(
     documentFromJSON({ type: "doc", content }),
   );
 }
 
-function importAssistantHtml(html: string): RichTextDocument {
-  const template = document.createElement("template");
-  template.innerHTML = DOMPurify.sanitize(html, {
-    FORBID_TAGS: ["img", "script", "style", "iframe", "object"],
-  });
-  for (const math of template.content.querySelectorAll(MATH_NODE_SELECTOR)) {
-    const latex =
-      readMathNode(math).latex.trim() ||
-      (math.textContent ?? "")
-        .trim()
-        .replace(/^\$+|\$+$/g, "")
-        .trim();
-    if (!latex) {
-      math.remove();
-      continue;
-    }
-    math.setAttribute("data-latex", latex);
-    math.replaceChildren();
-  }
-  const walker = document.createTreeWalker(
-    template.content,
-    NodeFilter.SHOW_TEXT,
-  );
-  const texts: Text[] = [];
-  while (walker.nextNode()) texts.push(walker.currentNode as Text);
-  for (const text of texts) {
-    if (
-      !text.textContent?.includes("$") ||
-      text.parentElement?.closest(`pre, code, ${MATH_NODE_SELECTOR}`)
-    )
-      continue;
-    const nodes = inlineNodes(text.textContent);
-    const fragment = document.createDocumentFragment();
-    // The DOM exists only at this external HTML boundary.
-    for (const json of nodes) {
-      const node = documentSchema().nodeFromJSON(json);
-      if (node.isText)
-        fragment.append(document.createTextNode(node.text ?? ""));
-      else {
-        const math = document.createElement(
-          node.type.name === "blockMath" ? "div" : "span",
-        );
-        math.dataset.type =
-          node.type.name === "blockMath" ? "block-math" : "inline-math";
-        math.dataset.latex = node.attrs.latex;
-        fragment.append(math);
-      }
-    }
-    const parent = text.parentElement;
-    if (
-      parent?.tagName === "P" &&
-      parent.childNodes.length === 1 &&
-      nodes.some((node) => node.type === "blockMath")
-    )
-      parent.replaceWith(fragment);
-    else text.replaceWith(fragment);
-  }
-  return documentFromHtml(template.innerHTML);
+function hasText(node: JSONContent): boolean {
+  return node.type !== "text" || Boolean(node.text?.trim());
 }

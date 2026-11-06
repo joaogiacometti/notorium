@@ -32,7 +32,7 @@ describe("targeted note edits", () => {
         {
           firstBlockId: "b1",
           lastBlockId: "b1",
-          html: "<p>Clear explanation</p>",
+          markdown: "Clear explanation",
         },
       ]),
     );
@@ -50,9 +50,9 @@ describe("targeted note edits", () => {
       "Regression",
       testDocument(mathContent),
     );
-    expect(draft.blocks.map((block) => block.html)).toEqual([
-      "<p>Weight $w_1$</p>",
-      "<p>$$y = ax + b$$</p>",
+    expect(draft.blocks.map((block) => block.markdown)).toEqual([
+      "Weight $w_1$",
+      "$$\ny = ax + b\n$$",
     ]);
     const result = prepareNoteEdits(
       draft,
@@ -61,7 +61,7 @@ describe("targeted note edits", () => {
         {
           firstBlockId: "b0",
           lastBlockId: "b1",
-          html: "<p><strong>Weight</strong> $w_1$</p><p>$$\\hat{y} = ax + b$$</p>",
+          markdown: "**Weight** $w_1$\n\n$$\\hat{y} = ax + b$$",
         },
       ]),
     );
@@ -73,8 +73,8 @@ describe("targeted note edits", () => {
     const draft = buildNoteDraft("s", 0, "Cells", testDocument(content));
     const result = prepareNoteEdits(draft, testDocument(content), {
       ...proposal(
-        [{ firstBlockId: "b1", lastBlockId: "b1", html: "" }],
-        [{ anchorBlockId: "b2", side: "after", html: "<p>Added</p>" }],
+        [{ firstBlockId: "b1", lastBlockId: "b1", markdown: "" }],
+        [{ anchorBlockId: "b2", side: "after", markdown: "Added" }],
       ),
       title: "Cell biology",
     });
@@ -88,7 +88,7 @@ describe("targeted note edits", () => {
       prepareNoteEdits(
         buildNoteDraft("s", 0, "Empty", testDocument("")),
         testDocument(""),
-        proposal([], [{ side: "after", html: "First" }]),
+        proposal([], [{ side: "after", markdown: "First" }]),
       ).content,
     ).toEqual(testDocument("<p>First</p>"));
   });
@@ -98,8 +98,8 @@ describe("targeted note edits", () => {
       draft,
       testDocument(content),
       proposal(
-        [{ firstBlockId: "b1", lastBlockId: "b1", html: "" }],
-        [{ anchorBlockId: "b0", side: "after", html: "<p>Moved</p>" }],
+        [{ firstBlockId: "b1", lastBlockId: "b1", markdown: "" }],
+        [{ anchorBlockId: "b0", side: "after", markdown: "Moved" }],
       ),
     );
     expect(testDocumentHtml(result.content)).toBe(
@@ -115,7 +115,7 @@ describe("targeted note edits", () => {
       prepareNoteEdits(
         draft,
         testDocument(content),
-        proposal([], [{ side: "after", html: "<p>Last</p>" }]),
+        proposal([], [{ side: "after", markdown: "Last" }]),
       ),
     ).toThrow("anchorBlockId");
   });
@@ -128,8 +128,8 @@ describe("targeted note edits", () => {
         proposal(
           [],
           [
-            { anchorBlockId: "b0", side: "after", html: "<p>One</p>" },
-            { anchorBlockId: "b1", side: "before", html: "<p>Two</p>" },
+            { anchorBlockId: "b0", side: "after", markdown: "One" },
+            { anchorBlockId: "b1", side: "before", markdown: "Two" },
           ],
         ),
       ),
@@ -140,7 +140,7 @@ describe("targeted note edits", () => {
     const replace = {
       firstBlockId: "b0",
       lastBlockId: "b1",
-      html: "<p>Changed</p>",
+      markdown: "Changed",
     };
     expect(() =>
       prepareNoteEdits(
@@ -169,7 +169,7 @@ describe("targeted note edits", () => {
         {
           firstBlockId: "b1",
           lastBlockId: "b1",
-          html: "Improved",
+          markdown: "Improved",
         },
       ]),
     );
@@ -190,7 +190,7 @@ describe("targeted note edits", () => {
         {
           firstBlockId: "b0",
           lastBlockId: "b3",
-          html: "<p>Combined {{NOTE_IMAGE_b1_0}} {{NOTE_IMAGE_b3_0}}</p>",
+          markdown: "Combined {{NOTE_IMAGE_b1_0}} {{NOTE_IMAGE_b3_0}}",
         },
       ]),
     );
@@ -198,16 +198,17 @@ describe("targeted note edits", () => {
     expect(testDocumentHtml(result.content)).toContain("pathname=one");
     expect(testDocumentHtml(result.content)).toContain("pathname=two");
   });
-  it("rejects invented images and sanitizes script content", () => {
+  it("drops invented images and script content", () => {
     const draft = buildNoteDraft("s", 0, "Cells", testDocument(content));
     const replace = {
       firstBlockId: "b1",
       lastBlockId: "b1",
-      html: '<img src="https://example.com/invented.png">',
+      markdown: "![x](https://example.com/invented.png)",
     };
-    expect(() =>
-      prepareNoteEdits(draft, testDocument(content), proposal([replace])),
-    ).toThrow("attachment");
+    expect(
+      prepareNoteEdits(draft, testDocument(content), proposal([replace]))
+        .content,
+    ).toEqual(testDocument("<h2>Cells</h2><p></p><p>Keep this</p>"));
     expect(
       prepareNoteEdits(
         draft,
@@ -215,19 +216,7 @@ describe("targeted note edits", () => {
         proposal([
           {
             ...replace,
-            html: '<p onclick="bad()">Safe</p><script>bad()</script>',
-          },
-        ]),
-      ).content,
-    ).toEqual(testDocument("<h2>Cells</h2><p>Safe</p><p>Keep this</p>"));
-    expect(
-      prepareNoteEdits(
-        draft,
-        testDocument(content),
-        proposal([
-          {
-            ...replace,
-            html: '<p onclick="bad()">Safe</p><script>bad()</script>',
+            markdown: 'Safe\n\n<script>bad()</script><p onclick="bad()">',
           },
         ]),
       ).content,

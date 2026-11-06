@@ -17,13 +17,13 @@ describe("assistant flashcard edit contracts", () => {
     expect(
       flashcardDraftSchema.safeParse({
         ...draft,
-        front: `<p>${"x".repeat(LIMITS.flashcardFrontMax + 1)}</p>`,
+        front: "x".repeat(LIMITS.flashcardFrontMax + 1),
       }).success,
     ).toBe(false);
     expect(
       flashcardDraftSchema.safeParse({
         ...draft,
-        front: `<p title="${"x".repeat(100_001)}">ok</p>`,
+        front: `[ok](https://example.com/${"x".repeat(100_001)})`,
       }).success,
     ).toBe(false);
   });

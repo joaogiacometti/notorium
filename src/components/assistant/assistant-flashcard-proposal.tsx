@@ -25,7 +25,7 @@ import {
   formatFlashcardExample,
 } from "@/features/assistant/utils";
 import type { FlashcardSource } from "@/features/flashcards/source-contract";
-import { plainTextToDocument } from "@/lib/ai/plain-text-rich-text";
+import { modelMarkdownToDocument } from "@/lib/ai/model-markdown";
 import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
 import { folderOptionsQuery } from "@/lib/client-cache/queries";
 import { documentText } from "@/lib/editor/document";
@@ -282,7 +282,7 @@ function ResolvedFlashcardProposal({
       <Icon className="size-3.5 shrink-0" />
       <span className="shrink-0">{OUTCOME_LABELS[status]}</span>
       <span className="min-w-0 flex-1 truncate">
-        {documentText(plainTextToDocument(front))}
+        {documentText(modelMarkdownToDocument(front))}
       </span>
       {onRestore ? (
         <Button type="button" variant="ghost" size="xs" onClick={onRestore}>
@@ -315,7 +315,7 @@ function useProposedFolder(proposedPath: string | undefined) {
 
 function toRichFlashcard(input: ProposedFlashcard) {
   return {
-    front: plainTextToDocument(input.front),
-    back: plainTextToDocument(composeProposedFlashcardBack(input)),
+    front: modelMarkdownToDocument(input.front),
+    back: modelMarkdownToDocument(composeProposedFlashcardBack(input)),
   };
 }

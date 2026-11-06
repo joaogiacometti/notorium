@@ -26,7 +26,7 @@ export function openNote(content: string): AssistantEvalCase["request"] {
       revision: 0,
       title: "Cell biology",
       partial: false,
-      blocks: [{ id: "b0", html: `<p>${content}</p>` }],
+      blocks: [{ id: "b0", markdown: content }],
     },
   };
 }

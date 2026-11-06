@@ -47,7 +47,7 @@ describe("document edit contracts", () => {
         revision: 0,
         title: "Title",
         partial: false,
-        blocks: [{ id: "b0", html: "x".repeat(12001) }],
+        blocks: [{ id: "b0", markdown: "x".repeat(12001) }],
       }).success,
     ).toBe(false);
   });
@@ -58,13 +58,13 @@ describe("document edit contracts", () => {
       revision: 0,
       title: "Title",
       partial: false,
-      blocks: [{ id: "b0", html: "<p>Original</p>" }],
+      blocks: [{ id: "b0", markdown: "Original" }],
     };
     const input = {
       sessionId: "s",
       revision: 0,
       replacements: [
-        { firstBlockId: "b0", lastBlockId: "b0", html: "<p>Improved</p>" },
+        { firstBlockId: "b0", lastBlockId: "b0", markdown: "Improved" },
       ],
     };
     const messages = [

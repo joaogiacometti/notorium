@@ -36,7 +36,7 @@ export class FakeDocumentEditChat implements ChatTransport<AssistantUIMessage> {
         {
           firstBlockId: this.invalid ? "missing" : draft.blocks[0]?.id,
           lastBlockId: draft.blocks[0]?.id,
-          html: "<p>Improved explanation</p>",
+          markdown: "Improved explanation",
         },
       ],
     };

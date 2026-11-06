@@ -6,7 +6,7 @@ import type {
 } from "@/features/assistant/document-edit-contract";
 import { locateNoteEdits } from "@/features/assistant/note-edit-ranges";
 import { STUDY_CONTEXT_MAX_CHARS } from "@/features/assistant/study-context";
-import { draftHtmlForAssistant } from "@/features/assistant/utils";
+import { draftMarkdownForAssistant } from "@/features/assistant/utils";
 import { editNoteSchema } from "@/features/notes/validation";
 import {
   documentFromJSON,
@@ -40,7 +40,7 @@ export function splitNoteBlocks(content: RichTextDocument): NoteBlock[] {
   return content.content.map((node, index) => ({ id: `b${index}`, node }));
 }
 
-/** HTML is exported only for the model request; the captured draft stays native. */
+/** Markdown is exported only for the model request; the captured draft stays native. */
 export function buildNoteDraft(
   sessionId: string,
   revision: number,
@@ -50,13 +50,13 @@ export function buildNoteDraft(
 ): NoteDraft {
   const all = splitNoteBlocks(content);
   const priority = [...new Set([...selected, ...all.map((_, index) => index)])];
-  const included = new Map<string, { id: string; html: string }>();
+  const included = new Map<string, { id: string; markdown: string }>();
   for (const index of priority) {
     const block = all[index];
     if (!block) continue;
     const safe = {
       id: block.id,
-      html: draftHtmlForAssistant(fragment([block.node])).replaceAll(
+      markdown: draftMarkdownForAssistant(fragment([block.node])).replaceAll(
         /\{\{IMAGE_(\d+)\}\}/g,
         `{{NOTE_IMAGE_${block.id}_$1}}`,
       ),
@@ -96,13 +96,9 @@ export function prepareNoteEdits(
     pieces.push(...blocks.slice(cursor, edit.from).map((block) => block.node));
     const range = blocks.slice(edit.from, edit.to);
     const original = fragment(range.map((block) => block.node));
-    if (/<img\b/i.test(edit.html) || /\/api\/attachments\//i.test(edit.html))
-      throw new Error(
-        "Invalid replacement attachment reference; expected original image placeholders",
-      );
     let offset = 0;
-    let html = edit.html;
-    if (/\{\{IMAGE_/.test(html))
+    let markdown = edit.markdown;
+    if (/\{\{IMAGE_/.test(markdown))
       throw new Error(
         "Invalid image placeholder; expected a note block image reference",
       );
@@ -111,19 +107,19 @@ export function prepareNoteEdits(
         (node) => node.type === "image",
       );
       images.forEach((_, index) => {
-        html = html.replaceAll(
+        markdown = markdown.replaceAll(
           `{{NOTE_IMAGE_${block.id}_${index}}}`,
           `{{IMAGE_${offset + index}}}`,
         );
       });
       offset += images.length;
     }
-    if (/\{\{NOTE_IMAGE_/.test(html))
+    if (/\{\{NOTE_IMAGE_/.test(markdown))
       throw new Error(
         "Invalid image placeholder; expected an image from the edited range",
       );
-    const replacement = html
-      ? restoreDraftReplacement(html, original)
+    const replacement = markdown
+      ? restoreDraftReplacement(markdown, original)
       : fragment([]);
     const position = documentSchema().nodeFromJSON(fragment(pieces)).content
       .size;

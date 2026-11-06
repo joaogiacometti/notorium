@@ -268,14 +268,14 @@ describe("shared assistant flashcard editing", () => {
 
   it("uses current unsaved content and independently accepts/discards fields", async () => {
     transport.replacements = {
-      front: "<p>Better front</p>",
-      back: "<p>Better back</p>",
+      front: "Better front",
+      back: "Better back",
     };
     await click("Send");
     expect(transport.requests[0].body).toMatchObject({
       draft: {
-        front: "<p>Original front</p>",
-        back: "<p>Original back</p>",
+        front: "Original front",
+        back: "Original back",
       },
     });
     expect(transport.requests[0].body).not.toHaveProperty("context");
@@ -294,7 +294,7 @@ describe("shared assistant flashcard editing", () => {
 
   it("rejects a late reply after typing and keeps the newer content", async () => {
     transport.delayed = true;
-    transport.replacements = { back: "<p>Suggestion</p>" };
+    transport.replacements = { back: "Suggestion" };
     await click("Send");
     await click("Type");
     await act(async () => {
@@ -311,7 +311,7 @@ describe("shared assistant flashcard editing", () => {
     "invalidates requests on %s",
     async (action) => {
       transport.delayed = true;
-      transport.replacements = { back: "<p>Suggestion</p>" };
+      transport.replacements = { back: "Suggestion" };
       await click("Send");
       await click(action);
       await act(async () => {
@@ -325,16 +325,16 @@ describe("shared assistant flashcard editing", () => {
 
   it("skips unresolved fields before a follow-up and sends the latest draft", async () => {
     transport.replacements = {
-      front: "<p>Improved front</p>",
-      back: "<p>Improved back</p>",
+      front: "Improved front",
+      back: "Improved back",
     };
     await click("Send");
     await click("Accept front");
     await click("Send");
     expect(transport.requests[1].body).toMatchObject({
       draft: {
-        front: "<p>Improved front</p>",
-        back: "<p>Original back</p>",
+        front: "Improved front",
+        back: "Original back",
       },
     });
     expect(JSON.stringify(transport.requests[1].messages)).toContain(
@@ -344,7 +344,7 @@ describe("shared assistant flashcard editing", () => {
 
   it("invalidates a late reply even after returning to the original editor", async () => {
     transport.delayed = true;
-    transport.replacements = { back: "<p>Suggestion</p>" };
+    transport.replacements = { back: "Suggestion" };
     await click("Send");
     await click("Toggle nested editor");
     await click("Toggle nested editor");
@@ -358,7 +358,7 @@ describe("shared assistant flashcard editing", () => {
   });
 
   it("accepts a field only once without generating another request", async () => {
-    transport.replacements = { back: "<p>Suggestion</p>" };
+    transport.replacements = { back: "Suggestion" };
     await click("Send");
     await click("Accept back twice");
     expect(read("values")).toContain("Suggestion");
@@ -368,8 +368,8 @@ describe("shared assistant flashcard editing", () => {
   });
 
   it("records superseded proposals when a reply contains multiple edit calls", async () => {
-    transport.replacements = { back: "<p>First suggestion</p>" };
-    transport.additionalReplacements = [{ back: "<p>Second suggestion</p>" }];
+    transport.replacements = { back: "First suggestion" };
+    transport.additionalReplacements = [{ back: "Second suggestion" }];
     await click("Send");
     expect(read("pending")).toContain("Second suggestion");
     expect(read("messages")).toContain('"back":"skipped"');
@@ -378,7 +378,7 @@ describe("shared assistant flashcard editing", () => {
   });
 
   it("keeps pending suggestions when an oversized draft prevents sending", async () => {
-    transport.replacements = { back: "<p>Suggestion</p>" };
+    transport.replacements = { back: "Suggestion" };
     await click("Send");
     await click("Oversize draft");
     await click("Send");
@@ -389,8 +389,8 @@ describe("shared assistant flashcard editing", () => {
 
   it("clears proposals on new chat without reverting accepted edits", async () => {
     transport.replacements = {
-      front: "<p>Improved front</p>",
-      back: "<p>Improved back</p>",
+      front: "Improved front",
+      back: "Improved back",
     };
     await click("Send");
     await click("Accept front");
@@ -415,10 +415,10 @@ describe("shared assistant flashcard editing", () => {
   });
   it("handles fresh proposals after new chat even when the model reuses a call id", async () => {
     transport.callId = "reused-call";
-    transport.replacements = { back: "<p>First suggestion</p>" };
+    transport.replacements = { back: "First suggestion" };
     await click("Send");
     await click("New chat");
-    transport.replacements = { back: "<p>Second suggestion</p>" };
+    transport.replacements = { back: "Second suggestion" };
     await click("Send");
     expect(read("pending")).toContain("Second suggestion");
   });

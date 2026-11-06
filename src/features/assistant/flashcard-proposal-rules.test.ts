@@ -4,8 +4,8 @@ import { findFlashcardProposalProblems } from "@/features/assistant/flashcard-pr
 const review = {
   kind: "review" as const,
   mode: "review" as const,
-  front: "<p>What is an aggregate root in Domain-Driven Design?</p>",
-  hiddenBack: "<p>The entry point of an aggregate.</p>",
+  front: "What is an aggregate root in Domain-Driven Design?",
+  hiddenBack: "The entry point of an aggregate.",
 };
 
 function problems(...fronts: string[]) {
@@ -35,7 +35,7 @@ describe("flashcard proposal rules", () => {
   });
 
   it("compares short fronts only as exact matches", () => {
-    const short = { ...review, front: "<p>What is ATP?</p>" };
+    const short = { ...review, front: "What is ATP?" };
     const check = (front: string) =>
       findFlashcardProposalProblems({ cards: [{ front }] }, short);
     expect(check("what is ATP")).toHaveLength(1);

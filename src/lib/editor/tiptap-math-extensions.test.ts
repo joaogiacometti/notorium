@@ -3,7 +3,7 @@
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { describe, expect, it } from "vitest";
-import { plainTextToDocument } from "@/lib/ai/plain-text-rich-text";
+import { modelMarkdownToDocument } from "@/lib/ai/model-markdown";
 import { buildMathExtensions } from "@/lib/editor/tiptap-math-extensions";
 import { MATH_KATEX_OPTIONS } from "@/lib/math/katex";
 
@@ -21,7 +21,7 @@ describe("buildMathExtensions", () => {
   it("renders numeric answer choices through the real editor math extension", () => {
     const editor = new Editor({
       extensions: [StarterKit, ...buildMathExtensions()],
-      content: plainTextToDocument("B) $6$"),
+      content: modelMarkdownToDocument("B) $6$"),
     });
     try {
       const math = editor.view.dom.querySelector(".katex");

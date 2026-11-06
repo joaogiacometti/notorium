@@ -1,20 +1,20 @@
 import { z } from "zod";
 import { editToolInputObject } from "@/features/assistant/edit-guards";
-import { editorHtmlText } from "@/features/assistant/editor-html-text";
-import { EDITOR_HTML_MATH_RULE } from "@/lib/ai/prompt-rules";
+import { EDITOR_MARKDOWN_RULE } from "@/lib/ai/prompt-rules";
 import { FOLDER_PATH_MAX_CHARS, LIMITS } from "@/lib/config/limits";
-import type { RichTextDocument } from "@/lib/editor/document";
+import { documentText, type RichTextDocument } from "@/lib/editor/document";
+import { documentFromMarkdown } from "@/lib/editor/document-markdown";
 
 /** Raw size cap for a card side sent to the assistant; the visible-text limit
- * is checked separately. HTML needs room for tables, math attributes, and
- * attachment references. */
+ * is checked separately, as saved cards count it. Markdown needs room for
+ * tables and syntax. */
 export const ASSISTANT_CARD_SIDE_MAX_CHARS = 100_000;
-const draftHtml = (limit: number) =>
+const draftMarkdown = (limit: number) =>
   z
     .string()
     .max(ASSISTANT_CARD_SIDE_MAX_CHARS)
     .refine(
-      (value) => editorHtmlText(value).length <= limit,
+      (value) => documentText(documentFromMarkdown(value)).length <= limit,
       `Expected rich text with at most ${limit} visible characters`,
     );
 
@@ -24,13 +24,13 @@ const draftHtml = (limit: number) =>
 export const flashcardDraftSchema = z.object({
   sessionId: z.string().min(1).max(100),
   revision: z.number().int().nonnegative(),
-  front: draftHtml(LIMITS.flashcardFrontMax),
-  back: draftHtml(LIMITS.flashcardBackMax),
+  front: draftMarkdown(LIMITS.flashcardFrontMax),
+  back: draftMarkdown(LIMITS.flashcardBackMax),
   folderPath: z.string().max(FOLDER_PATH_MAX_CHARS).optional(),
 });
 
-/** Model replacements use supported editor HTML, with images represented by placeholders.
- * @example flashcardEditsInputSchema.parse({ sessionId: "d", revision: 0, front: "<p>Why?</p>" });
+/** Model replacements use Markdown, with images represented by placeholders.
+ * @example flashcardEditsInputSchema.parse({ sessionId: "d", revision: 0, front: "Why?" });
  */
 export const flashcardEditsInputSchema = editToolInputObject(
   {
@@ -46,15 +46,13 @@ export const flashcardEditsInputSchema = editToolInputObject(
       .int()
       .nonnegative()
       .describe("Copy revision exactly from the current flashcard draft."),
-    front: draftHtml(LIMITS.flashcardFrontMax)
+    front: draftMarkdown(LIMITS.flashcardFrontMax)
+      .optional()
+      .describe("Full replacement front in Markdown; omit to keep unchanged."),
+    back: draftMarkdown(LIMITS.flashcardBackMax)
       .optional()
       .describe(
-        "Full replacement front in supported editor HTML; omit to keep unchanged.",
-      ),
-    back: draftHtml(LIMITS.flashcardBackMax)
-      .optional()
-      .describe(
-        "Full replacement back in supported editor HTML; omit to keep unchanged. Use ul/li for bullets or ol/li for ordered steps, without spacer paragraphs. Code blocks use pre/code.",
+        "Full replacement back in Markdown; omit to keep unchanged. Use - bullets or 1. ordered steps; indent a block equation under the bullet it belongs to.",
       ),
   },
   "",
@@ -63,7 +61,7 @@ export const flashcardEditsInputSchema = editToolInputObject(
     message: "Expected a front or back replacement",
   })
   .describe(
-    `Replace only requested fields; preserve unrelated content, formatting, and every image placeholder exactly. Never invent image URLs. Supported HTML includes paragraphs, headings, strong/em, lists, pre/code, and tables. ${EDITOR_HTML_MATH_RULE}`,
+    `Replace only requested fields; preserve unrelated content, formatting, and every image placeholder exactly. Never invent image URLs. ${EDITOR_MARKDOWN_RULE}`,
   );
 
 const editOutcome = z.enum(["accepted", "discarded", "skipped", "stale"]);

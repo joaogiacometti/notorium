@@ -8,8 +8,8 @@ describe("locateNoteEdits", () => {
   it("orders edits by position, with an insertion before an adjacent replacement", () => {
     const { edits, problems } = locateNoteEdits(ids, new Set(ids), {
       ...identity,
-      replacements: [{ firstBlockId: "b1", lastBlockId: "b2", html: "" }],
-      insertions: [{ anchorBlockId: "b0", side: "after", html: "<p>N</p>" }],
+      replacements: [{ firstBlockId: "b1", lastBlockId: "b2", markdown: "" }],
+      insertions: [{ anchorBlockId: "b0", side: "after", markdown: "N" }],
     });
     expect(problems).toEqual([]);
     expect(edits.map(({ kind, from, to }) => [kind, from, to])).toEqual([
@@ -21,11 +21,11 @@ describe("locateNoteEdits", () => {
   it("reports hidden ranges, missing anchors, and overlaps", () => {
     const { problems } = locateNoteEdits(ids, new Set(["b0", "b2"]), {
       ...identity,
-      replacements: [{ firstBlockId: "b0", lastBlockId: "b2", html: "" }],
+      replacements: [{ firstBlockId: "b0", lastBlockId: "b2", markdown: "" }],
       insertions: [
-        { side: "after", html: "<p>N</p>" },
-        { anchorBlockId: "b0", side: "after", html: "<p>A</p>" },
-        { anchorBlockId: "b2", side: "before", html: "<p>B</p>" },
+        { side: "after", markdown: "N" },
+        { anchorBlockId: "b0", side: "after", markdown: "A" },
+        { anchorBlockId: "b2", side: "before", markdown: "B" },
       ],
     });
     expect(problems).toEqual([
@@ -36,8 +36,8 @@ describe("locateNoteEdits", () => {
       locateNoteEdits(ids, new Set(ids), {
         ...identity,
         insertions: [
-          { anchorBlockId: "b0", side: "after", html: "<p>A</p>" },
-          { anchorBlockId: "b1", side: "before", html: "<p>B</p>" },
+          { anchorBlockId: "b0", side: "after", markdown: "A" },
+          { anchorBlockId: "b1", side: "before", markdown: "B" },
         ],
       }).problems,
     ).toEqual([
@@ -49,7 +49,7 @@ describe("locateNoteEdits", () => {
     expect(
       locateNoteEdits([], new Set(), {
         ...identity,
-        insertions: [{ side: "after", html: "<p>First</p>" }],
+        insertions: [{ side: "after", markdown: "First" }],
       }).edits,
     ).toMatchObject([{ from: 0, to: 0 }]);
   });
