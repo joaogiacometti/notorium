@@ -1,6 +1,10 @@
 import type { JSONContent } from "@tiptap/core";
 import { MarkdownManager } from "@tiptap/markdown";
-import { documentFromJSON, type RichTextDocument } from "@/lib/editor/document";
+import {
+  documentFromJSON,
+  documentSchema,
+  type RichTextDocument,
+} from "@/lib/editor/document";
 import { buildDocumentExtensions } from "@/lib/editor/document-extensions";
 
 let manager: MarkdownManager | undefined;
@@ -25,32 +29,65 @@ export function documentFromMarkdown(markdown: string): RichTextDocument {
   });
 }
 
-// List items must start with a paragraph, even an empty one.
+// Blank lines are dropped, and list items must start with a paragraph.
 function normalizeBlocks(nodes: JSONContent[], item = false): JSONContent[] {
-  const blocks = nodes
+  const blocks = splitBlocks(nodes)
     .map(normalizeNode)
     .filter(
-      (node, index) =>
-        (item && index === 0) ||
+      (node) =>
         node.type !== "paragraph" ||
-        node.content?.length,
+        node.content?.some(
+          (child) => child.type !== "text" || child.text?.trim(),
+        ),
     );
-  return blocks.length ? blocks : [{ type: "paragraph" }];
+  if (item ? blocks[0]?.type !== "paragraph" : !blocks.length)
+    blocks.unshift({ type: "paragraph" });
+  return blocks;
+}
+
+// Marked can leave inline content beside a block (`- $$x$$ tail`), and a
+// mid-line `$$...$$` arrives as blockMath inside a paragraph or heading (see
+// tiptap-math-extensions). Both become sibling blocks.
+function splitBlocks(nodes: JSONContent[]): JSONContent[] {
+  const blocks: JSONContent[] = [];
+  let open: JSONContent[] | undefined;
+  const add = (node: JSONContent, shell: JSONContent) => {
+    if (!documentSchema().nodes[node.type ?? ""]?.isInline) {
+      blocks.push(node);
+      open = undefined;
+      return;
+    }
+    if (!open) {
+      open = [];
+      blocks.push({ ...shell, content: open });
+    }
+    open.push(node);
+  };
+  for (const node of nodes) {
+    if (node.type !== "paragraph" && node.type !== "heading") {
+      add(node, { type: "paragraph" });
+      continue;
+    }
+    open = undefined;
+    if (!node.content?.length) blocks.push(node);
+    for (const child of node.content ?? []) add(child, node);
+    open = undefined;
+  }
+  return blocks;
 }
 
 function normalizeNode(node: JSONContent): JSONContent {
   if (node.type === "text")
     return { ...node, text: node.text?.replaceAll(/\s*\n\s*/g, " ") };
   if (!node.content || node.type === "codeBlock") return node;
-  const blocks = node.content.some((child) => child.type === "paragraph");
   return {
     ...node,
-    content: blocks
-      ? normalizeBlocks(
+    content: documentSchema().nodes[node.type ?? ""]?.isTextblock
+      ? node.content.map(normalizeNode)
+      : normalizeBlocks(
           node.content,
           node.type === "listItem" || node.type === "taskItem",
-        )
-      : node.content.map(normalizeNode),
+        ),
   };
 }
 

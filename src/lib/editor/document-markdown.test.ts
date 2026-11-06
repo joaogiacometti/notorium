@@ -23,6 +23,7 @@ describe("document Markdown", () => {
       "R&D and &amp; literally",
       "a < b > c <b>not bold</b>",
       "C:\\temp and \\$",
+      "Literal \\(x\\) and \\[y\\]",
       "*not italic* _nor_ `code` [link](x) ~~no~~",
     ]) {
       expect(documentFromMarkdown(documentToMarkdown(paragraph(text)))).toEqual(
@@ -32,6 +33,23 @@ describe("document Markdown", () => {
     expect(documentToMarkdown(paragraph("R&D costs $5"))).toBe(
       "R&D costs \\$5",
     );
+  });
+
+  it("writes inline math so it reads back as math", () => {
+    const value: RichTextDocument = {
+      version: 1,
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "inlineMath", attrs: { latex: " x " } }],
+        },
+      ],
+    };
+    expect(documentToMarkdown(value)).toBe("$x$");
+    expect(documentFromMarkdown("$x$").content[0].content).toEqual([
+      { type: "inlineMath", attrs: { latex: "x" } },
+    ]);
   });
 
   it("round-trips lists with block math, marks, code, tables, and tasks", () => {

@@ -51,6 +51,37 @@ describe("model Markdown import", () => {
     expect(richTextDocumentSchema.safeParse(value).success).toBe(true);
   });
 
+  it("lifts a mid-line block equation in a bullet out of its paragraph", () => {
+    const value = modelMarkdownToDocument(
+      "- Formula: $$\\text{CAC} = \\frac{a}{b}$$\n- $$x^2$$ tail",
+    );
+    expect(richTextDocumentSchema.safeParse(value).success).toBe(true);
+    expect(
+      value.content[0].content?.map((item) =>
+        item.content?.map((node) => node.type),
+      ),
+    ).toEqual([
+      ["paragraph", "blockMath"],
+      ["paragraph", "blockMath", "paragraph"],
+    ]);
+    expect(mathLatex("# Head $$x$$")).toEqual(["x"]);
+  });
+
+  it("keeps currency literal and still reads tight inline math", () => {
+    expect(
+      mathLatex(
+        "Example: $20,000 spend gives a CAC of $200; area $A = bh$, answer $12$.",
+      ),
+    ).toEqual(["A = bh", "12"]);
+    expect(mathLatex("Costs $5 and $10")).toEqual([]);
+  });
+
+  it("reads escaped pipes inside math in table cells", () => {
+    expect(mathLatex("| f | v |\n|---|---|\n| abs | $\\|x\\|$ |")).toEqual([
+      "|x|",
+    ]);
+  });
+
   it("reads only numeric ordered lists, with inline formatting in items", () => {
     expect(modelMarkdownToDocument("A. Lincoln was president").content).toEqual(
       [

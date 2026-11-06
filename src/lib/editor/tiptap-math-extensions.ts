@@ -31,6 +31,11 @@ const INLINE_MATH_INPUT_RULE = /(?<!\$)\$([^$\n]+?)\$$/;
 const INLINE_MATH_PASTE_RULE = /(?<!\$)\$([^$\n]+?)\$(?!\$)/g;
 const BLOCK_MATH_PASTE_RULE = /\$\$([^$\n]+?)\$\$/g;
 
+const MARKDOWN_MATH = [
+  [/^\$\$([^$]+?)\$\$/, "blockMath"],
+  [/^\$(?!\s)([^$]+?)(?<!\s)\$(?![$\d])/, "inlineMath"],
+] as const;
+
 const ConventionalInlineMath = InlineMath.extend({
   addInputRules() {
     return [
@@ -48,6 +53,26 @@ const ConventionalInlineMath = InlineMath.extend({
       }),
     ];
   },
+
+  // Markdown exchange (document-markdown.ts). Dollar math follows Pandoc's
+  // tex_math_dollars rule, so "$20 and $30" stays text: the opening `$` can't
+  // precede a space and the closing `$` can't follow one or precede a digit.
+  // Backslash delimiters stay unsupported: in CommonMark `\[` is an escaped
+  // bracket. Inside list items marked finds block math only at a line start,
+  // so display math is also tokenized inline and documentFromMarkdown lifts it.
+  markdownTokenizer: {
+    name: "inlineMath",
+    level: "inline",
+    start: (src: string) => src.indexOf("$"),
+    tokenize: (src: string) => {
+      for (const [pattern, type] of MARKDOWN_MATH) {
+        const match = pattern.exec(src);
+        const latex = match?.[1].trim();
+        if (match && latex) return { type, raw: match[0], latex };
+      }
+    },
+  },
+  renderMarkdown: (node) => `$${String(node.attrs?.latex ?? "").trim()}$`,
 
   // Input rules only fire on keystrokes, so pasted `$...$` needs its own rule.
   addPasteRules() {
