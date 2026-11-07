@@ -114,7 +114,7 @@ describe("DeleteAccountDialog", () => {
     });
 
     const button = Array.from(container.querySelectorAll("button")).find(
-      (element) => element.textContent === "Delete Account",
+      (element) => element.textContent === "Delete account",
     );
 
     expect(button).toBeTruthy();
@@ -140,7 +140,7 @@ describe("DeleteAccountDialog", () => {
     });
 
     const button = Array.from(container.querySelectorAll("button")).find(
-      (element) => element.textContent === "Delete Account",
+      (element) => element.textContent === "Delete account",
     );
 
     expect(button).toBeTruthy();

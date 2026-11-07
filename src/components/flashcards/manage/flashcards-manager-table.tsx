@@ -281,9 +281,11 @@ export function FlashcardsManagerTableSkeleton({
       rowClassName="py-2.5"
       rowCount={3}
       footer={[
-        { className: "h-7 w-28 rounded-full" },
-        { className: "h-8 w-24 rounded-full" },
-        { className: "h-8 w-24 rounded-full" },
+        // Page badge, "Rows" size select, then Previous/Next.
+        { className: "h-6.5 w-24" },
+        { className: "h-8 w-28" },
+        { className: "h-8 w-20" },
+        { className: "h-8 w-20" },
       ]}
       footerClassName="mt-auto"
     />

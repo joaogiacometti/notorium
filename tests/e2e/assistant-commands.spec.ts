@@ -39,9 +39,9 @@ test("starts a fresh chat from the composer command menu without sending a comma
   await expect.poll(() => assistant.requests.length).toBe(2);
   expect(assistant.requests[1]?.messages).toHaveLength(1);
   await page
-    .getByRole("button", { name: "New Flashcard", exact: true })
+    .getByRole("button", { name: "Create flashcard", exact: true })
     .click();
-  const editor = page.getByRole("dialog", { name: "New flashcard" });
+  const editor = page.getByRole("dialog", { name: "Create flashcard" });
   await expect(editor).toBeVisible();
   await composer.fill("/n");
   await expect(

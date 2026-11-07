@@ -15,6 +15,9 @@ interface SearchResults {
   flashcards: SearchData["flashcards"];
   /** True while a typed query has no matches to show yet. */
   isSearching: boolean;
+  /** True when the server search failed, so an empty list means "unknown". */
+  hasError: boolean;
+  retry: () => void;
   /** Trimmed query to highlight. */
   highlightQuery: string;
 }
@@ -43,12 +46,13 @@ export function useSearchResults(
     gcTime: 1000 * 60 * 15,
   });
 
+  const retry = () => void searchQuery.refetch();
   if (!isAuthenticated || query.trim().length < LIMITS.searchQueryMin) {
-    return { ...NO_SEARCH_DATA, isSearching: false, highlightQuery: "" };
+    return idleResults(false, retry);
   }
   if (!canSearch) {
     // Typed past the minimum but still debouncing.
-    return { ...NO_SEARCH_DATA, isSearching: true, highlightQuery: "" };
+    return idleResults(true, retry);
   }
   const { notes, pdfs, flashcards } = searchQuery.data ?? NO_SEARCH_DATA;
   return {
@@ -56,6 +60,18 @@ export function useSearchResults(
     pdfs,
     flashcards,
     isSearching: searchQuery.isPending,
+    hasError: searchQuery.isError,
+    retry,
     highlightQuery: debouncedQuery,
+  };
+}
+
+function idleResults(isSearching: boolean, retry: () => void): SearchResults {
+  return {
+    ...NO_SEARCH_DATA,
+    isSearching,
+    hasError: false,
+    retry,
+    highlightQuery: "",
   };
 }

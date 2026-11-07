@@ -20,6 +20,8 @@ import type { ExplanationSelection } from "@/features/assistant/selection-explan
 import { readAssistantErrorMessage } from "@/lib/ai/chat-error";
 import { selectionExplanationQuery } from "@/lib/client-cache/selection-explanation";
 import { LIMITS } from "@/lib/config/limits";
+import { getStatusToneClasses } from "@/lib/ui/status-tones";
+import { cn } from "@/lib/utils";
 
 /**
  * What the user can do with selected PDF text: get a quick explanation in
@@ -201,7 +203,10 @@ function ExplanationResult({ selection }: { selection: ExplanationSelection }) {
       <div className="flex items-center gap-2">
         <p
           role="alert"
-          className="min-w-0 flex-1 text-sm text-(--intent-danger-text)"
+          className={cn(
+            "min-w-0 flex-1 text-sm",
+            getStatusToneClasses("danger").text,
+          )}
         >
           {readAssistantErrorMessage(query.error)}
         </p>

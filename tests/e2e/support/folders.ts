@@ -55,7 +55,7 @@ export async function openFolderSidebarActions(page: Page, folderName: string) {
 }
 
 /**
- * Runs an item from a folder's Documents submenu ("Add note", "Add PDF") in
+ * Runs an item from a folder's Documents submenu ("Create note", "Add PDF") in
  * the left-menu folder tree.
  */
 export async function clickFolderDocumentsMenuItem(

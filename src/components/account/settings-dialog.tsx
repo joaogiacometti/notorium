@@ -12,6 +12,7 @@ import {
   type SettingsSectionId,
   settingsSections,
 } from "@/components/account/settings-sections";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ interface SettingsDialogProps {
   onSelectSection: (section: SettingsSectionId) => void;
   settings: AccountSettings | undefined;
   isLoading: boolean;
+  onRetry: () => void;
 }
 
 /**
@@ -38,7 +40,8 @@ interface SettingsDialogProps {
  *
  * @example
  * <SettingsDialog open={open} onOpenChange={setOpen} activeSection="account"
- *   onSelectSection={setSection} settings={data} isLoading={isPending} />
+ *   onSelectSection={setSection} settings={data} isLoading={isPending}
+ *   onRetry={refetch} />
  */
 export function SettingsDialog({
   open,
@@ -47,6 +50,7 @@ export function SettingsDialog({
   onSelectSection,
   settings,
   isLoading,
+  onRetry,
 }: Readonly<SettingsDialogProps>) {
   const [query, setQuery] = useState("");
   const searching = query.trim().length > 0;
@@ -83,12 +87,14 @@ export function SettingsDialog({
                 query={query}
                 settings={settings}
                 isLoading={isLoading}
+                onRetry={onRetry}
               />
             ) : (
               <SettingsSectionContent
                 activeSection={activeSection}
                 settings={settings}
                 isLoading={isLoading}
+                onRetry={onRetry}
               />
             )}
           </SettingsSearchProvider>
@@ -116,9 +122,7 @@ function SettingsSidebar({
   const searching = query.trim().length > 0;
   return (
     <nav className="shrink-0 border-b bg-muted/50 p-2 sm:w-48 sm:border-r sm:border-b-0 sm:p-3">
-      <DialogTitle className="px-2 pb-2 text-base font-semibold">
-        Settings
-      </DialogTitle>
+      <DialogTitle className="px-2 pb-2">Settings</DialogTitle>
       <div className="relative px-1 sm:px-0">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground sm:left-2.5" />
         <Input
@@ -151,8 +155,8 @@ function SettingsSidebar({
                 onClick={() => onSelectSection(section.id)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-accent/45 hover:text-foreground",
-                  active && "bg-accent/65 text-foreground",
+                  "flex shrink-0 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground",
+                  active && "bg-muted text-foreground",
                 )}
               >
                 <Icon className="size-4 shrink-0" />
@@ -170,12 +174,14 @@ interface SearchResultsProps {
   query: string;
   settings: AccountSettings | undefined;
   isLoading: boolean;
+  onRetry: () => void;
 }
 
 function SearchResults({
   query,
   settings,
   isLoading,
+  onRetry,
 }: Readonly<SearchResultsProps>) {
   return (
     <div>
@@ -185,7 +191,7 @@ function SearchResults({
       {settings ? (
         <AllSettings settings={settings} />
       ) : (
-        <SettingsLoadingState isLoading={isLoading} />
+        <SettingsLoadingState isLoading={isLoading} onRetry={onRetry} />
       )}
     </div>
   );
@@ -214,19 +220,21 @@ interface SettingsSectionContentProps {
   activeSection: SettingsSectionId;
   settings: AccountSettings | undefined;
   isLoading: boolean;
+  onRetry: () => void;
 }
 
 function SettingsSectionContent({
   activeSection,
   settings,
   isLoading,
+  onRetry,
 }: Readonly<SettingsSectionContentProps>) {
   if (activeSection === "appearance") {
     return <AppearanceCard />;
   }
 
   if (!settings) {
-    return <SettingsLoadingState isLoading={isLoading} />;
+    return <SettingsLoadingState isLoading={isLoading} onRetry={onRetry} />;
   }
 
   return <LoadedSection activeSection={activeSection} settings={settings} />;
@@ -252,13 +260,27 @@ function LoadedSection({
   );
 }
 
-function SettingsLoadingState({ isLoading }: Readonly<{ isLoading: boolean }>) {
+function SettingsLoadingState({
+  isLoading,
+  onRetry,
+}: Readonly<{ isLoading: boolean; onRetry: () => void }>) {
   return (
-    <div className="flex h-40 items-center justify-center text-muted-foreground">
+    <div
+      role="status"
+      className="flex h-40 flex-col items-center justify-center gap-2 text-sm text-muted-foreground"
+    >
       {isLoading ? (
-        <Loader2 className="size-5 animate-spin" />
+        <>
+          <Loader2 className="size-5 animate-spin" aria-hidden />
+          <span className="sr-only">Loading settings…</span>
+        </>
       ) : (
-        <p className="text-sm">Could not load your settings. Try reopening.</p>
+        <>
+          <p>Couldn't load your settings.</p>
+          <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+            Retry
+          </Button>
+        </>
       )}
     </div>
   );

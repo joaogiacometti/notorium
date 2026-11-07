@@ -60,7 +60,7 @@ export function DeleteDocumentDialog({
         </>
       }
       confirmLabel="Delete"
-      pendingLabel="Deleting..."
+      pendingLabel="Deleting…"
       confirmVariant="destructive"
       isPending={isPending}
       onConfirm={handleDelete}

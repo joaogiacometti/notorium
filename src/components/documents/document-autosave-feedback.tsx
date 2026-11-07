@@ -15,9 +15,11 @@ export function DocumentAutosaveFeedback({
   if (!isSaving && !hasError) return null;
   return (
     <div role="status" className="text-sm text-muted-foreground">
+      {/* h-10 matches the size-10 header actions beside it. */}
       <Button
         type="button"
         variant="outline"
+        className="h-10"
         disabled={isSaving}
         onClick={retry}
       >

@@ -138,7 +138,7 @@ export function CreateFlashcardForm<TValues extends FlashcardFormValues>({
           <AsyncButtonContent
             pending={isSubmitting}
             idleLabel="Create"
-            pendingLabel="Creating..."
+            pendingLabel="Creating…"
             saved={isSaved}
             savedLabel="Created"
           />

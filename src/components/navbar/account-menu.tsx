@@ -113,21 +113,20 @@ export function AccountMenu({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           data-testid="account-menu-settings"
-          className="cursor-pointer"
           onSelect={() => openAccountSettings()}
         >
           <Settings className="size-4" />
           Settings
         </DropdownMenuItem>
         {isAdmin ? (
-          <DropdownMenuItem asChild className="cursor-pointer">
+          <DropdownMenuItem asChild>
             <Link
               href="/admin"
               data-testid="account-menu-admin"
               className="flex w-full items-center gap-2 text-left"
             >
               <Shield className="size-4" />
-              Admin Panel
+              Admin panel
             </Link>
           </DropdownMenuItem>
         ) : null}

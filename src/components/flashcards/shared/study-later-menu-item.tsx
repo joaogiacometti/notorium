@@ -22,7 +22,6 @@ export function StudyLaterMenuItem({
       role="menuitemcheckbox"
       aria-checked={marked}
       onClick={onSelect}
-      className="cursor-pointer"
     >
       <Clock className="size-4" />
       Study later

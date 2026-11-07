@@ -24,9 +24,12 @@ class FakeSearchApi {
   searchedQueries: string[] = [];
   /** When true, searches never settle, simulating a slow server. */
   holdSearches = false;
+  /** When true, searches reject, simulating an unavailable server. */
+  failSearches = false;
 
   fetchSearchData = async (query: string): Promise<SearchData> => {
     this.searchedQueries.push(query);
+    if (this.failSearches) throw new Error("Search unavailable");
     return this.holdSearches ? new Promise(() => {}) : this.matches;
   };
 }
@@ -176,8 +179,8 @@ describe("GlobalSearch", () => {
   it("shows only commands before typing, without loading anything", async () => {
     await renderSearch();
     const labels = optionLabels();
-    expect(labels).toContain("Create Folder");
-    expect(labels).toContain("Show Keyboard Shortcuts");
+    expect(labels).toContain("Create folder");
+    expect(labels).toContain("Show keyboard shortcuts");
     expect(api.searchedQueries).toEqual([]);
     expect(document.body.textContent).not.toContain("Searching");
   });
@@ -203,7 +206,7 @@ describe("GlobalSearch", () => {
     await typeQuery("m");
 
     expect(optionLabels()).toContain("Theme: Dark");
-    expect(optionLabels()).not.toContain("Create Folder");
+    expect(optionLabels()).not.toContain("Create folder");
     expect(api.searchedQueries).toEqual([]);
   });
 
@@ -218,7 +221,7 @@ describe("GlobalSearch", () => {
 
     const labels = optionLabels();
     expect(api.searchedQueries).toEqual(["folder"]);
-    expect(labels).toContain("Create Folder");
+    expect(labels).toContain("Create folder");
     expect(labels.some((label) => label.startsWith("Folder notes"))).toBe(true);
     expect(labels).not.toContain("Theme: Dark");
   });
@@ -257,6 +260,37 @@ describe("GlobalSearch", () => {
     expect(document.body.textContent).toContain(
       "No matching commands, notes, PDFs, or flashcards.",
     );
+  });
+
+  it("reports a failed search with a retry instead of claiming nothing matches", async () => {
+    api.failSearches = true;
+    await renderSearch();
+    await typeQuery("cell");
+
+    expect(document.body.textContent).toContain(
+      "Couldn't search your library.",
+    );
+    expect(document.body.textContent).not.toContain("No matching");
+
+    api.failSearches = false;
+    api.matches = {
+      notes: [note("n1", "Cell cycle")],
+      pdfs: [],
+      flashcards: [],
+    };
+    const retry = Array.from(document.querySelectorAll("button")).find(
+      (button) => button.textContent === "Retry",
+    );
+    await act(async () => {
+      retry?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    await settle();
+
+    expect(api.searchedQueries).toEqual(["cell", "cell"]);
+    expect(optionLabels().some((label) => label.startsWith("Cell cycle"))).toBe(
+      true,
+    );
+    expect(document.body.textContent).not.toContain("Couldn't search");
   });
 
   it("navigates and closes when a result is selected", async () => {
@@ -298,7 +332,7 @@ describe("GlobalSearch", () => {
 
   it("opens the create dialog for a create command", async () => {
     await renderSearch();
-    clickOption("Create Note");
+    clickOption("Create note");
 
     expect(
       document.querySelector('[data-testid="create-dialog"]')?.textContent,
@@ -306,9 +340,9 @@ describe("GlobalSearch", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it("opens the Add PDF dialog for the Create PDF command", async () => {
+  it("opens the Add PDF dialog for the Add PDF command", async () => {
     await renderSearch();
-    clickOption("Create PDF");
+    clickOption("Add PDF");
 
     expect(
       document.querySelector('[data-testid="create-dialog"]')?.textContent,

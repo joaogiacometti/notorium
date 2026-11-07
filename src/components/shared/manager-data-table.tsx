@@ -387,7 +387,7 @@ export function ManagerDataTable<TRow extends RowData>({
               <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
                 <Badge
                   variant="outline"
-                  className="border-border px-3 py-1 text-muted-foreground"
+                  className="rounded-md border-border px-3 py-1 text-muted-foreground"
                 >
                   {pageLabel(pagination.pageIndex + 1, totalPageCount)}
                 </Badge>

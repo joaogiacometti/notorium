@@ -34,9 +34,9 @@ test("improves an unsaved card and keeps one conversation across review and edit
       page.getByText("I can help you study.", { exact: true }),
     ).toBeVisible();
     await page
-      .getByRole("button", { name: "New Flashcard", exact: true })
+      .getByRole("button", { name: "Create flashcard", exact: true })
       .click();
-    const dialog = page.getByRole("dialog", { name: "New flashcard" });
+    const dialog = page.getByRole("dialog", { name: "Create flashcard" });
     await replaceEditor(dialog.locator("#form-create-flashcard-front"), front);
     await replaceEditor(
       dialog.locator("#form-create-flashcard-back"),

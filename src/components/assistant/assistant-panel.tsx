@@ -13,6 +13,10 @@ import { Button } from "@/components/ui/button";
 import { describeStudyContext } from "@/features/assistant/study-context";
 import { isAssistantReplyInFlight } from "@/features/assistant/utils";
 import { readAssistantErrorMessage } from "@/lib/ai/chat-error";
+import { getStatusToneClasses } from "@/lib/ui/status-tones";
+import { cn } from "@/lib/utils";
+
+const dangerTone = getStatusToneClasses("danger");
 
 interface AssistantPanelProps {
   /** Hides the panel; the launcher keeps it mounted, so the chat survives. */
@@ -140,7 +144,11 @@ function AssistantConversationPanel({
       {chat.error ? (
         <div
           role="alert"
-          className="flex items-center gap-2 border-t bg-(--intent-danger-bg) px-4 py-2 text-xs text-(--intent-danger-text)"
+          className={cn(
+            "flex items-center gap-2 border-t px-4 py-2 text-xs",
+            dangerTone.bg,
+            dangerTone.text,
+          )}
         >
           <p className="flex-1">{readAssistantErrorMessage(chat.error)}</p>
           <Button

@@ -94,7 +94,7 @@ export function ForgotPasswordForm({
               <AsyncButtonContent
                 pending={isSubmitting}
                 idleLabel="Send reset link"
-                pendingLabel="Sending reset link..."
+                pendingLabel="Sending reset link…"
               />
             </Button>
           </Field>

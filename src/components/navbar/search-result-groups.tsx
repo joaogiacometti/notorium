@@ -21,8 +21,7 @@ type SearchNote = SearchData["notes"][number];
 type SearchPdf = SearchData["pdfs"][number];
 type SearchFlashcard = SearchData["flashcards"][number];
 
-const RESULT_ITEM_CLASS =
-  "flex cursor-pointer flex-col items-start gap-1 transition-colors";
+const RESULT_ITEM_CLASS = "flex flex-col items-start gap-1 transition-colors";
 const FOLDER_LABEL_CLASS =
   "flex min-w-0 max-w-[45%] items-center gap-1 overflow-hidden text-xs text-muted-foreground";
 

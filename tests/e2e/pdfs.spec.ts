@@ -94,7 +94,7 @@ test("finds an uploaded PDF from global search", async ({ page, e2eUser }) => {
 
     await page.keyboard.press("ControlOrMeta+k");
     const searchDialog = page.getByRole("dialog", {
-      name: "Search and Commands",
+      name: "Search and commands",
     });
     await searchDialog.getByRole("combobox").fill(pdfTitle);
     await searchDialog.getByRole("option", { name: pdfTitle }).click();
@@ -194,7 +194,7 @@ test("renames and deletes a PDF from its header menu", async ({
     await page.getByRole("menuitem", { name: "Rename", exact: true }).click();
     const renameDialog = page.getByRole("dialog", { name: "Rename PDF" });
     await renameDialog.getByRole("textbox").fill(renamedTitle);
-    await renameDialog.getByRole("button", { name: "Save Title" }).click();
+    await renameDialog.getByRole("button", { name: "Save title" }).click();
     await expect(renameDialog).toHaveCount(0);
     await expect(
       page.getByRole("heading", { name: renamedTitle }),

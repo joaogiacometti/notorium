@@ -9,6 +9,7 @@ import {
   ArrowUp,
   Trash2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 interface TiptapTableControlsProps {
@@ -80,32 +81,35 @@ export function TiptapTableControls({ editor }: TiptapTableControlsProps) {
     <BubbleMenu
       editor={editor}
       shouldShow={() => editor.isActive("table")}
-      className="flex items-center gap-0.5 rounded-md border border-(--border) bg-(--background) p-1 shadow-md"
+      className="flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md"
     >
       {insertActions.map((action) => (
-        <button
+        <Button
           key={action.label}
           type="button"
+          variant="ghost"
+          size="icon-sm"
           title={action.label}
-          onClick={action.command}
-          className="flex size-7 items-center justify-center rounded text-foreground hover:bg-(--muted) transition-colors"
           aria-label={action.label}
+          onClick={action.command}
         >
           {action.icon}
-        </button>
+        </Button>
       ))}
       <Separator orientation="vertical" className="mx-0.5 h-5" />
       {deleteActions.map((action) => (
-        <button
+        <Button
           key={action.label}
           type="button"
+          variant="ghost"
+          size="icon-sm"
           title={action.label}
-          onClick={action.command}
-          className="flex size-7 items-center justify-center rounded text-destructive hover:bg-destructive/10 transition-colors"
           aria-label={action.label}
+          onClick={action.command}
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           {action.icon}
-        </button>
+        </Button>
       ))}
     </BubbleMenu>
   );

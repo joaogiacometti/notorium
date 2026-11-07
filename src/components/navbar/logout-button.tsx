@@ -17,19 +17,14 @@ export function LogoutButton() {
   };
 
   return (
-    <DropdownMenuItem
-      asChild
-      className="cursor-pointer"
-      variant="destructive"
-      onClick={handleLogout}
-    >
+    <DropdownMenuItem asChild variant="destructive" onClick={handleLogout}>
       <button
         type="button"
         data-testid="account-menu-logout"
         className="flex w-full items-center gap-2 text-left"
       >
         <LogOut className="size-4" />
-        Log Out
+        Log out
       </button>
     </DropdownMenuItem>
   );

@@ -10,7 +10,7 @@ import { Dialog } from "@/components/ui/dialog";
 function DialogWithToolbar() {
   return (
     <Dialog open>
-      <FlashcardEditorDialogContent title="New flashcard">
+      <FlashcardEditorDialogContent title="Create flashcard">
         <button type="button" disabled>
           Folder
         </button>
@@ -25,7 +25,7 @@ function DialogWithComposer() {
   if (!workspace) return null;
   return (
     <Dialog open>
-      <FlashcardEditorDialogContent title="New flashcard">
+      <FlashcardEditorDialogContent title="Create flashcard">
         <section data-study-assistant>
           <button type="button" onClick={() => workspace.setOpen(true)}>
             Open assistant

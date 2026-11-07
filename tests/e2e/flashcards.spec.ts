@@ -60,10 +60,10 @@ async function fillRichTextEditor(editor: Locator, value: string) {
 
 async function openCreateFlashcardDialog(page: Page) {
   await page
-    .getByRole("button", { name: "New Flashcard", exact: true })
+    .getByRole("button", { name: "Create flashcard", exact: true })
     .click();
 
-  return page.getByRole("dialog", { name: "New flashcard" });
+  return page.getByRole("dialog", { name: "Create flashcard" });
 }
 
 async function createFlashcardFromManageDialog(
@@ -198,7 +198,7 @@ test("can delete a flashcard", async ({ page, e2eUser }) => {
       .getByRole("button", { name: "Open flashcard actions", exact: true })
       .click();
     await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
-    const deleteDialog = page.getByRole("dialog", { name: "Delete Flashcard" });
+    const deleteDialog = page.getByRole("dialog", { name: "Delete flashcard" });
     await deleteDialog
       .getByRole("button", { name: "Delete", exact: true })
       .click();
@@ -235,7 +235,7 @@ test("can switch between folder-scoped flashcards views", async ({
 
     await page.getByRole("tab", { name: "Manage", exact: true }).click();
     await expect(
-      page.getByRole("button", { name: "New Flashcard", exact: true }),
+      page.getByRole("button", { name: "Create flashcard", exact: true }),
     ).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`folderId=${folder.id}`));
   } finally {
@@ -273,7 +273,7 @@ test("can search folder-scoped manage flashcards without hanging", async ({
 
     await openFlashcardsManagePage(page, folder.id);
     await page
-      .getByPlaceholder("Search front, back, or folder path...")
+      .getByPlaceholder("Search front, back, or folder path…")
       .fill(searchTerm);
 
     await expect(page).toHaveURL(
@@ -466,7 +466,7 @@ test("study later defers a card in review and lists it in manage", async ({
     await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
 
     await openFlashcardsManagePage(page, folder.id);
-    await page.getByRole("button", { name: "Show Study later cards" }).click();
+    await page.getByRole("button", { name: "Show study later cards" }).click();
     await expect(page).toHaveURL(/filter=studyLater/);
     const deferredRow = page
       .getByRole("link")

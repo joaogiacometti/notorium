@@ -52,7 +52,7 @@ type ActionConfirmationFooterProps = Pick<
  * Renders the shared confirmation shell for action dialogs.
  *
  * @example
- * <ActionConfirmationDialog open={open} onOpenChange={setOpen} title="Delete Note" description="Delete this note?" confirmLabel="Delete" pendingLabel="Deleting..." confirmVariant="destructive" isPending={false} onConfirm={deleteNote} />
+ * <ActionConfirmationDialog open={open} onOpenChange={setOpen} title="Delete note" description="Delete this note?" confirmLabel="Delete" pendingLabel="Deleting…" confirmVariant="destructive" isPending={false} onConfirm={deleteNote} />
  */
 export function ActionConfirmationDialog({
   open,

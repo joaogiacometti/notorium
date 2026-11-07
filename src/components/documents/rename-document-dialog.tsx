@@ -93,7 +93,7 @@ export function RenameDocumentDialog({
         <DialogHeader>
           <DialogTitle>Rename {kindLabel}</DialogTitle>
           <DialogDescription className="sr-only">
-            Update the {kindLabel.toLowerCase()} title.
+            Update the {kindLabel} title.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -119,8 +119,8 @@ export function RenameDocumentDialog({
             <Button type="submit" disabled={isSubmitting} className="w-full">
               <AsyncButtonContent
                 pending={isSubmitting}
-                idleLabel="Save Title"
-                pendingLabel="Saving..."
+                idleLabel="Save title"
+                pendingLabel="Saving…"
               />
             </Button>
           </FieldGroup>

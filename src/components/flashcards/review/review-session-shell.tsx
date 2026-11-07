@@ -88,7 +88,6 @@ function SessionHeader({
         <Button
           variant="ghost"
           size="icon"
-          className="size-9"
           aria-label={exitLabel}
           onClick={onExit}
         >

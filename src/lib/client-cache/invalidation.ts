@@ -47,3 +47,10 @@ export async function invalidateFlashcardViews(
     refreshQueries(client, libraryKeys.flashcards),
   ]);
 }
+
+/** The settings dialog reads its data from the client cache, not Server Components. */
+export async function invalidateAccountSettings(
+  client: QueryClient,
+): Promise<void> {
+  await refreshQueries(client, libraryKeys.accountSettings);
+}

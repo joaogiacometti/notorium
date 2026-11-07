@@ -2,6 +2,8 @@
 
 import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { Button } from "@/components/ui/button";
+import { getStatusToneClasses } from "@/lib/ui/status-tones";
+import { cn } from "@/lib/utils";
 
 /** Resolve the whole proposal inside the active document workspace.
  * @example <DocumentEditReviewControls disabled={uploading} />
@@ -16,8 +18,10 @@ export function DocumentEditReviewControls({
       aria-label="Review document changes"
     >
       <span className="mr-auto text-xs text-muted-foreground">
-        <span className="text-(--intent-success-text)">Added</span> /{" "}
-        <span className="text-(--intent-danger-text) line-through">
+        <span className={getStatusToneClasses("success").text}>Added</span> /{" "}
+        <span
+          className={cn("line-through", getStatusToneClasses("danger").text)}
+        >
           Removed
         </span>
       </span>

@@ -178,7 +178,10 @@ export function ReviewActivityCardSkeleton() {
         <Skeleton className="ml-auto h-4 w-32" />
       </CardHeader>
       <CardContent className="space-y-2.5">
-        <Skeleton className="h-24 w-full rounded-md" />
+        {/* 53 week columns by 7 days keep this ratio; phones scroll at 8px cells. */}
+        <div className="pb-1">
+          <Skeleton className="aspect-53/7 min-h-18.5 w-full" />
+        </div>
         <div className="flex items-center justify-between">
           <Skeleton className="h-3 w-40" />
           <Skeleton className="h-3 w-24" />

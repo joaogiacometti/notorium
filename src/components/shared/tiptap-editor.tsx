@@ -108,7 +108,7 @@ export function TiptapEditor({
   const noteLinkTargetData = noteLinks?.targets ?? null;
   const navigateNoteLinkRef = useRef(noteLinks?.navigate);
   navigateNoteLinkRef.current = noteLinks?.navigate;
-  const resolvedPlaceholder = placeholder ?? "Start writing your notes...";
+  const resolvedPlaceholder = placeholder ?? "Start writing your notes…";
   const onEditorReadyRef = useRef(onEditorReady);
   onEditorReadyRef.current = onEditorReady;
   const onToolbarTargetChangeRef = useRef(onToolbarTargetChange);
@@ -298,7 +298,7 @@ export function TiptapEditor({
           )}
         >
           <Loader2 className="size-4 animate-spin" />
-          <span>Uploading image...</span>
+          <span>Uploading image…</span>
         </div>
       ) : null}
       {editor && !bare ? (

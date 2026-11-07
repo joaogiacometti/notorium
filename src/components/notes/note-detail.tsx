@@ -259,14 +259,12 @@ export function NoteDetail({ note, folderName }: Readonly<NoteDetailProps>) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      className="cursor-pointer"
                       onClick={() => void copyNoteContent("rich")}
                     >
                       <Clipboard className="size-4" />
                       Copy as rich text
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="cursor-pointer"
                       onClick={() => void copyNoteContent("plain")}
                     >
                       <Clipboard className="size-4" />
@@ -274,7 +272,7 @@ export function NoteDetail({ note, folderName }: Readonly<NoteDetailProps>) {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className="cursor-pointer text-destructive focus:text-destructive"
+                      variant="destructive"
                       onClick={() => setDeleteOpen(true)}
                     >
                       <Trash2 className="size-4" />
@@ -299,7 +297,7 @@ export function NoteDetail({ note, folderName }: Readonly<NoteDetailProps>) {
                     onEditorReady={setAssistantEditor}
                     value={field.value ?? emptyDocument()}
                     onChange={field.onChange}
-                    placeholder="Write your notes here..."
+                    placeholder="Write your notes here…"
                     id="form-edit-note-content"
                     aria-invalid={fieldState.invalid}
                     imageUploadContext="notes"

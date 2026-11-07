@@ -78,11 +78,11 @@ describe("ActionConfirmationDialog", () => {
     await renderDialog({
       root,
       isPending: true,
-      pendingLabel: "Deleting...",
+      pendingLabel: "Deleting…",
     });
 
     expect(findButton("Cancel", container)?.disabled).toBe(true);
-    expect(findButton("Deleting...", container)?.disabled).toBe(true);
+    expect(findButton("Deleting…", container)?.disabled).toBe(true);
   });
 
   it("supports confirm-only disabled state", async () => {
@@ -99,7 +99,7 @@ describe("ActionConfirmationDialog", () => {
 async function renderDialog({
   root,
   confirmLabel = "Delete",
-  pendingLabel = "Deleting...",
+  pendingLabel = "Deleting…",
   confirmVariant = "destructive",
   isPending = false,
   confirmDisabled = false,

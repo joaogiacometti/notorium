@@ -30,7 +30,7 @@ export function CreateFolderDialog({
       open={open}
       onOpenChange={onOpenChange}
       trigger={trigger}
-      title={isSubfolder ? "Create Subfolder" : undefined}
+      title={isSubfolder ? "Create subfolder" : undefined}
       values={EMPTY_CREATE_FOLDER_VALUES}
       onSubmitAction={(values) =>
         createFolder({

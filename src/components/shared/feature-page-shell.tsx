@@ -8,7 +8,6 @@ import {
 interface FeaturePageShellProps {
   children: ReactNode;
   icon: BreadcrumbIcon;
-  isolateContentScroll?: boolean;
   switcher?: ReactNode;
   title: string;
 }
@@ -16,7 +15,6 @@ interface FeaturePageShellProps {
 export function FeaturePageShell({
   children,
   icon,
-  isolateContentScroll = false,
   switcher,
   title,
 }: Readonly<FeaturePageShellProps>) {
@@ -27,15 +25,7 @@ export function FeaturePageShell({
         <AppPageContainer className="flex flex-col lg:h-full lg:min-h-0">
           {switcher ? <div className="mb-4">{switcher}</div> : null}
 
-          <div
-            className={
-              isolateContentScroll
-                ? "lg:min-h-0 lg:flex-1"
-                : "lg:flex-1 lg:min-h-0"
-            }
-          >
-            {children}
-          </div>
+          <div className="lg:min-h-0 lg:flex-1">{children}</div>
         </AppPageContainer>
       </main>
     </>

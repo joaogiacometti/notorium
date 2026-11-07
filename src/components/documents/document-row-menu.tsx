@@ -80,7 +80,6 @@ export function DocumentRowMenu({
         {handlers.onEditRequested ? (
           <DropdownMenuItem
             onClick={() => openDialog(() => handlers.onEditRequested?.(item))}
-            className="cursor-pointer"
           >
             <Pencil className="size-4" />
             Rename
@@ -90,7 +89,7 @@ export function DocumentRowMenu({
         {handlers.onDeleteRequested ? (
           <DropdownMenuItem
             onClick={() => openDialog(() => handlers.onDeleteRequested?.(item))}
-            className="cursor-pointer text-destructive focus:text-destructive"
+            variant="destructive"
           >
             <Trash2 className="size-4" />
             Delete
@@ -111,17 +110,11 @@ function NoteRowMenuItems({
   return (
     <>
       <DropdownMenuSeparator />
-      <DropdownMenuItem
-        className="cursor-pointer"
-        onClick={() => onCopyRequested(item, "rich")}
-      >
+      <DropdownMenuItem onClick={() => onCopyRequested(item, "rich")}>
         <Clipboard className="size-4" />
         Copy as rich text
       </DropdownMenuItem>
-      <DropdownMenuItem
-        className="cursor-pointer"
-        onClick={() => onCopyRequested(item, "plain")}
-      >
+      <DropdownMenuItem onClick={() => onCopyRequested(item, "plain")}>
         <Clipboard className="size-4" />
         Copy as plain text
       </DropdownMenuItem>

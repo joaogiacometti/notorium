@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { FlashcardsManageQueryInput } from "@/features/flashcards/validation";
+import { fetchAccountSettings } from "@/lib/read-api/account";
 import {
   fetchFolderDocuments,
   fetchNoteConnections,
@@ -21,7 +22,16 @@ export const libraryKeys = {
   noteConnections: ["note-connections"] as const,
   connections: (noteId: string) => ["note-connections", noteId] as const,
   flashcards: ["flashcards-manage-page"] as const,
+  accountSettings: ["account-settings"] as const,
 };
+
+export function accountSettingsQuery() {
+  return queryOptions({
+    queryKey: libraryKeys.accountSettings,
+    queryFn: () => fetchAccountSettings(),
+    staleTime: 30 * 1000,
+  });
+}
 
 export function folderOptionsQuery() {
   return queryOptions({

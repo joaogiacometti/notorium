@@ -1,21 +1,13 @@
 "use client";
 
-import {
-  Copy,
-  Loader2,
-  MoreVertical,
-  Pencil,
-  RotateCcw,
-  Trash2,
-  Undo2,
-} from "lucide-react";
+import { Loader2, MoreVertical, Undo2 } from "lucide-react";
 import { ExamBadge } from "@/components/flashcards/review/exam-badge";
 import { ReviewCardEditor } from "@/components/flashcards/review/review-card-editor";
 import { ReviewGradeButtons } from "@/components/flashcards/review/review-grade-buttons";
 import { ReviewSessionCardContent } from "@/components/flashcards/review/review-session-card-content";
 import { ReviewSessionShell } from "@/components/flashcards/review/review-session-shell";
 import { copyFlashcardsWithToast } from "@/components/flashcards/shared/copy-flashcards-with-toast";
-import { StudyLaterMenuItem } from "@/components/flashcards/shared/study-later-menu-item";
+import { FlashcardActionMenuItems } from "@/components/flashcards/shared/flashcard-action-menu-items";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -173,19 +165,14 @@ function SessionCardActions({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-10"
-          aria-label="Open review actions"
-        >
-          <MoreVertical className="size-5" />
+        <Button variant="ghost" size="icon" aria-label="Open review actions">
+          <MoreVertical className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {canUndoReview ? (
           <>
-            <DropdownMenuItem onClick={onUndoReview} className="cursor-pointer">
+            <DropdownMenuItem onClick={onUndoReview}>
               <Undo2 className="size-4" />
               Undo last review
             </DropdownMenuItem>
@@ -193,40 +180,14 @@ function SessionCardActions({
           </>
         ) : null}
         {cardActions ? (
-          <>
-            <StudyLaterMenuItem
-              marked={studyLaterMarked}
-              onSelect={() => onToggleStudyLater?.()}
-            />
-            <DropdownMenuItem
-              onClick={onCopyFlashcard}
-              className="cursor-pointer"
-            >
-              <Copy className="size-4" />
-              Copy
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={onEditFlashcard}
-              className="cursor-pointer"
-            >
-              <Pencil className="size-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={onResetFlashcard}
-              className="cursor-pointer"
-            >
-              <RotateCcw className="size-4" />
-              Reset
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={onDeleteFlashcard}
-              className="cursor-pointer text-destructive focus:text-destructive"
-            >
-              <Trash2 className="size-4" />
-              Delete
-            </DropdownMenuItem>
-          </>
+          <FlashcardActionMenuItems
+            onEdit={() => onEditFlashcard?.()}
+            onCopy={() => onCopyFlashcard?.()}
+            studyLaterMarked={studyLaterMarked}
+            onToggleStudyLater={() => onToggleStudyLater?.()}
+            onReset={() => onResetFlashcard?.()}
+            onDelete={() => onDeleteFlashcard?.()}
+          />
         ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -238,12 +199,11 @@ function SessionCardActionsPendingButton() {
     <Button
       variant="ghost"
       size="icon"
-      className="size-10"
       aria-label="Review action in progress"
       aria-busy="true"
       disabled
     >
-      <Loader2 className="size-5 animate-spin" />
+      <Loader2 className="size-4 animate-spin" />
     </Button>
   );
 }

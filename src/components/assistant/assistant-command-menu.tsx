@@ -109,7 +109,7 @@ export function AssistantCommandMenu({
             value={name}
             onSelect={() => onSelect(name)}
             onMouseDown={(event) => event.preventDefault()}
-            className="cursor-pointer gap-2"
+            className="gap-2"
           >
             <Icon className="size-4 text-muted-foreground" />
             <span className="min-w-0 flex-1">

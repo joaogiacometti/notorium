@@ -53,7 +53,8 @@ describe("FlashcardsManagerToolbar", () => {
     });
 
     const button = Array.from(container.querySelectorAll("button")).find(
-      (currentButton) => currentButton.textContent?.includes("New Flashcard"),
+      (currentButton) =>
+        currentButton.textContent?.includes("Create flashcard"),
     ) as HTMLButtonElement | undefined;
 
     expect(button).toBeTruthy();
@@ -67,8 +68,8 @@ describe("FlashcardsManagerToolbar", () => {
   });
 
   it.each([
-    ["studyLater", "Study later"],
-    ["struggling", "Struggling"],
+    ["studyLater", "study later"],
+    ["struggling", "struggling"],
   ] as const)(
     "toggles the %s filter and shows when it is on",
     async (filter, label) => {
@@ -105,7 +106,7 @@ describe("FlashcardsManagerToolbar", () => {
     const pressedLabels = Array.from(
       container.querySelectorAll('button[aria-pressed="true"]'),
     ).map((button) => button.getAttribute("aria-label"));
-    expect(pressedLabels).toEqual(["Show Struggling cards"]);
+    expect(pressedLabels).toEqual(["Show struggling cards"]);
   });
 
   it("shows an unavailable count when the manage read fails", async () => {
@@ -120,7 +121,19 @@ describe("FlashcardsManagerToolbar", () => {
     });
 
     expect(container.textContent).toContain("Flashcards unavailable");
-    expect(container.textContent).not.toContain("17 of 17 flashcards");
+    expect(container.textContent).not.toContain("17 flashcards");
+  });
+
+  it.each([
+    [1, "1 flashcard"],
+    [17, "17 flashcards"],
+  ])("counts %i matching cards as %s", async (total, label) => {
+    await act(async () => {
+      root.render(<FlashcardsManagerToolbar {...baseProps} total={total} />);
+    });
+
+    expect(container.textContent).toContain(label);
+    expect(container.textContent).not.toContain(" of ");
   });
 
   it("shows hover and focus tooltips for selection toolbar actions", async () => {
@@ -209,7 +222,7 @@ describe("FlashcardsManagerToolbar", () => {
     });
 
     const copyingButton = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Copying..."]',
+      'button[aria-label="Copying…"]',
     );
     expect(copyingButton?.disabled).toBe(true);
   });

@@ -49,10 +49,10 @@ export function BulkResetFlashcardsDialog({
     <ActionConfirmationDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Reset Flashcards"
+      title="Reset flashcards"
       description={descriptionText}
       confirmLabel="Reset"
-      pendingLabel="Resetting..."
+      pendingLabel="Resetting…"
       confirmVariant="default"
       isPending={isPending}
       onConfirm={handleReset}

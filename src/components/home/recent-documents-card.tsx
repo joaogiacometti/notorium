@@ -1,13 +1,17 @@
 import Link from "next/link";
 import { DOCUMENT_KIND_ICONS } from "@/components/documents/document-kind-icons";
 import { DashboardCardHeader } from "@/components/home/dashboard-card-header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
   DocumentKind,
   DocumentListItem,
 } from "@/features/documents/types";
 import { formatRelativeTime } from "@/lib/dates/format";
 import { getDocumentDetailHref } from "@/lib/navigation/detail-page-back-link";
+
+/** How many documents the Home dashboard lists. */
+export const RECENT_DOCUMENTS_LIMIT = 6;
 
 interface RecentDocumentsCardProps {
   documents: DocumentListItem[];
@@ -56,4 +60,30 @@ export function RecentDocumentsCard({
 function DocumentKindIcon({ kind }: Readonly<{ kind: DocumentKind }>) {
   const Icon = DOCUMENT_KIND_ICONS[kind];
   return <Icon className="size-4 shrink-0" />;
+}
+
+/** Loading placeholder with {@link RecentDocumentsCard}'s full row height. */
+export function RecentDocumentsCardSkeleton() {
+  return (
+    <Card className="gap-3 py-4">
+      <CardHeader className="flex min-h-5 flex-row items-center gap-2 space-y-0">
+        <Skeleton className="h-4 w-32" />
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-1">
+          {Array.from({ length: RECENT_DOCUMENTS_LIMIT }, (_, index) => (
+            <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows have no stable id
+              key={index}
+              className="flex h-7 items-center gap-2"
+            >
+              <Skeleton className="size-4 shrink-0" />
+              <Skeleton className="h-4 flex-1" />
+              <Skeleton className="h-3 w-14 shrink-0" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }

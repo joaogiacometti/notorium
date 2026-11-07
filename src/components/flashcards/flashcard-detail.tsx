@@ -2,13 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowRightLeft,
-  Copy,
-  MoreVertical,
-  RotateCcw,
-  Trash2,
-} from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -21,9 +15,9 @@ import { ResetFlashcardDialog } from "@/components/flashcards/dialogs/reset-flas
 import { BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/bulk-move-flashcards-dialog";
 import { copyFlashcardsWithToast } from "@/components/flashcards/shared/copy-flashcards-with-toast";
 import { getEditFlashcardFormValues } from "@/components/flashcards/shared/edit-flashcard-form-values";
+import { FlashcardActionMenuItems } from "@/components/flashcards/shared/flashcard-action-menu-items";
 import { FlashcardCardEditor } from "@/components/flashcards/shared/flashcard-card-editor";
 import { FlashcardSourceReference } from "@/components/flashcards/shared/flashcard-source-reference";
-import { StudyLaterMenuItem } from "@/components/flashcards/shared/study-later-menu-item";
 import { toggleStudyLater } from "@/components/flashcards/shared/toggle-study-later";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import type { Breadcrumb } from "@/components/shared/page-top-bar";
@@ -31,8 +25,6 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -125,7 +117,7 @@ export function FlashcardDetail({
           <FlashcardSourceReference source={flashcard.source} />
         </div>
 
-        <div className="flex shrink-0">
+        <div className="flex shrink-0 gap-2">
           <DocumentAutosaveFeedback {...autosave} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -140,9 +132,8 @@ export function FlashcardDetail({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() =>
+              <FlashcardActionMenuItems
+                onCopy={() =>
                   void copyFlashcardsWithToast([
                     {
                       front: watchedFront,
@@ -151,42 +142,18 @@ export function FlashcardDetail({
                     },
                   ])
                 }
-              >
-                <Copy className="size-4" />
-                Copy
-              </DropdownMenuItem>
-              <StudyLaterMenuItem
-                marked={studyLaterAt !== null}
-                onSelect={() =>
+                onMove={() => setMoveOpen(true)}
+                studyLaterMarked={studyLaterAt !== null}
+                onToggleStudyLater={() =>
                   void toggleStudyLater(
                     queryClient,
                     { id: flashcard.id, studyLaterAt },
                     setStudyLaterAt,
                   )
                 }
+                onReset={() => setResetOpen(true)}
+                onDelete={() => setDeleteOpen(true)}
               />
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => setResetOpen(true)}
-              >
-                <RotateCcw className="size-4" />
-                Reset
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => setMoveOpen(true)}
-              >
-                <ArrowRightLeft className="size-4" />
-                Move
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="cursor-pointer text-destructive focus:text-destructive"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 className="size-4" />
-                Delete
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

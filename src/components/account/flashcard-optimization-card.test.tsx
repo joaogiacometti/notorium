@@ -1,7 +1,9 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FlashcardOptimizationCard } from "@/components/account/flashcard-optimization-card";
+import { libraryKeys } from "@/lib/client-cache/queries";
 
 const {
   optimizeFlashcardSchedulerMock,
@@ -92,6 +94,10 @@ vi.mock("@/components/shared/action-confirmation-dialog", () => ({
     ) : null,
 }));
 
+vi.mock("@/lib/read-api/account", () => ({
+  fetchAccountSettings: vi.fn(() => new Promise(() => {})),
+}));
+
 vi.mock("@/lib/server/server-action-errors", () => ({
   resolveActionErrorMessage: () => "Could not optimize.",
 }));
@@ -106,12 +112,32 @@ const settings = {
 describe("FlashcardOptimizationCard", () => {
   let container: HTMLDivElement;
   let root: Root;
+  let queryClient: QueryClient;
+
+  function renderCard() {
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <FlashcardOptimizationCard settings={settings} />
+      </QueryClientProvider>,
+    );
+  }
+
+  function isAccountSettingsInvalidated(): boolean {
+    return (
+      queryClient.getQueryState(libraryKeys.accountSettings)?.isInvalidated ??
+      false
+    );
+  }
 
   beforeEach(() => {
     (globalThis as ReactActEnvironmentGlobal).IS_REACT_ACT_ENVIRONMENT = true;
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
+    queryClient = new QueryClient();
+    queryClient.setQueryData(libraryKeys.accountSettings, {
+      fsrsOptimization: settings,
+    });
     vi.clearAllMocks();
   });
 
@@ -131,7 +157,7 @@ describe("FlashcardOptimizationCard", () => {
     });
 
     await act(async () => {
-      root.render(<FlashcardOptimizationCard settings={settings} />);
+      renderCard();
     });
 
     const button = Array.from(container.querySelectorAll("button")).find(
@@ -147,6 +173,9 @@ describe("FlashcardOptimizationCard", () => {
       "FSRS optimization completed.",
     );
     expect(routerRefreshMock).toHaveBeenCalledOnce();
+    // The dialog reads settings from the client cache, so "Last optimized"
+    // only updates once that cache is refreshed.
+    expect(isAccountSettingsInvalidated()).toBe(true);
   });
 
   it("resets optimization after confirmation", async () => {
@@ -155,7 +184,7 @@ describe("FlashcardOptimizationCard", () => {
     });
 
     await act(async () => {
-      root.render(<FlashcardOptimizationCard settings={settings} />);
+      renderCard();
     });
 
     const resetButton = Array.from(container.querySelectorAll("button")).find(
@@ -167,7 +196,7 @@ describe("FlashcardOptimizationCard", () => {
 
     const dialog = container.querySelector('[role="dialog"]');
     expect(dialog?.getAttribute("data-confirm-variant")).toBe("destructive");
-    expect(container.textContent).toContain("Reset Optimization");
+    expect(container.textContent).toContain("Reset optimization");
     expect(container.textContent).toContain(
       "discard the current optimized FSRS tuning",
     );
@@ -182,11 +211,12 @@ describe("FlashcardOptimizationCard", () => {
     expect(resetFlashcardSchedulerOptimizationMock).toHaveBeenCalledOnce();
     expect(toastSuccessMock).toHaveBeenCalledWith("FSRS optimization reset.");
     expect(routerRefreshMock).toHaveBeenCalledOnce();
+    expect(isAccountSettingsInvalidated()).toBe(true);
   });
 
   it("enables the automatic optimization save action after the switch changes", async () => {
     await act(async () => {
-      root.render(<FlashcardOptimizationCard settings={settings} />);
+      renderCard();
     });
 
     const saveButton = Array.from(container.querySelectorAll("button")).find(
@@ -210,7 +240,7 @@ describe("FlashcardOptimizationCard", () => {
     });
 
     await act(async () => {
-      root.render(<FlashcardOptimizationCard settings={settings} />);
+      renderCard();
     });
 
     const toggle = container.querySelector("#automatic-optimization-toggle");
@@ -231,5 +261,7 @@ describe("FlashcardOptimizationCard", () => {
     expect(toastSuccessMock).toHaveBeenCalledWith(
       "FSRS optimization preferences saved.",
     );
+    expect(isAccountSettingsInvalidated()).toBe(true);
+    expect(saveButton?.hasAttribute("disabled")).toBe(true);
   });
 });

@@ -153,7 +153,7 @@ export function SignupForm({
               <AsyncButtonContent
                 pending={isSubmitting}
                 idleLabel="Create account"
-                pendingLabel="Creating account..."
+                pendingLabel="Creating account…"
               />
             </Button>
           </Field>

@@ -112,7 +112,7 @@ export function TableSkeleton({
           )}
         >
           {footer.map((cell, index) =>
-            renderCell(cell, `footer-${index + 1}`, "h-8 w-24 rounded-full"),
+            renderCell(cell, `footer-${index + 1}`, "h-8 w-24"),
           )}
         </div>
       ) : null}

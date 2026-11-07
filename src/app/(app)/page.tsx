@@ -1,7 +1,10 @@
 import { Suspense } from "react";
 import { FlashcardsDueCard } from "@/components/home/flashcards-due-card";
 import { HomeGreeting } from "@/components/home/home-greeting";
-import { RecentDocumentsCard } from "@/components/home/recent-documents-card";
+import {
+  RECENT_DOCUMENTS_LIMIT,
+  RecentDocumentsCard,
+} from "@/components/home/recent-documents-card";
 import {
   ReviewActivityCard,
   ReviewActivityCardSkeleton,
@@ -22,13 +25,13 @@ export default async function HomePage() {
   const reviewActivityPromise = getFlashcardReviewActivityForUser(userId, now);
   const [summary, recentDocuments] = await Promise.all([
     getFlashcardReviewSummaryForUser(userId, now),
-    getRecentDocumentsForUser(userId, 6),
+    getRecentDocumentsForUser(userId, RECENT_DOCUMENTS_LIMIT),
   ]);
 
   const name = session.user.name?.trim() || session.user.email || "there";
 
   return (
-    <FeaturePageShell title="Home" icon="home" isolateContentScroll>
+    <FeaturePageShell title="Home" icon="home">
       <div
         data-testid="home-dashboard"
         className="space-y-4 lg:h-full lg:overflow-y-auto lg:pr-1"

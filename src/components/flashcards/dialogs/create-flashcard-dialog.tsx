@@ -40,7 +40,7 @@ export function CreateFlashcardDialog({
     <>
       <Dialog open={open} onOpenChange={dialog.handleOpenChange}>
         {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-        <FlashcardEditorDialogContent title="New flashcard">
+        <FlashcardEditorDialogContent title="Create flashcard">
           <CreateFlashcardForm
             open={open}
             form={form}

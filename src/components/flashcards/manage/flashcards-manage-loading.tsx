@@ -5,35 +5,46 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function FlashcardsManageLoading() {
   return (
     <FlashcardsLoadingShell>
-      <div
-        className="flex flex-col gap-3 lg:h-full lg:min-h-0"
-        data-testid="flashcards-manage-loading"
-      >
-        <div className="rounded-lg border bg-card">
-          <div className="relative px-4 py-3 sm:px-6 sm:py-4">
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-                <div className="min-w-0 flex-1 lg:max-w-3xl">
-                  <Skeleton className="h-10 w-full rounded-lg" />
-                </div>
-                <Skeleton className="h-10 w-36 rounded-lg" />
-              </div>
+      <FlashcardsManageLoadingBody />
+    </FlashcardsLoadingShell>
+  );
+}
 
-              <div className="flex flex-wrap items-center gap-2 sm:justify-between">
-                <div className="flex min-w-0 basis-full flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem] sm:flex-1 sm:basis-0">
-                  <Skeleton className="h-6 w-44 rounded-full" />
-                  <Skeleton className="h-6 w-24 rounded-md" />
-                  <Skeleton className="h-6 w-24 rounded-md" />
-                </div>
-                <div className="ml-auto min-h-8 max-sm:hidden sm:min-w-34" />
+/**
+ * Mirrors `FlashcardsManager` below the subject filter: the toolbar card
+ * (search, Create flashcard, count and filter chips) above the table. Shared by
+ * the route loading state and the in-page subject change.
+ */
+export function FlashcardsManageLoadingBody() {
+  return (
+    <div
+      className="flex flex-col gap-3 lg:h-full lg:min-h-0"
+      data-testid="flashcards-manage-loading"
+    >
+      <div className="rounded-lg border bg-card">
+        <div className="relative px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0 flex-1 lg:max-w-3xl">
+                <Skeleton className="h-10 w-full" />
               </div>
+              <Skeleton className="h-10 w-full sm:w-40" />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 sm:justify-between">
+              <div className="flex min-w-0 basis-full flex-wrap items-center gap-1.5 sm:min-h-8 sm:min-w-[18rem] sm:flex-1 sm:basis-0">
+                <Skeleton className="h-6 w-36" />
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-6 w-24" />
+              </div>
+              <div className="ml-auto min-h-8 max-sm:hidden sm:min-w-34" />
             </div>
           </div>
         </div>
-        <div className="overflow-hidden rounded-lg border bg-card lg:min-h-0 lg:flex-1">
-          <FlashcardsManagerTableSkeleton />
-        </div>
       </div>
-    </FlashcardsLoadingShell>
+      <div className="overflow-hidden rounded-lg border bg-card lg:min-h-0 lg:flex-1">
+        <FlashcardsManagerTableSkeleton />
+      </div>
+    </div>
   );
 }

@@ -20,7 +20,7 @@ export function DangerZoneCard() {
 
   return (
     <>
-      <SettingsSection title="Danger Zone">
+      <SettingsSection title="Danger zone">
         <SettingsRow
           label="Delete account"
           description="Permanently removes your folders, notes, and flashcards. This cannot be undone."
@@ -31,7 +31,7 @@ export function DangerZoneCard() {
               onClick={() => setDeleteDialogOpen(true)}
               className="w-full sm:w-fit"
             >
-              Delete Account
+              Delete account
             </Button>
           }
         />

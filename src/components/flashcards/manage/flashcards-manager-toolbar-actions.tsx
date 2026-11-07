@@ -88,7 +88,7 @@ export function ToolbarActionBar({
       )}
     >
       <ToolbarIconActionButton
-        ariaLabel={isCopyingSelection ? "Copying..." : "Copy"}
+        ariaLabel={isCopyingSelection ? "Copying…" : "Copy"}
         onClick={onCopySelection}
         disabled={isCopyingSelection}
         className="rounded-md text-muted-foreground hover:text-foreground"

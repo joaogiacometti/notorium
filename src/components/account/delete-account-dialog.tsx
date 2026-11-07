@@ -35,10 +35,10 @@ export function DeleteAccountDialog({
     <ActionConfirmationDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Delete Account"
+      title="Delete account"
       description="Are you sure you want to delete your account? This action cannot be undone."
-      confirmLabel="Delete Account"
-      pendingLabel="Deleting..."
+      confirmLabel="Delete account"
+      pendingLabel="Deleting…"
       confirmVariant="destructive"
       isPending={isPending}
       onConfirm={handleDelete}

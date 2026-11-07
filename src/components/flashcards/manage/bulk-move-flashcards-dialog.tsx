@@ -97,7 +97,7 @@ export function BulkMoveFlashcardsDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Move Flashcards</DialogTitle>
+          <DialogTitle>Move flashcards</DialogTitle>
           <DialogDescription>{descriptionText}</DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -130,7 +130,7 @@ export function BulkMoveFlashcardsDialog({
                 <AsyncButtonContent
                   pending={isPending}
                   idleLabel="Move"
-                  pendingLabel="Moving..."
+                  pendingLabel="Moving…"
                 />
               </Button>
             </DialogFooter>

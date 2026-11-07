@@ -22,7 +22,7 @@ const panelClassName =
   "flex max-h-[90svh] w-full max-w-2xl flex-col rounded-lg border bg-background shadow-lg";
 
 /** Keep editor and global chat in one modal focus scope without changing layers.
- * @example <FlashcardEditorDialogContent title="New flashcard">{form}</FlashcardEditorDialogContent>
+ * @example <FlashcardEditorDialogContent title="Create flashcard">{form}</FlashcardEditorDialogContent>
  */
 export function FlashcardEditorDialogContent({
   title,
@@ -81,7 +81,7 @@ export function FlashcardEditorDialogContent({
 function FlashcardEditorDialogHeader({ title }: Readonly<{ title: string }>) {
   return (
     <div className="flex shrink-0 items-center gap-1 px-4 pt-4 pb-3 sm:px-6">
-      <DialogTitle className="flex-1 text-base">{title}</DialogTitle>
+      <DialogTitle className="flex-1">{title}</DialogTitle>
       <AssistantLauncherButton />
       <DialogClose asChild>
         <Button

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateUserAccessStatus } from "@/app/actions/account";
-import { Badge } from "@/components/ui/badge";
+import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,12 +38,22 @@ import {
 } from "@/components/ui/table";
 import type { ManagedUser } from "@/lib/auth/access-control";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import type { StatusTone } from "@/lib/ui/status-tones";
 
 interface UserAccessManagementCardProps {
   users: ManagedUser[];
 }
 
 const PAGE_SIZE = 25;
+
+const accessStatusBadges = {
+  pending: { label: "Pending", tone: "warning" },
+  approved: { label: "Approved", tone: "success" },
+  blocked: { label: "Blocked", tone: "danger" },
+} satisfies Record<
+  ManagedUser["accessStatus"],
+  { label: string; tone: StatusTone }
+>;
 
 export function UserAccessManagementCard({
   users,
@@ -57,16 +67,6 @@ export function UserAccessManagementCard({
   >("pending");
   const [page, setPage] = useState(1);
 
-  const statusToneMap = {
-    pending: "secondary",
-    approved: "default",
-    blocked: "destructive",
-  } as const;
-  const statusLabelMap = {
-    pending: "Pending",
-    approved: "Approved",
-    blocked: "Blocked",
-  } as const;
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const statusFilteredUsers =
     statusFilter === "all"
@@ -116,7 +116,7 @@ export function UserAccessManagementCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Access Control</CardTitle>
+        <CardTitle>Access control</CardTitle>
         <CardDescription>Approve, hold, or block user access.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -132,7 +132,7 @@ export function UserAccessManagementCard({
                     setSearchQuery(event.target.value);
                     setPage(1);
                   }}
-                  placeholder="Search name or email..."
+                  placeholder="Search name or email…"
                   className="w-full"
                 />
                 <Select
@@ -191,8 +191,8 @@ export function UserAccessManagementCard({
                   ) : (
                     paginatedUsers.map((managedUser) => {
                       const isUpdating = updatingUserId === managedUser.id;
-                      const statusLabel =
-                        statusLabelMap[managedUser.accessStatus];
+                      const status =
+                        accessStatusBadges[managedUser.accessStatus];
                       return (
                         <TableRow
                           key={managedUser.id}
@@ -212,11 +212,9 @@ export function UserAccessManagementCard({
                             </p>
                           </TableCell>
                           <TableCell>
-                            <Badge
-                              variant={statusToneMap[managedUser.accessStatus]}
-                            >
-                              {statusLabel}
-                            </Badge>
+                            <StatusToneBadge tone={status.tone}>
+                              {status.label}
+                            </StatusToneBadge>
                           </TableCell>
                           <TableCell>
                             <div className="flex justify-end">
@@ -234,7 +232,6 @@ export function UserAccessManagementCard({
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem
-                                    className="cursor-pointer"
                                     disabled={isPending || isUpdating}
                                     onClick={() =>
                                       updateStatus(managedUser.id, "approved")
@@ -243,16 +240,15 @@ export function UserAccessManagementCard({
                                     Approve
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    className="cursor-pointer"
                                     disabled={isPending || isUpdating}
                                     onClick={() =>
                                       updateStatus(managedUser.id, "pending")
                                     }
                                   >
-                                    Set Pending
+                                    Set pending
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    className="cursor-pointer text-destructive focus:text-destructive"
+                                    variant="destructive"
                                     disabled={isPending || isUpdating}
                                     onClick={() =>
                                       updateStatus(managedUser.id, "blocked")

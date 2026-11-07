@@ -51,7 +51,7 @@ function SearchCommandItem({
     <CommandItem
       value={`command:${command.id}`}
       onSelect={() => onRun(command.action)}
-      className="cursor-pointer gap-2"
+      className="gap-2"
     >
       <Icon className="size-4! text-muted-foreground" />
       <span>{command.label}</span>

@@ -36,9 +36,9 @@ function getUniqueNoteTitle(testTitle: string) {
 }
 
 async function createNoteFromDialog(page: Page, title: string) {
-  const createDialog = page.getByRole("dialog", { name: "Create Note" });
+  const createDialog = page.getByRole("dialog", { name: "Create note" });
   await createDialog.locator("#form-create-note-title-input").fill(title);
-  await createDialog.getByRole("button", { name: "Create Note" }).click();
+  await createDialog.getByRole("button", { name: "Create note" }).click();
   await expect(createDialog).toHaveCount(0);
 }
 
@@ -66,7 +66,7 @@ async function openNoteActions(page: Page) {
 }
 
 async function clickFolderNewNote(page: Page, folderName: string) {
-  await clickFolderDocumentsMenuItem(page, folderName, "Add note");
+  await clickFolderDocumentsMenuItem(page, folderName, "Create note");
 }
 
 async function createSidebarNote(
@@ -76,9 +76,9 @@ async function createSidebarNote(
 ) {
   // Notes are created from the left-menu folder tree.
   await clickFolderNewNote(page, folderName);
-  const createDialog = page.getByRole("dialog", { name: "Create Note" });
+  const createDialog = page.getByRole("dialog", { name: "Create note" });
   await createDialog.locator("#form-create-note-title-input").fill(title);
-  await createDialog.getByRole("button", { name: "Create Note" }).click();
+  await createDialog.getByRole("button", { name: "Create note" }).click();
   await expect(createDialog).toHaveCount(0);
   await expect(page.locator("#form-edit-note-title")).toHaveValue(title);
 }
@@ -210,7 +210,7 @@ test("can delete a note", async ({ page, e2eUser }) => {
 
     await openNoteActions(page);
     await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
-    const deleteDialog = page.getByRole("dialog", { name: "Delete Note" });
+    const deleteDialog = page.getByRole("dialog", { name: "Delete note" });
     await deleteDialog.getByRole("button", { name: "Delete" }).click();
 
     await expect(deleteDialog).toHaveCount(0);
@@ -302,7 +302,7 @@ test("creates a flashcard from the open note through the assistant after confirm
     await expect(page.locator("#form-edit-note-title")).toHaveValue(noteTitle);
     await openNoteActions(page);
     await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
-    const deleteDialog = page.getByRole("dialog", { name: "Delete Note" });
+    const deleteDialog = page.getByRole("dialog", { name: "Delete note" });
     await deleteDialog.getByRole("button", { name: "Delete" }).click();
     await expect(deleteDialog).toHaveCount(0);
     await page.goto(cardUrl);

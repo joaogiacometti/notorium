@@ -66,7 +66,7 @@ describe("FolderActionsMenu", () => {
     container.remove();
   });
 
-  it("offers Add note under Documents and opens its creation flow", () => {
+  it("offers Create note under Documents and opens its creation flow", () => {
     const onCreateNote = vi.fn();
     const node = {
       id: "biology",
@@ -91,11 +91,11 @@ describe("FolderActionsMenu", () => {
     const buttons = [...container.querySelectorAll("button")];
     const named = (label: string) =>
       buttons.find((button) => button.textContent?.trim() === label);
-    expect(named("Subfolder")).toBeDefined();
-    expect(named("Add note")).toBeDefined();
+    expect(named("Create subfolder")).toBeDefined();
+    expect(named("Create note")).toBeDefined();
     expect(named("Document")).toBeUndefined();
     act(() => {
-      named("Add note")?.click();
+      named("Create note")?.click();
       named("Finish menu close")?.click();
     });
     expect(onCreateNote).toHaveBeenCalledWith("biology");

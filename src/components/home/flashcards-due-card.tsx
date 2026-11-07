@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   getFlashcardReviewSessionHref,
   getFlashcardsHref,
@@ -46,6 +47,23 @@ export function FlashcardsDueCard({
           {caughtUp ? "Browse flashcards" : "Review now"}
         </Link>
       </Button>
+    </Card>
+  );
+}
+
+/** Loading placeholder matching {@link FlashcardsDueCard}'s line heights. */
+export function FlashcardsDueCardSkeleton() {
+  return (
+    <Card className="flex-row items-center gap-4 px-6 py-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex h-5 items-center">
+          <Skeleton className="h-4 w-28" />
+        </div>
+        <div className="flex h-8 items-center">
+          <Skeleton className="h-7 w-48" />
+        </div>
+      </div>
+      <Skeleton className="h-9 w-32" />
     </Card>
   );
 }

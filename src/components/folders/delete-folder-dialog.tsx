@@ -47,7 +47,7 @@ export function DeleteFolderDialog({
     <ActionConfirmationDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Delete Folder"
+      title="Delete folder"
       description={
         <>
           Are you sure you want to delete{" "}
@@ -61,7 +61,7 @@ export function DeleteFolderDialog({
         </>
       }
       confirmLabel="Delete"
-      pendingLabel="Deleting..."
+      pendingLabel="Deleting…"
       confirmVariant="destructive"
       cancelTestId="cancel-delete-folder"
       confirmTestId="confirm-delete-folder"

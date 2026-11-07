@@ -103,7 +103,7 @@ export function ResetPasswordForm({
               <AsyncButtonContent
                 pending={isSubmitting}
                 idleLabel="Reset password"
-                pendingLabel="Resetting password..."
+                pendingLabel="Resetting password…"
               />
             </Button>
           </Field>

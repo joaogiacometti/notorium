@@ -1,8 +1,11 @@
 "use client";
 
 import { CheckCircle2, CircleAlert, Gauge, Sparkles } from "lucide-react";
+import { gradeTones } from "@/components/flashcards/shared/grade-tones";
 import { Button } from "@/components/ui/button";
 import { gradeLabels, type ReviewGrade } from "@/features/flashcards/fsrs";
+import { getStatusToneClasses } from "@/lib/ui/status-tones";
+import { cn } from "@/lib/utils";
 
 interface ReviewGradeButtonsProps {
   isPending: boolean;
@@ -15,13 +18,6 @@ const gradeShortcuts: Record<ReviewGrade, string> = {
   hard: "2",
   good: "3",
   easy: "4",
-};
-const gradeButtonStyles: Record<ReviewGrade, string> = {
-  again:
-    "border-[color:var(--intent-danger-border)] bg-[color:var(--intent-danger-bg)] text-[color:var(--intent-danger-text)] hover:border-[color:var(--intent-danger-border-hover)] hover:bg-[color:var(--intent-danger-bg-hover)]",
-  hard: "border-[color:var(--intent-warning-border)] bg-[color:var(--intent-warning-bg)] text-[color:var(--intent-warning-text)] hover:border-[color:var(--intent-warning-border-hover)] hover:bg-[color:var(--intent-warning-bg-hover)]",
-  good: "border-[color:var(--intent-info-border)] bg-[color:var(--intent-info-bg)] text-[color:var(--intent-info-text)] hover:border-[color:var(--intent-info-border-hover)] hover:bg-[color:var(--intent-info-bg-hover)]",
-  easy: "border-[color:var(--intent-success-border)] bg-[color:var(--intent-success-bg)] text-[color:var(--intent-success-text)] hover:border-[color:var(--intent-success-border-hover)] hover:bg-[color:var(--intent-success-bg-hover)]",
 };
 const gradeIcons: Record<ReviewGrade, typeof CircleAlert> = {
   again: CircleAlert,
@@ -37,6 +33,7 @@ export function ReviewGradeButtons({
     <>
       {reviewGrades.map((grade) => {
         const Icon = gradeIcons[grade];
+        const tone = getStatusToneClasses(gradeTones[grade]);
         return (
           <Button
             key={grade}
@@ -45,7 +42,13 @@ export function ReviewGradeButtons({
             onClick={() => onGrade(grade)}
             disabled={isPending}
             aria-keyshortcuts={gradeShortcuts[grade]}
-            className={`h-12 w-full min-w-0 border px-1.5 py-0 text-xs font-semibold leading-tight sm:h-auto sm:min-h-16 sm:px-4 sm:py-2 sm:text-sm ${gradeButtonStyles[grade]}`}
+            className={cn(
+              "h-12 w-full min-w-0 border px-1.5 py-0 text-xs font-semibold leading-tight sm:h-auto sm:min-h-16 sm:px-4 sm:py-2 sm:text-sm",
+              tone.border,
+              tone.bg,
+              tone.text,
+              tone.hover,
+            )}
           >
             <span className="flex min-w-0 flex-col items-center justify-center text-center sm:gap-1">
               <span className="flex min-w-0 items-center gap-1.5">

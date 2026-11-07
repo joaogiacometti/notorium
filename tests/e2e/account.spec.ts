@@ -90,7 +90,7 @@ test("can reset flashcard optimization without deleting review history", async (
     await expect(page.getByText("Last optimized:")).toBeVisible();
 
     await page.getByRole("button", { name: "Reset", exact: true }).click();
-    const dialog = page.getByRole("dialog", { name: "Reset Optimization" });
+    const dialog = page.getByRole("dialog", { name: "Reset optimization" });
     await expect(dialog).toBeVisible();
     await dialog.getByRole("button", { name: "Reset", exact: true }).click();
 

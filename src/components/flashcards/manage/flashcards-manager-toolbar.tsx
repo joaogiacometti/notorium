@@ -58,7 +58,7 @@ function ToolbarStatusBadges({
   if (isManageScopeLoading) {
     return (
       <Skeleton
-        className="h-6 w-44 rounded-full"
+        className="h-6 w-36"
         data-testid="flashcards-manage-count-loading"
       />
     );
@@ -75,7 +75,7 @@ function ToolbarStatusBadges({
       {hasSelection ? null : <Search className="size-3.5" />}
       {hasSelection
         ? `${selectedCount} selected`
-        : `${total} of ${total} flashcards`}
+        : `${total} ${total === 1 ? "flashcard" : "flashcards"}`}
     </Badge>
   );
 }
@@ -110,7 +110,7 @@ function ManageFilterChip({
       size="xs"
       onClick={onToggle}
       aria-pressed={active}
-      aria-label={`Show ${label} cards`}
+      aria-label={`Show ${label.toLowerCase()} cards`}
       className={cn(
         "border-border font-normal",
         active
@@ -155,8 +155,8 @@ export function FlashcardsManagerToolbar({
                     onChange={(event) =>
                       onSearchQueryChange(event.target.value)
                     }
-                    placeholder="Search front, back, or folder path..."
-                    className="h-10 rounded-lg border-border bg-background/80 pl-10"
+                    placeholder="Search front, back, or folder path…"
+                    className="h-10 border-border bg-background/80 pl-10"
                   />
                 </div>
               </div>
@@ -164,10 +164,10 @@ export function FlashcardsManagerToolbar({
                 <Button
                   type="button"
                   onClick={onOpenCreateDialog}
-                  className="h-10 flex-1 gap-2 rounded-lg px-4 sm:flex-initial"
+                  className="h-10 flex-1 gap-2 px-4 sm:flex-initial"
                 >
                   <CopyPlus className="size-4" />
-                  New Flashcard
+                  Create flashcard
                 </Button>
               </div>
             </div>

@@ -199,7 +199,7 @@ export function FolderTreeSidebar({ tree }: Readonly<FolderTreeSidebarProps>) {
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label="New folder"
+            aria-label="Create folder"
             onClick={openCreateRoot}
           >
             <Plus className="size-4" />

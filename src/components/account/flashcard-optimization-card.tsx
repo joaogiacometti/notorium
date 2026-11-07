@@ -1,10 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useFormState } from "react-hook-form";
 import { toast } from "sonner";
 import {
   optimizeFlashcardScheduler,
@@ -23,6 +24,7 @@ import {
   type UpdateFsrsOptimizationPreferencesForm,
   updateFsrsOptimizationPreferencesSchema,
 } from "@/features/flashcards/fsrs/validation";
+import { invalidateAccountSettings } from "@/lib/client-cache/invalidation";
 import { formatDateLong } from "@/lib/dates/format";
 import type { FlashcardOptimizationSettings } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
@@ -39,6 +41,7 @@ export function FlashcardOptimizationCard({
   settings,
 }: Readonly<FlashcardOptimizationCardProps>) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [resetOpen, setResetOpen] = useState(false);
   const [isOptimizing, startOptimization] = useTransition();
   const [isResetting, startReset] = useTransition();
@@ -49,11 +52,11 @@ export function FlashcardOptimizationCard({
       automaticOptimizationEnabled: settings.automaticOptimizationEnabled,
     },
   });
-  const automaticOptimizationEnabled = form.watch(
-    "automaticOptimizationEnabled",
-  );
-  const preferencesChanged =
-    automaticOptimizationEnabled !== settings.automaticOptimizationEnabled;
+  // Compared with the last saved value, not the `settings` prop, which stays
+  // stale until the refreshed settings query resolves.
+  const { isDirty: preferencesChanged } = useFormState({
+    control: form.control,
+  });
 
   async function handleOptimizeNow() {
     startOptimization(async () => {
@@ -61,6 +64,7 @@ export function FlashcardOptimizationCard({
       if (result.success) {
         toast.success("FSRS optimization completed.");
         router.refresh();
+        await invalidateAccountSettings(queryClient);
         return;
       }
 
@@ -75,6 +79,7 @@ export function FlashcardOptimizationCard({
         setResetOpen(false);
         toast.success("FSRS optimization reset.");
         router.refresh();
+        await invalidateAccountSettings(queryClient);
         return;
       }
 
@@ -89,6 +94,7 @@ export function FlashcardOptimizationCard({
         form.reset(data);
         toast.success("FSRS optimization preferences saved.");
         router.refresh();
+        await invalidateAccountSettings(queryClient);
         return;
       }
 
@@ -114,7 +120,7 @@ export function FlashcardOptimizationCard({
                 <AsyncButtonContent
                   pending={isOptimizing}
                   idleLabel="Optimize now"
-                  pendingLabel="Optimizing..."
+                  pendingLabel="Optimizing…"
                 />
               </Button>
               <Button
@@ -162,7 +168,7 @@ export function FlashcardOptimizationCard({
                 <AsyncButtonContent
                   pending={isSaving}
                   idleLabel="Save"
-                  pendingLabel="Saving..."
+                  pendingLabel="Saving…"
                 />
               </Button>
             </form>
@@ -173,10 +179,10 @@ export function FlashcardOptimizationCard({
       <ActionConfirmationDialog
         open={resetOpen}
         onOpenChange={setResetOpen}
-        title="Reset Optimization"
+        title="Reset optimization"
         description="Resetting will discard the current optimized FSRS tuning and restore the default scheduler. Your review history and flashcard progress will be kept."
         confirmLabel="Reset"
-        pendingLabel="Resetting..."
+        pendingLabel="Resetting…"
         confirmVariant="destructive"
         isPending={isResetting}
         onConfirm={handleReset}

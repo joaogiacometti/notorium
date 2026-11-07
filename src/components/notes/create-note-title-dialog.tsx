@@ -130,7 +130,7 @@ export function CreateNoteTitleDialog({
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Create Note</DialogTitle>
+          <DialogTitle>Create note</DialogTitle>
           <DialogDescription className="sr-only">
             Create a note with a title.
           </DialogDescription>
@@ -181,8 +181,8 @@ export function CreateNoteTitleDialog({
             <Button type="submit" disabled={isSubmitting} className="w-full">
               <AsyncButtonContent
                 pending={isSubmitting}
-                idleLabel="Create Note"
-                pendingLabel="Creating..."
+                idleLabel="Create note"
+                pendingLabel="Creating…"
               />
             </Button>
           </FieldGroup>

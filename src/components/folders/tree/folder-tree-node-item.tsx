@@ -265,7 +265,7 @@ function DueReviewBadge({ folderId, dueCount }: Readonly<DueReviewBadgeProps>) {
       href={getFlashcardReviewSessionHref(folderId)}
       onClick={(event) => event.stopPropagation()}
       aria-label={`Review ${dueCount} due ${dueCount === 1 ? "card" : "cards"} in this folder`}
-      className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-foreground transition-colors hover:bg-primary/20"
+      className="shrink-0 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-foreground transition-colors hover:bg-primary/20"
     >
       {dueCount}
     </Link>

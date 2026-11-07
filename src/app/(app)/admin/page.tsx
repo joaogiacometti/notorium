@@ -1,6 +1,6 @@
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { UserAccessManagementCard } from "@/components/admin/user-access-management-card";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
-import { PageHeader } from "@/components/shared/page-header";
 import { getManagedUsers } from "@/lib/auth/access-control";
 import { requireAdminSession } from "@/lib/auth/auth";
 
@@ -14,10 +14,7 @@ export default async function AdminPage() {
         breadcrumb={{ current: { label: "Admin", icon: "shield" } }}
         maxWidth="3xl"
       >
-        <PageHeader
-          title="Admin Panel"
-          description="Manage user access and approval states."
-        />
+        <AdminPageHeader />
         <UserAccessManagementCard users={managedUsers} />
       </DetailPageLayout>
     </main>

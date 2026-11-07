@@ -47,7 +47,7 @@ interface FolderActionsMenuProps {
 }
 
 /**
- * The per-folder kebab menu in the tree row. Subfolder is a direct action;
+ * The per-folder kebab menu in the tree row. "Create subfolder" is a direct action;
  * document and flashcard actions each share a submenu.
  */
 export function FolderActionsMenu({
@@ -98,7 +98,7 @@ export function FolderActionsMenu({
           onClick={() => openDialog(() => onCreateChild(node.id))}
         >
           <FolderPlus className="size-4" />
-          Subfolder
+          Create subfolder
         </DropdownMenuItem>
 
         <DropdownMenuSub>
@@ -111,7 +111,7 @@ export function FolderActionsMenu({
               onClick={() => openDialog(() => onCreateNote(node.id))}
             >
               <FileText className="size-4" />
-              Add note
+              Create note
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => openDialog(() => onCreatePdf(node.id))}
@@ -132,7 +132,7 @@ export function FolderActionsMenu({
               onClick={() => openDialog(() => onCreateFlashcard(node.id))}
             >
               <SquarePen className="size-4" />
-              Add flashcard
+              Create flashcard
             </DropdownMenuItem>
             {node.dueFlashcardCount > 0 && (
               <DropdownMenuItem asChild>
@@ -161,7 +161,7 @@ export function FolderActionsMenu({
           Rename
         </DropdownMenuItem>
         <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
+          variant="destructive"
           onClick={() =>
             openDialog(() => onDelete({ id: node.id, name: node.path }))
           }

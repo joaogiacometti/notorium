@@ -39,7 +39,7 @@ interface FolderDialogFormProps {
   onOpenChange: (open: boolean) => void;
   trigger?: React.ReactNode;
   values: FolderFormValues;
-  /** Overrides the dialog heading, e.g. "Create Subfolder". */
+  /** Overrides the dialog heading, e.g. "Create subfolder". */
   title?: string;
   onSubmitAction: (
     values: FolderFormValues,
@@ -108,7 +108,7 @@ export function FolderDialogForm({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {title ?? (mode === "create" ? "Create Folder" : "Rename Folder")}
+            {title ?? (mode === "create" ? "Create folder" : "Rename folder")}
           </DialogTitle>
         </DialogHeader>
         <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
@@ -140,8 +140,8 @@ export function FolderDialogForm({
             >
               <AsyncButtonContent
                 pending={isSubmitting}
-                idleLabel={mode === "create" ? "Create Folder" : "Save Changes"}
-                pendingLabel={mode === "create" ? "Creating..." : "Saving..."}
+                idleLabel={mode === "create" ? "Create folder" : "Save changes"}
+                pendingLabel={mode === "create" ? "Creating…" : "Saving…"}
               />
             </Button>
           </FieldGroup>

@@ -138,7 +138,7 @@ export function ReviewCardEditor({
         <AsyncButtonContent
           pending={session.isSubmitting}
           idleLabel="Save"
-          pendingLabel="Saving..."
+          pendingLabel="Saving…"
         />
       </Button>
     </div>

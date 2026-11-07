@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -17,6 +18,7 @@ import {
   type UpdateAccountForm,
   updateAccountSchema,
 } from "@/features/account/validation";
+import { invalidateAccountSettings } from "@/lib/client-cache/invalidation";
 import { formatDateLong } from "@/lib/dates/format";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
@@ -39,6 +41,7 @@ export function AccountProfileCard({
   createdAt,
 }: Readonly<AccountProfileCardProps>) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(updateAccountSchema),
     defaultValues: { name },
@@ -50,6 +53,7 @@ export function AccountProfileCard({
       form.reset({ name: data.name });
       toast.success("Account updated.");
       router.refresh();
+      await invalidateAccountSettings(queryClient);
       return;
     }
     toast.error(resolveActionErrorMessage(result));
@@ -96,7 +100,7 @@ export function AccountProfileCard({
             <AsyncButtonContent
               pending={form.formState.isSubmitting}
               idleLabel="Save"
-              pendingLabel="Saving..."
+              pendingLabel="Saving…"
             />
           </Button>
         </form>

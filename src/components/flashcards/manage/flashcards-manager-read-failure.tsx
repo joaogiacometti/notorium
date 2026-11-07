@@ -1,5 +1,9 @@
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
+import { getStatusToneClasses } from "@/lib/ui/status-tones";
+import { cn } from "@/lib/utils";
+
+const dangerTone = getStatusToneClasses("danger");
 
 interface FlashcardsManagerReadFailureProps {
   message: string;
@@ -17,7 +21,12 @@ export function FlashcardsManagerReadFailure({
   return (
     <div
       role="alert"
-      className="flex flex-wrap items-center gap-3 rounded-lg border border-(--intent-danger-border) bg-(--intent-danger-bg) px-4 py-3 text-sm text-(--intent-danger-text)"
+      className={cn(
+        "flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 text-sm",
+        dangerTone.border,
+        dangerTone.bg,
+        dangerTone.text,
+      )}
     >
       <p className="min-w-0 flex-1">{message}</p>
       <Button
@@ -30,7 +39,7 @@ export function FlashcardsManagerReadFailure({
         <AsyncButtonContent
           pending={retrying}
           idleLabel="Retry"
-          pendingLabel="Retrying..."
+          pendingLabel="Retrying…"
         />
       </Button>
       {onDismiss ? (

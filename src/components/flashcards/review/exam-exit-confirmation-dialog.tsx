@@ -23,10 +23,10 @@ export function ExamExitConfirmationDialog({
     <ActionConfirmationDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Exit Exam"
+      title="Exit exam"
       description="Are you sure you want to exit? Your progress won't be saved."
       confirmLabel="Exit"
-      pendingLabel="Exiting..."
+      pendingLabel="Exiting…"
       confirmVariant="destructive"
       isPending={false}
       onConfirm={onConfirm}

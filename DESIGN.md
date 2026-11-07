@@ -31,7 +31,9 @@ are for custom controls such as segmented toggles and drop zones, not ordinary a
 - Note workspaces own their full-width layout for zen mode. Review/exam sessions
   are in-flow pages with the sidebar hidden, not modal overlays or scroll locks.
 - When changing a page or header, update its matching `loading.tsx` and
-  `PageTopBarSkeleton` so loading and loaded layouts agree.
+  `PageTopBarSkeleton` so loading and loaded layouts agree. Skeletons mirror the
+  loaded boxes (heights, counts, frame); routes and in-page loading states that
+  show the same view share one skeleton.
 - Use the spacing roles below instead of near-matching one-off values. Container
   and dialog components own their frame padding; scrolling editor dialogs keep
   header/body/footer separate, with a border above footer actions.
@@ -44,20 +46,30 @@ are for custom controls such as segmented toggles and drop zones, not ordinary a
 | Inline icon + text | `gap-1` for `text-xs`; `gap-1.5`–`gap-2` for larger text |
 | Detail header actions | `size-10` icon buttons with `gap-2` |
 
-Editable labels use title case. Flashcard Front/Back labels stay uppercase across
-read and edit surfaces; other uppercase labels identify read-only sections.
+## Copy
+
+- Titles, buttons, menu items, and labels use sentence case. Capitalize only proper
+  nouns, acronyms (PDF), and app section names (Home, Flashcards). Flashcard
+  Front/Back labels stay uppercase across read and edit surfaces; other uppercase
+  labels identify read-only sections.
+- One label per action everywhere it appears, verb first: **Create** makes a new
+  object (Create folder), **Add** brings in a file (Add PDF).
+- In-progress labels and placeholders end with `…`, not three periods.
+- Destructive menu items use `DropdownMenuItem variant="destructive"`.
 
 ## Surfaces, color, and type
 
 Keep the UI flat: no decorative gradients, shadows, or nested bordered panels.
 Use `Card` for panels, plain `border-border`, and theme radius defaults: controls
-use `rounded-md`, panels/dialogs `rounded-lg`. Reserve `rounded-full` for avatars
-and status dots. Floating surfaces may use `shadow-md` and above.
+and badges use `rounded-md`, panels/dialogs `rounded-lg`. Reserve `rounded-full`
+for avatars, status dots, and progress bars. Floating surfaces may use `shadow-md`
+and above.
 
 Use semantic theme colors, not hardcoded palette classes or per-component hex
 values. Hover fill is `bg-muted/50`; selected fill is `bg-muted`. Primary marks
 the main action, focus, and selection. Intent colors communicate status through
-[status tones](./src/lib/ui/status-tones.ts), not bespoke per-status maps.
+[status tones](./src/lib/ui/status-tones.ts), not bespoke per-status maps; review
+grades map to tones once, in `gradeTones`.
 
 | Text role | Convention |
 | --- | --- |

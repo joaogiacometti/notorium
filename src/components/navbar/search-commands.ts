@@ -38,7 +38,7 @@ export interface SearchCommand {
 export const searchCommands: SearchCommand[] = [
   {
     id: "create-folder",
-    label: "Create Folder",
+    label: "Create folder",
     group: "Create",
     keywords: ["new", "add", "create", "folder", "directory", "organize"],
     icon: FolderPlus,
@@ -46,7 +46,7 @@ export const searchCommands: SearchCommand[] = [
   },
   {
     id: "create-flashcard",
-    label: "Create Flashcard",
+    label: "Create flashcard",
     group: "Create",
     keywords: ["new", "add", "create", "flashcard", "card"],
     icon: Layers,
@@ -54,7 +54,7 @@ export const searchCommands: SearchCommand[] = [
   },
   {
     id: "create-note",
-    label: "Create Note",
+    label: "Create note",
     group: "Create",
     keywords: ["new", "add", "create", "note", "document"],
     icon: FileText,
@@ -62,7 +62,7 @@ export const searchCommands: SearchCommand[] = [
   },
   {
     id: "create-pdf",
-    label: "Create PDF",
+    label: "Add PDF",
     group: "Create",
     keywords: ["new", "add", "create", "upload", "pdf", "book", "document"],
     icon: FileType,
@@ -86,7 +86,7 @@ export const searchCommands: SearchCommand[] = [
   },
   {
     id: "open-settings",
-    label: "Open Settings",
+    label: "Open settings",
     group: "Settings",
     keywords: ["account", "settings", "profile", "preferences"],
     icon: UserCog,
@@ -118,7 +118,7 @@ export const searchCommands: SearchCommand[] = [
   },
   {
     id: "shortcuts-help",
-    label: "Show Keyboard Shortcuts",
+    label: "Show keyboard shortcuts",
     group: "Settings",
     keywords: ["keyboard", "shortcuts", "help", "keys"],
     icon: Keyboard,

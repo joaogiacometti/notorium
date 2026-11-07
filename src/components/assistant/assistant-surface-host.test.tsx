@@ -47,7 +47,7 @@ function PortalHarness({
       ) : null}
       {modal ? (
         <Dialog open={nested}>
-          <FlashcardEditorDialogContent title="New flashcard">
+          <FlashcardEditorDialogContent title="Create flashcard">
             <p>Card editor</p>
           </FlashcardEditorDialogContent>
         </Dialog>

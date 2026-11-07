@@ -47,7 +47,7 @@ export function ResetFlashcardDialog({
     <ActionConfirmationDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Reset Flashcard"
+      title="Reset flashcard"
       description={
         <>
           Are you sure you want to reset{" "}
@@ -59,7 +59,7 @@ export function ResetFlashcardDialog({
         </>
       }
       confirmLabel="Reset"
-      pendingLabel="Resetting..."
+      pendingLabel="Resetting…"
       confirmVariant="default"
       isPending={isPending}
       onConfirm={handleReset}

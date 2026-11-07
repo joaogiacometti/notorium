@@ -1,8 +1,36 @@
 import { RotateCcw, X } from "lucide-react";
 import { ExamBadge } from "@/components/flashcards/review/exam-badge";
+import { gradeTones } from "@/components/flashcards/shared/grade-tones";
 import { Button } from "@/components/ui/button";
 import type { ReviewGrade } from "@/features/flashcards/fsrs";
 import { gradeLabels } from "@/features/flashcards/fsrs";
+import { getStatusToneClasses } from "@/lib/ui/status-tones";
+import { cn } from "@/lib/utils";
+
+const reviewGrades: ReviewGrade[] = ["again", "hard", "good", "easy"];
+
+interface GradeArc {
+  grade: ReviewGrade;
+  length: number;
+  offset: number;
+}
+
+/** Consecutive ring segments, one per grade that occurred, in grade order. */
+function buildGradeArcs(
+  counts: Record<ReviewGrade, number>,
+  totalCards: number,
+  circumference: number,
+): GradeArc[] {
+  const arcs: GradeArc[] = [];
+  let offset = 0;
+  for (const grade of reviewGrades) {
+    const length =
+      totalCards > 0 ? (counts[grade] / totalCards) * circumference : 0;
+    if (length > 0) arcs.push({ grade, length, offset });
+    offset += length;
+  }
+  return arcs;
+}
 
 interface ExamResultsScreenProps {
   totalCards: number;
@@ -36,16 +64,8 @@ export function ExamResultsScreen({
   const confidentPercent =
     totalCards > 0 ? Math.round((confidentCount / totalCards) * 100) : 0;
 
-  const againPercent = totalCards > 0 ? (counts.again / totalCards) * 100 : 0;
-  const hardPercent = totalCards > 0 ? (counts.hard / totalCards) * 100 : 0;
-  const goodPercent = totalCards > 0 ? (counts.good / totalCards) * 100 : 0;
-  const easyPercent = totalCards > 0 ? (counts.easy / totalCards) * 100 : 0;
-
   const circumference = 2 * Math.PI * 40;
-  const againArc = (againPercent / 100) * circumference;
-  const hardArc = (hardPercent / 100) * circumference;
-  const goodArc = (goodPercent / 100) * circumference;
-  const easyArc = (easyPercent / 100) * circumference;
+  const arcs = buildGradeArcs(counts, totalCards, circumference);
 
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center bg-background px-4 sm:px-6">
@@ -68,7 +88,10 @@ export function ExamResultsScreen({
             Session complete
           </h1>
           <p className="text-muted-foreground">
-            All {totalCards} cards reviewed · {formatDuration(duration)}
+            {totalCards === 1
+              ? "1 card reviewed"
+              : `All ${totalCards} cards reviewed`}{" "}
+            · {formatDuration(duration)}
           </p>
         </div>
 
@@ -85,62 +108,22 @@ export function ExamResultsScreen({
                 cy="50"
                 r="40"
                 fill="none"
-                stroke="currentColor"
                 strokeWidth="8"
-                className="text-muted/30"
+                className="stroke-muted/30"
               />
-              {againArc > 0 && (
+              {arcs.map((arc) => (
                 <circle
+                  key={arc.grade}
                   cx="50"
                   cy="50"
                   r="40"
                   fill="none"
-                  stroke="currentColor"
                   strokeWidth="8"
-                  strokeDasharray={`${againArc} ${circumference - againArc}`}
-                  strokeDashoffset="0"
-                  className="text-(--intent-danger-fill) transition-all duration-1000"
+                  strokeDasharray={`${arc.length} ${circumference - arc.length}`}
+                  strokeDashoffset={-arc.offset}
+                  className={getStatusToneClasses(gradeTones[arc.grade]).stroke}
                 />
-              )}
-              {hardArc > 0 && (
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  strokeDasharray={`${hardArc} ${circumference - hardArc}`}
-                  strokeDashoffset={`-${againArc}`}
-                  className="text-(--intent-warning-fill) transition-all duration-1000"
-                />
-              )}
-              {goodArc > 0 && (
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  strokeDasharray={`${goodArc} ${circumference - goodArc}`}
-                  strokeDashoffset={`-${againArc + hardArc}`}
-                  className="text-(--intent-info-fill) transition-all duration-1000"
-                />
-              )}
-              {easyArc > 0 && (
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  strokeDasharray={`${easyArc} ${circumference - easyArc}`}
-                  strokeDashoffset={`-${againArc + hardArc + goodArc}`}
-                  className="text-(--intent-success-fill) transition-all duration-1000"
-                />
-              )}
+              ))}
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-4xl font-bold">{confidentPercent}%</span>
@@ -150,16 +133,15 @@ export function ExamResultsScreen({
         </div>
 
         <div className="grid grid-cols-4 gap-3 sm:gap-4">
-          {(["again", "hard", "good", "easy"] as const).map((grade) => {
-            const colorMap = {
-              again: "text-[var(--intent-danger-text)]",
-              hard: "text-[var(--intent-warning-text)]",
-              good: "text-[var(--intent-info-text)]",
-              easy: "text-[var(--intent-success-text)]",
-            };
+          {reviewGrades.map((grade) => {
             return (
               <div key={grade} className="rounded-lg border bg-card p-4 sm:p-6">
-                <div className={`mb-1 text-3xl font-bold ${colorMap[grade]}`}>
+                <div
+                  className={cn(
+                    "mb-1 text-3xl font-bold tabular-nums",
+                    getStatusToneClasses(gradeTones[grade]).text,
+                  )}
+                >
                   {counts[grade]}
                 </div>
                 <div className="text-xs font-medium text-muted-foreground capitalize">

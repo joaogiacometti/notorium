@@ -47,10 +47,10 @@ export function AppearanceCard() {
                 onClick={() => handleThemeChange(option.id)}
                 aria-pressed={isSelected}
                 className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors",
+                  "flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors",
                   isSelected
-                    ? "border-border bg-accent/65 text-foreground"
-                    : "hover:border-border hover:bg-accent/45",
+                    ? "border-border bg-muted text-foreground"
+                    : "hover:border-border hover:bg-muted/50",
                 )}
               >
                 <ThemePreview themeId={option.id} isSelected={isSelected} />

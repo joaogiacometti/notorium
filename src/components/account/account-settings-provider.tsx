@@ -14,7 +14,7 @@ import {
   resolveSettingsSection,
   type SettingsSectionId,
 } from "@/components/account/settings-sections";
-import { fetchAccountSettings } from "@/lib/read-api/account";
+import { accountSettingsQuery } from "@/lib/client-cache/queries";
 
 type OpenAccountSettings = (section?: SettingsSectionId) => void;
 
@@ -50,11 +50,13 @@ export function AccountSettingsProvider({
 
   useDeepLinkedSettings(openSettings, userId);
 
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ["account-settings", userId],
-    queryFn: () => fetchAccountSettings(),
+  const {
+    data: settings,
+    isLoading,
+    refetch,
+  } = useQuery({
+    ...accountSettingsQuery(),
     enabled: open && userId.length > 0,
-    staleTime: 1000 * 30,
   });
 
   return (
@@ -68,6 +70,7 @@ export function AccountSettingsProvider({
           onSelectSection={setActiveSection}
           settings={settings}
           isLoading={isLoading}
+          onRetry={() => void refetch()}
         />
       )}
     </OpenAccountSettingsContext.Provider>

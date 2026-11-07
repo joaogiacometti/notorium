@@ -49,10 +49,10 @@ export function BulkDeleteFlashcardsDialog({
     <ActionConfirmationDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Delete Flashcards"
+      title="Delete flashcards"
       description={descriptionText}
       confirmLabel="Delete"
-      pendingLabel="Deleting..."
+      pendingLabel="Deleting…"
       confirmVariant="destructive"
       isPending={isPending}
       onConfirm={handleDelete}

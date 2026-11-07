@@ -155,21 +155,18 @@ function PdfActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem className="cursor-pointer" onClick={onRename}>
+        <DropdownMenuItem onClick={onRename}>
           <Pencil className="size-4" />
           Rename
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="cursor-pointer">
+        <DropdownMenuItem asChild>
           <a href={downloadUrl} download={fileName}>
             <Download className="size-4" />
             Download
           </a>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="cursor-pointer text-destructive focus:text-destructive"
-          onClick={onDelete}
-        >
+        <DropdownMenuItem variant="destructive" onClick={onDelete}>
           <Trash2 className="size-4" />
           Delete
         </DropdownMenuItem>

@@ -19,9 +19,9 @@ export function UnsavedChangesDialog({
       onOpenChange={onOpenChange}
       title="Discard changes?"
       description="You have unsaved edits. If you discard now, those changes will be lost."
-      cancelLabel="Keep Editing"
+      cancelLabel="Keep editing"
       confirmLabel="Discard"
-      pendingLabel="Discarding..."
+      pendingLabel="Discarding…"
       confirmVariant="destructive"
       isPending={false}
       onConfirm={onDiscard}

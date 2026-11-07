@@ -15,10 +15,13 @@ describe("ReviewSessionLoading", () => {
   });
 
   it("shows the header badge placeholder only for exams", () => {
+    // The review header renders no badge, so its skeleton must not reserve one
+    // either, or the progress text shifts once the session loads.
+    const skeletons = (markup: string) =>
+      markup.match(/data-slot="skeleton"/g)?.length ?? 0;
     const review = renderToStaticMarkup(<ReviewSessionLoading />);
     const exam = renderToStaticMarkup(<ExamSessionLoading />);
 
-    expect(review).not.toContain("h-7 w-16");
-    expect(exam).toContain("h-7 w-16");
+    expect(skeletons(exam)).toBe(skeletons(review) + 1);
   });
 });

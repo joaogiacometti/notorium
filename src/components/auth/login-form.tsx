@@ -19,11 +19,14 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
+import { getStatusToneClasses } from "@/lib/ui/status-tones";
 import { cn } from "@/lib/utils";
 import {
   type LoginForm as LoginFormValues,
   loginSchema,
 } from "@/lib/validations/auth";
+
+const infoTone = getStatusToneClasses("info");
 
 export function LoginForm({
   showPendingApprovalNotice = false,
@@ -71,15 +74,19 @@ export function LoginForm({
       <form id="form-login" onSubmit={form.handleSubmit(onSubmit)}>
         <FieldGroup className="gap-4 md:gap-6">
           {showPendingApprovalNotice ? (
-            <div className="flex items-start gap-3 rounded-lg border border-[var(--intent-info-border)] bg-[var(--intent-info-bg)] px-4 py-3 text-sm">
-              <Clock3 className="mt-0.5 size-4 shrink-0 text-[var(--intent-info-fill)]" />
+            <div
+              role="status"
+              className={cn(
+                "flex items-start gap-3 rounded-lg border px-4 py-3 text-sm",
+                infoTone.border,
+                infoTone.bg,
+                infoTone.text,
+              )}
+            >
+              <Clock3 className="mt-0.5 size-4 shrink-0" />
               <div className="space-y-1">
-                <p className="font-medium text-[var(--intent-info-text)]">
-                  Account created successfully.
-                </p>
-                <p className="text-[var(--intent-info-text)]/90">
-                  Your access now waits for administrator approval.
-                </p>
+                <p className="font-medium">Account created successfully.</p>
+                <p>Your access now waits for administrator approval.</p>
               </div>
             </div>
           ) : null}
@@ -137,7 +144,7 @@ export function LoginForm({
               <AsyncButtonContent
                 pending={isSubmitting}
                 idleLabel="Sign in"
-                pendingLabel="Signing in..."
+                pendingLabel="Signing in…"
               />
             </Button>
           </Field>

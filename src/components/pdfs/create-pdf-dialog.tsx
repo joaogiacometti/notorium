@@ -202,7 +202,7 @@ export function CreatePdfDialog({
               <AsyncButtonContent
                 pending={isUploading}
                 idleLabel="Upload PDF"
-                pendingLabel="Uploading..."
+                pendingLabel="Uploading…"
               />
             </Button>
           </FieldGroup>

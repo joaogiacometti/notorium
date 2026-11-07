@@ -154,5 +154,5 @@ function getPickerStatus(
 ): string {
   if (query.length < LIMITS.searchQueryMin) return "Type to find a note";
   if (failed) return "Couldn't search notes. Keep typing to try again.";
-  return fetching ? "Searching..." : "No matching notes";
+  return fetching ? "Searching…" : "No matching notes";
 }

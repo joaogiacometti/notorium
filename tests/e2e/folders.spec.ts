@@ -46,12 +46,14 @@ test("can create a folder", async ({ page, e2eUser }) => {
 
     await waitForAppShell(page);
 
-    await page.getByRole("button", { name: "New folder", exact: true }).click();
-    const createDialog = page.getByRole("dialog", { name: "Create Folder" });
+    await page
+      .getByRole("button", { name: "Create folder", exact: true })
+      .click();
+    const createDialog = page.getByRole("dialog", { name: "Create folder" });
     await createDialog
       .locator("#form-create-folder-name")
       .fill(initialFolderName);
-    await createDialog.getByRole("button", { name: "Create Folder" }).click();
+    await createDialog.getByRole("button", { name: "Create folder" }).click();
 
     // Verify the folder appears in the sidebar tree.
     await expect(getFolderSidebarRow(page, initialFolderName)).toBeVisible();
@@ -68,10 +70,12 @@ test("nested folders expose their documents through folder routes", async ({
     registerCleanup(() => clearUserFoldersByNames(e2eUser.userId, [rootName]));
 
     await waitForAppShell(page);
-    await page.getByRole("button", { name: "New folder", exact: true }).click();
-    const dialog = page.getByRole("dialog", { name: "Create Folder" });
+    await page
+      .getByRole("button", { name: "Create folder", exact: true })
+      .click();
+    const dialog = page.getByRole("dialog", { name: "Create folder" });
     await dialog.getByLabel("Name", { exact: true }).fill(path);
-    await dialog.getByRole("button", { name: "Create Folder" }).click();
+    await dialog.getByRole("button", { name: "Create folder" }).click();
     await expect(dialog).not.toBeVisible();
 
     const optionsResponse = await page.request.get("/api/folders/options");
@@ -140,9 +144,9 @@ test("can edit a folder", async ({ page, e2eUser }) => {
 
     await openFolderSidebarActions(page, initialFolderName);
     await page.getByRole("menuitem", { name: "Rename" }).click();
-    const editDialog = page.getByRole("dialog", { name: "Rename Folder" });
+    const editDialog = page.getByRole("dialog", { name: "Rename folder" });
     await editDialog.locator("#form-edit-folder-name").fill(updatedFolderName);
-    await editDialog.getByRole("button", { name: "Save Changes" }).click();
+    await editDialog.getByRole("button", { name: "Save changes" }).click();
     await expect(editDialog).not.toBeVisible();
 
     // Reload for a deterministic tree, then verify the rename is reflected.
@@ -168,7 +172,7 @@ test("can delete a folder", async ({ page, e2eUser }) => {
     await page.getByRole("menuitem", { name: "Delete" }).click();
 
     const deleteDialog = page.getByRole("dialog", {
-      name: "Delete Folder",
+      name: "Delete folder",
     });
     await deleteDialog
       .getByRole("button", { name: "Delete", exact: true })
@@ -207,7 +211,7 @@ test("can delete multiple folders from the sidebar", async ({
       await openFolderSidebarActions(page, name);
       await page.getByRole("menuitem", { name: "Delete" }).click();
       const deleteDialog = page.getByRole("dialog", {
-        name: "Delete Folder",
+        name: "Delete folder",
       });
       await deleteDialog
         .getByRole("button", { name: "Delete", exact: true })

@@ -46,7 +46,7 @@ export function DeleteFlashcardDialog({
     <ActionConfirmationDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Delete Flashcard"
+      title="Delete flashcard"
       description={
         <>
           Are you sure you want to delete{" "}
@@ -57,7 +57,7 @@ export function DeleteFlashcardDialog({
         </>
       }
       confirmLabel="Delete"
-      pendingLabel="Deleting..."
+      pendingLabel="Deleting…"
       confirmVariant="destructive"
       isPending={isPending}
       onConfirm={handleDelete}

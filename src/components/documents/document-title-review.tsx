@@ -1,3 +1,6 @@
+import { getStatusToneClasses } from "@/lib/ui/status-tones";
+import { cn } from "@/lib/utils";
+
 interface DocumentTitleReviewProps {
   original: string;
   replacement: string;
@@ -15,8 +18,10 @@ export function DocumentTitleReview({
       aria-label="Suggested title changes"
       className="min-w-0 flex-1 border-0 px-3 text-lg font-semibold tracking-tight"
     >
-      <del className="mr-2 text-(--intent-danger-text)">{original}</del>
-      <ins className="text-(--intent-success-text) no-underline">
+      <del className={cn("mr-2", getStatusToneClasses("danger").text)}>
+        {original}
+      </del>
+      <ins className={cn("no-underline", getStatusToneClasses("success").text)}>
         {replacement}
       </ins>
     </fieldset>

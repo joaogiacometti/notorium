@@ -1,21 +1,12 @@
 "use client";
 
-import {
-  ArrowRightLeft,
-  Copy,
-  MoreVertical,
-  RotateCcw,
-  Trash2,
-} from "lucide-react";
-
-import { StudyLaterMenuItem } from "@/components/flashcards/shared/study-later-menu-item";
+import { MoreVertical } from "lucide-react";
+import { FlashcardActionMenuItems } from "@/components/flashcards/shared/flashcard-action-menu-items";
 import { ROW_ACTION_TRIGGER_CLASS } from "@/components/shared/row-action-visibility";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -51,31 +42,14 @@ export function FlashcardsTableRowActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onCopyRequested} className="cursor-pointer">
-          <Copy className="size-4" />
-          Copy
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onMoveRequested}>
-          <ArrowRightLeft className="size-4" />
-          Move
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <StudyLaterMenuItem
-          marked={studyLaterMarked}
-          onSelect={onStudyLaterToggleRequested}
+        <FlashcardActionMenuItems
+          onCopy={onCopyRequested}
+          onMove={onMoveRequested}
+          studyLaterMarked={studyLaterMarked}
+          onToggleStudyLater={onStudyLaterToggleRequested}
+          onReset={onResetRequested}
+          onDelete={onDeleteRequested}
         />
-        <DropdownMenuItem onClick={onResetRequested} className="cursor-pointer">
-          <RotateCcw className="size-4" />
-          Reset
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={onDeleteRequested}
-          className="cursor-pointer text-destructive focus:text-destructive"
-        >
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

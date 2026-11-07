@@ -11,7 +11,7 @@ import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 type DocumentActionResult = Promise<{ success: true } | ActionErrorResult>;
 
 interface DocumentKindActions {
-  /** Singular name shown in dialogs, such as "Rename Note". */
+  /** Singular name shown mid-sentence in dialogs, such as "Rename note". */
   label: string;
   titleSchema: z.ZodType<{ title: string }, { title: string }>;
   rename: (id: string, title: string) => DocumentActionResult;
@@ -20,7 +20,7 @@ interface DocumentKindActions {
 
 export const DOCUMENT_KIND_ACTIONS = {
   note: {
-    label: "Note",
+    label: "note",
     titleSchema: editNoteSchema.pick({ title: true }),
     rename: (id, title) => editNote({ id, title }),
     remove: (id) => deleteNote({ id }),

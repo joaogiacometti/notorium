@@ -239,7 +239,7 @@ export const shortcutRegistry: Shortcut[] = [
     id: "flashcard-study-later",
     kind: "keys",
     keys: ["l"],
-    description: "Toggle Study later",
+    description: "Toggle study later",
     category: ShortcutCategory.FlashcardReview,
   },
   {

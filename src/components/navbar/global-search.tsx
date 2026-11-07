@@ -21,6 +21,7 @@ import {
 import { useSearchCommandActions } from "@/components/navbar/use-search-command-actions";
 import { useSearchResults } from "@/components/navbar/use-search-results";
 import { useShortcutsDialogOpen } from "@/components/shortcuts/shortcuts-suspension-context";
+import { Button } from "@/components/ui/button";
 import {
   CommandDialog,
   CommandEmpty,
@@ -118,7 +119,7 @@ export function GlobalSearch({
       <CommandDialog
         open={open}
         onOpenChange={handleOpenChange}
-        title="Search and Commands"
+        title="Search and commands"
         description="Search your notes, PDFs, and flashcards or run a command"
         commandProps={{ shouldFilter: false }}
       >
@@ -126,16 +127,20 @@ export function GlobalSearch({
           value={query}
           onValueChange={setQuery}
           maxLength={LIMITS.searchQueryMax}
-          placeholder="Search notes, PDFs, and flashcards, or run a command..."
+          placeholder="Search notes, PDFs, and flashcards, or run a command…"
         />
         <CommandList>
-          {!results.isSearching && commands.length === 0 && !hasResults && (
-            <CommandEmpty>
-              No matching commands, notes, PDFs, or flashcards.
-            </CommandEmpty>
-          )}
+          {!results.isSearching &&
+            !results.hasError &&
+            commands.length === 0 &&
+            !hasResults && (
+              <CommandEmpty>
+                No matching commands, notes, PDFs, or flashcards.
+              </CommandEmpty>
+            )}
           <SearchCommandGroups commands={commands} onRun={runAction} />
           {results.isSearching && !hasResults ? <SearchingRow /> : null}
+          {results.hasError ? <SearchErrorRow onRetry={results.retry} /> : null}
           <NoteResultGroup
             notes={results.notes}
             highlightQuery={results.highlightQuery}
@@ -169,6 +174,27 @@ export function GlobalSearch({
         onNavigate={navigate}
       />
     </>
+  );
+}
+
+/** Shown instead of results when the server search failed. */
+function SearchErrorRow({ onRetry }: Readonly<{ onRetry: () => void }>) {
+  return (
+    <div
+      role="alert"
+      className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground"
+    >
+      Couldn't search your library.
+      <Button
+        type="button"
+        variant="link"
+        size="sm"
+        className="h-auto p-0"
+        onClick={onRetry}
+      >
+        Retry
+      </Button>
+    </div>
   );
 }
 
