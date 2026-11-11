@@ -4,6 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Download, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { AssistantLauncherButton } from "@/components/assistant/assistant-launcher-button";
+import { AssistantSurfaceHost } from "@/components/assistant/assistant-surface-host";
+import { useAssistantWorkspace } from "@/components/assistant/assistant-workspace-context";
 import { DeleteDocumentDialog } from "@/components/documents/delete-document-dialog";
 import {
   DOCUMENT_KIND_ACTIONS,
@@ -42,6 +45,7 @@ export function PdfDetail({ pdf, folderName }: Readonly<PdfDetailProps>) {
   const queryClient = useQueryClient();
   const [, startNavTransition] = useTransition();
   const { isZenMode, toggleZenMode } = useZenMode();
+  const assistantWorkspace = useAssistantWorkspace();
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   // The title row leaves with the reading controls while reading down: on
@@ -63,11 +67,14 @@ export function PdfDetail({ pdf, folderName }: Readonly<PdfDetailProps>) {
         maxWidth="7xl"
         className={cn(
           "flex flex-col gap-2 overflow-hidden px-0 pt-2 sm:gap-4 sm:pt-6",
+          isZenMode && assistantWorkspace?.open && "lg:pr-96",
           isZenMode
             ? "fixed inset-0 z-immersive h-dvh max-w-none bg-background pb-0 sm:py-4"
             : "h-[calc(100dvh-3.5rem-var(--app-mobile-header-height,0rem))] pb-0 sm:pb-4 lg:pb-6",
         )}
       >
+        {/* Zen mode covers the app shell, so the assistant portals in here. */}
+        {isZenMode ? <AssistantSurfaceHost /> : null}
         <div
           className={cn(
             "flex min-w-0 shrink-0 items-start justify-between gap-2 px-4 sm:gap-4 sm:px-0",
@@ -78,6 +85,7 @@ export function PdfDetail({ pdf, folderName }: Readonly<PdfDetailProps>) {
             {pdf.title}
           </h1>
           <div className="flex shrink-0 gap-2">
+            {isZenMode ? <AssistantLauncherButton className="size-10" /> : null}
             <ZenModeToggle
               isZenMode={isZenMode}
               onToggle={() => {
