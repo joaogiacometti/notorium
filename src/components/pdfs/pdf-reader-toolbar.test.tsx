@@ -10,6 +10,7 @@ describe("PDF reading controls", () => {
   const onZoomChange = vi.fn();
   const onGoBack = vi.fn();
   const onPageJump = vi.fn();
+  const onPageTintChange = vi.fn();
 
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -42,6 +43,8 @@ describe("PDF reading controls", () => {
           trimMargins
           canTrimMargins
           onTrimMarginsChange={vi.fn()}
+          pageTint="original"
+          onPageTintChange={onPageTintChange}
         />,
       ),
     );
@@ -78,6 +81,16 @@ describe("PDF reading controls", () => {
       expect(onZoomChange).toHaveBeenCalledWith({ kind: "ratio", ratio });
     },
   );
+
+  it("offers page colors from the reading menu", async () => {
+    renderToolbar();
+    await openReadingMenu();
+    const sepia = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="menuitemradio"]'),
+    ).find((item) => item.textContent?.trim() === "Sepia");
+    act(() => sepia?.click());
+    expect(onPageTintChange).toHaveBeenCalledWith("sepia");
+  });
 
   it("keeps return navigation in the toolbar, not the zoom menu", async () => {
     renderToolbar();

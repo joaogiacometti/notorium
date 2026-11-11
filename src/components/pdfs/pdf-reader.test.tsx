@@ -2,6 +2,7 @@ import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PdfReader } from "@/components/pdfs/pdf-reader";
+import { measurePdfTextCrop } from "@/components/pdfs/pdf-text-crop";
 
 const pdfFixture = vi.hoisted(() => ({
   numPages: 30,
@@ -107,6 +108,10 @@ class FakeReaderResizeObserver {
     );
   }
 
+  unobserve() {
+    this.target = null;
+  }
+
   disconnect() {
     if (FakeReaderResizeObserver.current === this)
       FakeReaderResizeObserver.current = null;
@@ -127,8 +132,12 @@ class DeferredPdfResult<T> {
 describe("PDF reader links", () => {
   let container: HTMLDivElement;
   let root: Root;
+  const onChromeHiddenChange = vi.fn();
 
   beforeEach(() => {
+    onChromeHiddenChange.mockReset();
+    localStorage.clear();
+    vi.mocked(measurePdfTextCrop).mockResolvedValue(null);
     pdfFixture.getOutline.mockReset();
     pdfFixture.getOutline.mockResolvedValue([
       {
@@ -154,7 +163,7 @@ describe("PDF reader links", () => {
     vi.unstubAllGlobals();
   });
 
-  async function openReader() {
+  async function openReader(chromeHidden = false, immersive = false) {
     act(() => {
       root.render(
         <PdfReader
@@ -163,6 +172,9 @@ describe("PDF reader links", () => {
           folderPath="Books"
           fileUrl="/book.pdf"
           initialPage={1}
+          immersive={immersive}
+          chromeHidden={chromeHidden}
+          onChromeHiddenChange={onChromeHiddenChange}
         />,
       );
     });
@@ -465,5 +477,118 @@ describe("PDF reader links", () => {
     expect(container.querySelector("input")?.value).toBe("20");
     const scroller = destination?.parentElement?.parentElement;
     expect(scroller?.scrollTop).toBeGreaterThan(0);
+  });
+
+  function dragPages(fromY: number, toY: number) {
+    const scroller = readerScroller();
+    function touch(type: string, clientY: number) {
+      const event = new Event(type, { bubbles: true });
+      Object.assign(event, { touches: [{ clientX: 100, clientY }] });
+      scroller.dispatchEvent(event);
+    }
+    act(() => {
+      touch("touchstart", fromY);
+      touch("touchmove", toY);
+    });
+  }
+
+  it("asks to hide the controls when a phone reader drags down the pages", async () => {
+    await openReader();
+    act(() => FakeReaderResizeObserver.current?.resize(390, 700));
+
+    dragPages(400, 395);
+    expect(onChromeHiddenChange).not.toHaveBeenCalled();
+    dragPages(400, 300);
+
+    expect(onChromeHiddenChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it("brings hidden controls back on a drag up or a tap on the page", async () => {
+    await openReader(true);
+    act(() => FakeReaderResizeObserver.current?.resize(390, 700));
+
+    dragPages(300, 400);
+    expect(onChromeHiddenChange).toHaveBeenLastCalledWith(false);
+    onChromeHiddenChange.mockReset();
+    act(() => readerScroller().click());
+
+    expect(onChromeHiddenChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it("keeps the controls for page jumps, links, wide columns, and the contents tray", async () => {
+    await openReader();
+    dragPages(400, 300);
+    act(() => FakeReaderResizeObserver.current?.resize(390, 700));
+    clickReaderButton("Next page");
+    clickReaderButton("Chapter link on page 1");
+    await act(async () => clickReaderButton("Table of contents"));
+    dragPages(400, 300);
+
+    expect(onChromeHiddenChange).not.toHaveBeenCalled();
+  });
+
+  it("follows the wheel in zen mode on a wide column, and ignores mouse clicks", async () => {
+    await openReader(false, true);
+    const scroller = readerScroller();
+    act(() => {
+      const click = new MouseEvent("click", { bubbles: true });
+      Object.assign(click, { pointerType: "mouse" });
+      scroller.dispatchEvent(click);
+    });
+    expect(onChromeHiddenChange).not.toHaveBeenCalled();
+
+    act(() => {
+      scroller.dispatchEvent(new WheelEvent("wheel", { deltaY: 40 }));
+    });
+
+    expect(onChromeHiddenChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it("remembers the chosen page color for the next PDF", async () => {
+    await openReader();
+    const pages = readerScroller().firstElementChild;
+    expect(pages?.getAttribute("data-pdf-page-tint")).toBe("original");
+    const trigger = container.querySelector('[aria-label="Zoom presets"]');
+    await act(async () => {
+      trigger?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
+      );
+    });
+    const dark = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="menuitemradio"]'),
+    ).find((item) => item.textContent?.trim() === "Dark");
+    act(() => dark?.click());
+    expect(pages?.getAttribute("data-pdf-page-tint")).toBe("dark");
+
+    act(() => root.unmount());
+    root = createRoot(container);
+    await openReader();
+
+    expect(
+      readerScroller().firstElementChild?.getAttribute("data-pdf-page-tint"),
+    ).toBe("dark");
+  });
+
+  it("trims page margins on phones and shows whole pages on wide columns", async () => {
+    vi.mocked(measurePdfTextCrop).mockResolvedValue({
+      crop: { left: 0.1, width: 0.8, top: 0.1, height: 0.75 },
+      runningHead: null,
+    });
+    await openReader();
+    const firstPage = container.querySelector<HTMLElement>(
+      '[data-page-number="1"]',
+    );
+    function pageShape() {
+      return (
+        Number.parseFloat(firstPage?.style.height ?? "0") /
+        Number.parseFloat(firstPage?.style.width ?? "1")
+      );
+    }
+    expect(pageShape()).toBeCloseTo(800 / 600);
+
+    act(() => FakeReaderResizeObserver.current?.resize(390, 700));
+
+    expect(firstPage?.style.width).toBe("382px");
+    expect(pageShape()).toBeCloseTo((800 * 0.75) / (600 * 0.8));
   });
 });

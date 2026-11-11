@@ -18,12 +18,14 @@ import {
   parsePageInput,
   stepPdfZoom,
 } from "@/components/pdfs/pdf-page-layout";
+import type { PdfPageTint } from "@/components/pdfs/use-pdf-page-tint";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
@@ -49,6 +51,10 @@ interface PdfReaderToolbarProps {
   /** False when the PDF has no text column to trim to, such as scans. */
   canTrimMargins: boolean;
   onTrimMarginsChange: (trim: boolean) => void;
+  pageTint: PdfPageTint;
+  onPageTintChange: (tint: string) => void;
+  /** Takes the bar away while the reader moves down the pages. */
+  hidden?: "phones" | "everywhere";
 }
 
 export function PdfReaderToolbar({
@@ -66,11 +72,18 @@ export function PdfReaderToolbar({
   trimMargins,
   canTrimMargins,
   onTrimMarginsChange,
+  pageTint,
+  onPageTintChange,
+  hidden,
 }: Readonly<PdfReaderToolbarProps>) {
   return (
     <fieldset
       aria-label="PDF reading controls"
-      className="order-last flex min-w-0 shrink-0 items-center justify-between gap-1 border-t border-border bg-background px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:order-first sm:flex-wrap sm:gap-2 sm:border-0 sm:p-0"
+      className={cn(
+        "order-last flex min-w-0 shrink-0 items-center justify-between gap-1 border-t border-border bg-background px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:order-first sm:flex-wrap sm:gap-2 sm:border-0 sm:p-0",
+        hidden === "phones" && "max-sm:hidden",
+        hidden === "everywhere" && "hidden",
+      )}
     >
       <div className="flex min-w-0 items-center sm:gap-1">
         <Button
@@ -152,6 +165,8 @@ export function PdfReaderToolbar({
           trimMargins={trimMargins}
           canTrimMargins={canTrimMargins}
           onTrimMarginsChange={onTrimMarginsChange}
+          pageTint={pageTint}
+          onPageTintChange={onPageTintChange}
         />
         <Button
           type="button"
@@ -185,6 +200,8 @@ type ZoomPresetMenuProps = Pick<
   | "trimMargins"
   | "canTrimMargins"
   | "onTrimMarginsChange"
+  | "pageTint"
+  | "onPageTintChange"
 >;
 
 // The pdf.js viewer's zoom presets.
@@ -195,6 +212,8 @@ function ZoomPresetMenu({
   trimMargins,
   canTrimMargins,
   onTrimMarginsChange,
+  pageTint,
+  onPageTintChange,
 }: Readonly<ZoomPresetMenuProps>) {
   return (
     <DropdownMenu>
@@ -252,6 +271,18 @@ function ZoomPresetMenu({
         >
           Trim margins
         </DropdownMenuCheckboxItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Page color</DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={pageTint}
+          onValueChange={onPageTintChange}
+        >
+          <DropdownMenuRadioItem value="original">
+            Original
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="sepia">Sepia</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

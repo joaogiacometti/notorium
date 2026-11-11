@@ -44,6 +44,9 @@ export function PdfDetail({ pdf, folderName }: Readonly<PdfDetailProps>) {
   const { isZenMode, toggleZenMode } = useZenMode();
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  // The title row leaves with the reading controls while reading down: on
+  // phones always, on wider screens only in zen mode.
+  const [chromeHidden, setChromeHidden] = useState(false);
   const fileUrl = getAttachmentReadUrl(pdf.blobPathname);
 
   return (
@@ -65,14 +68,22 @@ export function PdfDetail({ pdf, folderName }: Readonly<PdfDetailProps>) {
             : "h-[calc(100dvh-3.5rem-var(--app-mobile-header-height,0rem))] pb-0 sm:pb-4 lg:pb-6",
         )}
       >
-        <div className="flex min-w-0 shrink-0 items-start justify-between gap-2 px-4 sm:gap-4 sm:px-0">
+        <div
+          className={cn(
+            "flex min-w-0 shrink-0 items-start justify-between gap-2 px-4 sm:gap-4 sm:px-0",
+            chromeHidden && (isZenMode ? "hidden" : "max-sm:hidden"),
+          )}
+        >
           <h1 className="min-w-0 truncate text-xl leading-10 font-semibold tracking-tight sm:px-3">
             {pdf.title}
           </h1>
           <div className="flex shrink-0 gap-2">
             <ZenModeToggle
               isZenMode={isZenMode}
-              onToggle={toggleZenMode}
+              onToggle={() => {
+                setChromeHidden(false);
+                toggleZenMode();
+              }}
               className="size-10"
             />
             <PdfActionsMenu
@@ -89,6 +100,9 @@ export function PdfDetail({ pdf, folderName }: Readonly<PdfDetailProps>) {
           folderPath={folderName}
           fileUrl={fileUrl}
           initialPage={pdf.lastPage}
+          immersive={isZenMode}
+          chromeHidden={chromeHidden}
+          onChromeHiddenChange={setChromeHidden}
         />
       </AppPageContainer>
 

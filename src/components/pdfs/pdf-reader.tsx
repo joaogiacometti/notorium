@@ -2,7 +2,6 @@
 
 import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
-import type { PDFDocumentProxy } from "pdfjs-dist";
 import {
   type RefObject,
   useEffect,
@@ -11,9 +10,12 @@ import {
   useState,
 } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+import type { PageCallback } from "react-pdf/dist/shared/types.js";
 import { savePdfReadingPage } from "@/app/actions/pdfs";
+import { type OpenedPdf, openPdfAt } from "@/components/pdfs/pdf-opening";
 import {
   actualSizeRatio,
+  buildPageSlots,
   cropPageSize,
   PDF_FIT_WIDTH,
   PDF_NARROW_COLUMN_PX,
@@ -21,7 +23,7 @@ import {
   PDF_PAGE_GAP_PX,
   PDF_RENDER_WINDOW_PAGES,
   type PdfCrop,
-  type PdfPageSize,
+  type PdfRows,
   type PdfZoom,
   pageRenderPixelRatio,
   readerColumnPadding,
@@ -30,8 +32,10 @@ import {
 import { PdfReaderToolbar } from "@/components/pdfs/pdf-reader-toolbar";
 import { PdfSelectionActions } from "@/components/pdfs/pdf-selection-actions";
 import { PdfTableOfContents } from "@/components/pdfs/pdf-table-of-contents";
-import { measurePdfTextCrop } from "@/components/pdfs/pdf-text-crop";
+import { measurePdfPageRows } from "@/components/pdfs/pdf-text-crop";
 import { usePdfGestureZoom } from "@/components/pdfs/use-pdf-gesture-zoom";
+import { usePdfPageTint } from "@/components/pdfs/use-pdf-page-tint";
+import { usePdfReadingChrome } from "@/components/pdfs/use-pdf-reading-chrome";
 import { usePdfReadingProgress } from "@/components/pdfs/use-pdf-reading-progress";
 import {
   type PdfScrollLayout,
@@ -55,7 +59,7 @@ const PDF_LOAD_OPTIONS = {
   disableStream: true,
   rangeChunkSize: 512 * 1024,
 };
-const A4_POINTS: PdfPageSize = { width: 595, height: 842 };
+const NO_PAGE_ROWS: ReadonlyMap<number, PdfRows> = new Map();
 
 interface PdfReaderProps {
   pdfId: string;
@@ -63,16 +67,22 @@ interface PdfReaderProps {
   folderPath: string;
   fileUrl: string;
   initialPage: number;
+  /** Zen mode: the controls can leave on any screen, not only on phones. */
+  immersive: boolean;
+  /** Whether the reading controls are out of the way. */
+  chromeHidden: boolean;
+  onChromeHiddenChange: (hidden: boolean) => void;
 }
 
 /**
  * A continuous, vertically scrolling PDF reader that fits pages to the
  * column width by default, zooms with buttons, pinch, or Ctrl/⌘ + wheel, renders only
  * the pages near the viewport, remembers the page being read, and offers
- * the selected or visible text to the study assistant.
+ * the selected or visible text to the study assistant. On phones and in zen
+ * mode it asks its host to hide the controls while the reader moves down the pages.
  *
  * @example
- * <PdfReader pdfId={pdf.id} title={pdf.title} folderPath={folderName} fileUrl={url} initialPage={pdf.lastPage} />
+ * <PdfReader pdfId={pdf.id} title={pdf.title} folderPath={folderName} fileUrl={url} initialPage={pdf.lastPage} immersive={isZenMode} chromeHidden={hidden} onChromeHiddenChange={setHidden} />
  */
 export function PdfReader({
   pdfId,
@@ -80,6 +90,9 @@ export function PdfReader({
   folderPath,
   fileUrl,
   initialPage,
+  immersive,
+  chromeHidden,
+  onChromeHiddenChange,
 }: Readonly<PdfReaderProps>) {
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [opened, setOpened] = useState<OpenedPdf | null>(null);
@@ -127,6 +140,9 @@ export function PdfReader({
           initialPage={opened.initialPage}
           basePage={opened.basePage}
           textCrop={opened.textCrop}
+          immersive={immersive}
+          chromeHidden={chromeHidden}
+          onChromeHiddenChange={onChromeHiddenChange}
         />
       ) : (
         <PdfColumnSkeleton />
@@ -135,21 +151,14 @@ export function PdfReader({
   );
 }
 
-interface OpenedPdf {
-  pdfDocument: PDFDocumentProxy;
-  pageCount: number;
-  initialPage: number;
-  /** The opening page's size, assumed for pages that have not loaded yet. */
-  basePage: PdfPageSize;
-  /** The text column of the opening pages; null when there is nothing to trim. */
-  textCrop: PdfCrop | null;
-}
-
 interface PdfPageColumnProps extends OpenedPdf {
   navigationRef: RefObject<PdfScrollLayout | null>;
   pdfId: string;
   title: string;
   folderPath: string;
+  immersive: boolean;
+  chromeHidden: boolean;
+  onChromeHiddenChange: (hidden: boolean) => void;
 }
 
 function PdfPageColumn({
@@ -162,6 +171,9 @@ function PdfPageColumn({
   initialPage,
   basePage,
   textCrop,
+  immersive,
+  chromeHidden,
+  onChromeHiddenChange,
 }: Readonly<PdfPageColumnProps>) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -173,10 +185,16 @@ function PdfPageColumn({
   const [pageAspects, setPageAspects] = useState<ReadonlyMap<number, number>>(
     () => new Map(),
   );
+  // Rows of loaded pages whose own text reaches outside the shared crop.
+  const [pageRows, setPageRows] = useState<ReadonlyMap<number, PdfRows>>(
+    () => new Map(),
+  );
+  const [pageTint, setPageTint] = usePdfPageTint();
   const column = useElementSize(scrollRef);
   const padding = readerColumnPadding(column.width);
-  const trimmed = trimMargins ?? column.width < PDF_NARROW_COLUMN_PX;
-  const crop = (trimmed ? textCrop : null) ?? PDF_NO_CROP;
+  const narrow = column.width < PDF_NARROW_COLUMN_PX;
+  const trimmed = textCrop !== null && (trimMargins ?? narrow);
+  const crop: PdfCrop = trimmed ? textCrop.crop : PDF_NO_CROP;
   const visiblePage = cropPageSize(basePage, crop);
   // The slot shows the visible part; the page renders wider behind it.
   const pageWidth = resolvePageWidth(
@@ -186,12 +204,13 @@ function PdfPageColumn({
   );
   const renderWidth = pageWidth / crop.width;
   const zoomRatio = actualSizeRatio(pageWidth, visiblePage);
-  const pageHeights = buildPageHeights(
-    renderWidth,
-    pageCount,
-    pageAspects,
-    basePage.height / basePage.width,
-  );
+  const slots = buildPageSlots(renderWidth, pageCount, {
+    baseAspect: basePage.height / basePage.width,
+    aspects: pageAspects,
+    baseRows: crop,
+    rows: trimmed ? pageRows : NO_PAGE_ROWS,
+  });
+  const pageHeights = slots.map((slot) => slot.height);
   const layout = usePdfScrollLayout({ scrollRef, pageHeights, initialPage });
   useImperativeHandle(navigationRef, () => layout);
 
@@ -204,11 +223,38 @@ function PdfPageColumn({
     setPageAspects((current) => new Map(current).set(pageNumber, aspect));
   }
 
+  // Likewise, only a page whose text leaves the shared rows changes the layout.
+  // Measuring is an enhancement: a page that fails keeps the shared rows.
+  async function recordPageRows(pageNumber: number, page: PageCallback) {
+    if (!textCrop) return;
+    const shared = textCrop.crop;
+    const rows = await measurePdfPageRows(page, textCrop).catch(() => null);
+    if (!rows) return;
+    setPageRows((current) => {
+      const assumed = current.get(pageNumber) ?? shared;
+      return assumed.top === rows.top && assumed.height === rows.height
+        ? current
+        : new Map(current).set(pageNumber, rows);
+    });
+  }
+
+  function handlePageLoad(pageNumber: number, page: PageCallback) {
+    recordPageAspect(pageNumber, page.originalHeight / page.originalWidth);
+    void recordPageRows(pageNumber, page);
+  }
+
   usePdfGestureZoom({
     scrollRef,
     contentRef,
     zoom: zoomRatio,
     onZoomCommit: (ratio) => setZoom({ kind: "ratio", ratio }),
+  });
+  usePdfReadingChrome({
+    scrollRef,
+    // The contents tray is closed from the controls, so they stay with it.
+    enabled: (narrow || immersive) && !contentsOpen,
+    hidden: chromeHidden,
+    onHiddenChange: onChromeHiddenChange,
   });
   usePdfReadingProgress({
     pdfId,
@@ -239,9 +285,12 @@ function PdfPageColumn({
         contentsOpen={contentsOpen}
         contentsToggleRef={contentsToggleRef}
         onToggleContents={() => setContentsOpen((open) => !open)}
-        trimMargins={textCrop !== null && trimmed}
+        trimMargins={trimmed}
         canTrimMargins={textCrop !== null}
         onTrimMarginsChange={setTrimMargins}
+        pageTint={pageTint}
+        onPageTintChange={setPageTint}
+        hidden={chromeHidden ? chromeHideScope(immersive) : undefined}
       />
       <PdfSelectionActions pagesRef={contentRef} />
       <div className="flex min-h-0 flex-1 flex-col gap-2 sm:flex-row">
@@ -262,10 +311,11 @@ function PdfPageColumn({
         >
           <div
             ref={contentRef}
+            data-pdf-page-tint={pageTint}
             className="flex w-fit min-w-full origin-top flex-col items-center"
             style={{ gap: PDF_PAGE_GAP_PX, padding }}
           >
-            {pageHeights.map((height, index) => {
+            {slots.map((slot, index) => {
               const pageNumber = index + 1;
               return (
                 <PdfPageSlot
@@ -274,12 +324,14 @@ function PdfPageColumn({
                   width={pageWidth}
                   renderWidth={renderWidth}
                   cropLeft={crop.left * renderWidth}
-                  height={height}
+                  cropTop={slot.cropTop}
+                  height={slot.height}
+                  renderHeight={slot.fullHeight}
                   rendered={
                     Math.abs(pageNumber - layout.currentPage) <=
                     PDF_RENDER_WINDOW_PAGES
                   }
-                  onAspect={recordPageAspect}
+                  onLoad={handlePageLoad}
                 />
               );
             })}
@@ -290,16 +342,23 @@ function PdfPageColumn({
   );
 }
 
+function chromeHideScope(immersive: boolean) {
+  return immersive ? "everywhere" : "phones";
+}
+
 interface PdfPageSlotProps {
   pageNumber: number;
   /** The visible slot width; the page renders at `renderWidth` behind it. */
   width: number;
   renderWidth: number;
-  /** How far the page shifts left so its trimmed margin sits outside the slot. */
+  /** How far the page shifts so its trimmed margins sit outside the slot. */
   cropLeft: number;
+  cropTop: number;
+  /** The visible slot height; the page renders at `renderHeight` behind it. */
   height: number;
+  renderHeight: number;
   rendered: boolean;
-  onAspect: (pageNumber: number, aspect: number) => void;
+  onLoad: (pageNumber: number, page: PageCallback) => void;
 }
 
 // A fixed-size slot keeps the scroll height stable whether or not the page is
@@ -309,9 +368,11 @@ function PdfPageSlot({
   width,
   renderWidth,
   cropLeft,
+  cropTop,
   height,
+  renderHeight,
   rendered,
-  onAspect,
+  onLoad,
 }: Readonly<PdfPageSlotProps>) {
   const placeholder = <PdfPagePlaceholder pageNumber={pageNumber} />;
   return (
@@ -322,8 +383,12 @@ function PdfPageSlot({
     >
       {rendered ? (
         <div
-          className="h-full"
-          style={{ width: renderWidth, marginLeft: -cropLeft }}
+          style={{
+            width: renderWidth,
+            height: renderHeight,
+            marginLeft: -cropLeft,
+            marginTop: -cropTop,
+          }}
         >
           <Page
             pageNumber={pageNumber}
@@ -335,14 +400,12 @@ function PdfPageSlot({
             className="size-full"
             devicePixelRatio={pageRenderPixelRatio(
               renderWidth,
-              height,
+              renderHeight,
               window.devicePixelRatio,
             )}
             renderAnnotationLayer
             loading={placeholder}
-            onLoadSuccess={(page) =>
-              onAspect(pageNumber, page.originalHeight / page.originalWidth)
-            }
+            onLoadSuccess={(page) => onLoad(pageNumber, page)}
           />
         </div>
       ) : (
@@ -354,66 +417,13 @@ function PdfPageSlot({
 
 function PdfPagePlaceholder({ pageNumber }: Readonly<{ pageNumber: number }>) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-card text-sm text-muted-foreground tabular-nums">
+    <div
+      data-pdf-page-placeholder
+      className="absolute inset-0 flex items-center justify-center bg-card text-sm text-muted-foreground tabular-nums"
+    >
       {pageNumber}
     </div>
   );
-}
-
-function buildPageHeights(
-  pageWidth: number,
-  pageCount: number,
-  pageAspects: ReadonlyMap<number, number>,
-  baseAspect: number,
-): number[] {
-  if (pageWidth <= 0) return [];
-  return Array.from(
-    { length: pageCount },
-    (_, index) => pageWidth * (pageAspects.get(index + 1) ?? baseAspect),
-  );
-}
-
-/** Page count, clamped opening page, and the opening page's size. */
-async function openPdfAt(
-  document: PDFDocumentProxy,
-  savedPage: number,
-): Promise<OpenedPdf> {
-  const initialPage = Math.min(Math.max(1, savedPage), document.numPages);
-  return {
-    pdfDocument: document,
-    pageCount: document.numPages,
-    initialPage,
-    basePage: await readPageSize(document, initialPage),
-    textCrop: await readTextCrop(document, initialPage),
-  };
-}
-
-// Trimming is an enhancement: a page that fails to measure opens untrimmed.
-async function readTextCrop(
-  document: PDFDocumentProxy,
-  pageNumber: number,
-): Promise<PdfCrop | null> {
-  try {
-    return await measurePdfTextCrop(document, pageNumber);
-  } catch {
-    return null;
-  }
-}
-
-// Measuring a real page before the first layout keeps placeholder heights
-// right, so pages loading in later rarely resize and shift the column.
-async function readPageSize(
-  document: PDFDocumentProxy,
-  pageNumber: number,
-): Promise<PdfPageSize> {
-  try {
-    const viewport = (await document.getPage(pageNumber)).getViewport({
-      scale: 1,
-    });
-    return { width: viewport.width, height: viewport.height };
-  } catch {
-    return A4_POINTS;
-  }
 }
 
 function useElementSize(ref: RefObject<HTMLElement | null>): {

@@ -96,17 +96,63 @@ export interface PdfPageSize {
   height: number;
 }
 
-/** A horizontal crop of every page, as fractions of the page width. */
+/** The part of a page left visible, as fractions of its width and height. */
 export interface PdfCrop {
   left: number;
   width: number;
+  top: number;
+  height: number;
 }
 
-export const PDF_NO_CROP: PdfCrop = { left: 0, width: 1 };
+/** The vertical part of a crop, which can differ from page to page. */
+export type PdfRows = Pick<PdfCrop, "top" | "height">;
+
+export const PDF_NO_CROP: PdfCrop = { left: 0, width: 1, top: 0, height: 1 };
 
 /** The page size left visible by a crop, so zoom math sizes the visible part. */
 export function cropPageSize(page: PdfPageSize, crop: PdfCrop): PdfPageSize {
-  return { width: page.width * crop.width, height: page.height };
+  return {
+    width: page.width * crop.width,
+    height: page.height * crop.height,
+  };
+}
+
+export interface PdfPageSlotLayout {
+  /** The visible slot height. */
+  height: number;
+  /** The whole page's height at the rendered width. */
+  fullHeight: number;
+  /** How far the page shifts up so its trimmed top sits outside the slot. */
+  cropTop: number;
+}
+
+/**
+ * Every page's slot at a rendered width. Pages that have not loaded assume
+ * the base aspect, and pages without their own rows use the shared ones.
+ *
+ * @example buildPageSlots(800, 2, { baseAspect: 1.5, aspects: new Map(), baseRows: PDF_NO_CROP, rows: new Map() });
+ */
+export function buildPageSlots(
+  renderWidth: number,
+  pageCount: number,
+  pages: {
+    baseAspect: number;
+    aspects: ReadonlyMap<number, number>;
+    baseRows: PdfRows;
+    rows: ReadonlyMap<number, PdfRows>;
+  },
+): PdfPageSlotLayout[] {
+  if (renderWidth <= 0) return [];
+  return Array.from({ length: pageCount }, (_, index) => {
+    const fullHeight =
+      renderWidth * (pages.aspects.get(index + 1) ?? pages.baseAspect);
+    const rows = pages.rows.get(index + 1) ?? pages.baseRows;
+    return {
+      height: fullHeight * rows.height,
+      fullHeight,
+      cropTop: fullHeight * rows.top,
+    };
+  });
 }
 
 /** Space around the pages: phones keep less so the page gets the width. */

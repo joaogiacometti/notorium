@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   actualSizeRatio,
+  buildPageSlots,
   buildPageTops,
   clampPdfZoom,
   cropPageSize,
@@ -153,21 +154,47 @@ describe("pageRenderPixelRatio", () => {
 });
 
 describe("cropPageSize", () => {
-  it("keeps the cropped width and the full height", () => {
-    expect(
-      cropPageSize({ width: 600, height: 800 }, { left: 0.1, width: 0.75 }),
-    ).toEqual({ width: 450, height: 800 });
+  const crop = { left: 0.1, width: 0.75, top: 0.1, height: 0.5 };
+
+  it("keeps the cropped width and height", () => {
+    expect(cropPageSize({ width: 600, height: 800 }, crop)).toEqual({
+      width: 450,
+      height: 400,
+    });
   });
 
   it("sizes a page width fit by its visible part", () => {
     const frame = { columnWidth: 400, columnHeight: 700, padding: 4 };
-    const visible = cropPageSize(
-      { width: 600, height: 800 },
-      { left: 0.1, width: 0.75 },
-    );
+    const visible = cropPageSize({ width: 600, height: 800 }, crop);
     expect(
       resolvePageWidth({ kind: "fit", mode: "width" }, frame, visible),
     ).toBe(392);
+  });
+});
+
+describe("buildPageSlots", () => {
+  it("sizes each slot by its page's shape and rows", () => {
+    const slots = buildPageSlots(1000, 3, {
+      baseAspect: 1.5,
+      aspects: new Map([[2, 1]]),
+      baseRows: { top: 0.1, height: 0.8 },
+      rows: new Map([[3, { top: 0, height: 1 }]]),
+    });
+    expect(slots).toEqual([
+      { height: 1200, fullHeight: 1500, cropTop: 150 },
+      { height: 800, fullHeight: 1000, cropTop: 100 },
+      { height: 1500, fullHeight: 1500, cropTop: 0 },
+    ]);
+  });
+
+  it("has no slots before the column is measured", () => {
+    const pages = {
+      baseAspect: 1.5,
+      aspects: new Map(),
+      baseRows: { top: 0, height: 1 },
+      rows: new Map(),
+    };
+    expect(buildPageSlots(0, 3, pages)).toEqual([]);
   });
 });
 

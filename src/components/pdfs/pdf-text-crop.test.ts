@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  measurePageText,
   measurePdfTextCrop,
-  measureTextColumn,
+  type PageText,
   type PdfCropSource,
-  resolvePdfCrop,
+  resolvePageRows,
+  resolvePdfTextCrop,
 } from "@/components/pdfs/pdf-text-crop";
 
 // pdf.js's scale-1 viewport for an unrotated US Letter page: it flips y only.
@@ -38,54 +40,152 @@ class FakePdfCropDocument implements PdfCropSource {
   }
 }
 
-describe("measureTextColumn", () => {
-  it("spans the text and skips page numbers, blanks, and marked content", () => {
+const LINE_PITCH = 14;
+
+function textLine(baseline: number, fontHeight = 10, left = 90, right = 522) {
+  return { left, right, top: baseline - fontHeight, baseline, fontHeight };
+}
+
+/** A Letter page of body lines between two baselines, under optional lines. */
+function bodyPage(
+  from = 100,
+  to = 688,
+  above: ReturnType<typeof textLine>[] = [],
+): PageText {
+  const lines = [...above];
+  for (let baseline = from; baseline <= to; baseline += LINE_PITCH) {
+    lines.push(textLine(baseline));
+  }
+  return { width: 612, height: 792, lines };
+}
+
+const BLANK_PAGE: PageText = { width: 612, height: 792, lines: [] };
+const ROWS_PADDING = 792 * 0.015;
+
+describe("measurePageText", () => {
+  it("groups text into lines and skips page numbers, blanks, and marked content", () => {
     const items = [
       textItem("Body", 90, 400),
-      textItem("Line", 110, 420),
+      textItem("text", 500, 30),
+      { str: "Next line", width: 420, transform: [10, 0, 0, 10, 110, 686] },
       textItem("17", 560, 10),
       textItem("  ", 10, 5),
       { type: "beginMarkedContent" },
     ];
-    expect(measureTextColumn(items, LETTER_VIEWPORT)).toEqual({
-      left: 90,
-      right: 530,
-    });
+    expect(measurePageText(items, LETTER_VIEWPORT).lines).toEqual([
+      { left: 90, right: 530, top: 82, baseline: 92, fontHeight: 10 },
+      { left: 110, right: 530, top: 96, baseline: 106, fontHeight: 10 },
+    ]);
+  });
+
+  it("keeps a raised mark on the line it belongs to", () => {
+    const items = [
+      textItem("Body", 90, 400),
+      { str: "a", width: 4, transform: [6, 0, 0, 6, 490, 704] },
+    ];
+    expect(measurePageText(items, LETTER_VIEWPORT).lines).toHaveLength(1);
   });
 
   it("applies the viewport offset", () => {
     const shifted = { ...LETTER_VIEWPORT, transform: [1, 0, 0, -1, -20, 792] };
-    expect(measureTextColumn([textItem("Body", 90, 400)], shifted)).toEqual({
-      left: 70,
-      right: 470,
-    });
+    const [line] = measurePageText([textItem("Body", 90, 400)], shifted).lines;
+    expect(line).toMatchObject({ left: 70, right: 470 });
   });
 
-  it("returns null for a page without text", () => {
-    expect(measureTextColumn([], LETTER_VIEWPORT)).toBeNull();
+  it("has no lines for a page without text", () => {
+    expect(measurePageText([], LETTER_VIEWPORT).lines).toEqual([]);
   });
 });
 
-describe("resolvePdfCrop", () => {
+describe("resolvePdfTextCrop", () => {
   it("unions pages and pads the text column", () => {
-    const crop = resolvePdfCrop(
-      [
-        { left: 108, right: 504 },
-        { left: 90, right: 486 },
-      ],
-      612,
-    );
+    const crop = resolvePdfTextCrop([
+      { ...BLANK_PAGE, lines: [textLine(92, 10, 108, 504)] },
+      { ...BLANK_PAGE, lines: [textLine(92, 10, 90, 486)] },
+    ])?.crop;
     expect(crop?.left).toBeCloseTo((90 - 18.36) / 612);
     expect(crop?.width).toBeCloseTo((504 - 90 + 36.72) / 612);
   });
 
   it("skips crops that gain little or keep too little", () => {
-    expect(resolvePdfCrop([{ left: 10, right: 600 }], 612)).toBeNull();
-    expect(resolvePdfCrop([{ left: 250, right: 400 }], 612)).toBeNull();
+    expect(
+      resolvePdfTextCrop([
+        { ...BLANK_PAGE, lines: [textLine(92, 10, 10, 600)] },
+      ]),
+    ).toBeNull();
+    expect(
+      resolvePdfTextCrop([
+        { ...BLANK_PAGE, lines: [textLine(92, 10, 250, 400)] },
+      ]),
+    ).toBeNull();
   });
 
   it("returns null without measured text", () => {
-    expect(resolvePdfCrop([null, null], 612)).toBeNull();
+    expect(resolvePdfTextCrop([BLANK_PAGE, BLANK_PAGE])).toBeNull();
+  });
+
+  it("trims the margins above and below the tallest text block", () => {
+    const crop = resolvePdfTextCrop([bodyPage(100, 400), bodyPage()])?.crop;
+    expect(crop?.top).toBeCloseTo((90 - ROWS_PADDING) / 792);
+    expect((crop?.top ?? 0) + (crop?.height ?? 0)).toBeCloseTo(
+      (688 + ROWS_PADDING) / 792,
+    );
+  });
+
+  it("trims a running head that repeats across pages", () => {
+    const textCrop = resolvePdfTextCrop([
+      bodyPage(100, 688, [textLine(50, 9, 90, 300)]),
+      bodyPage(100, 688, [textLine(50, 9, 300, 522)]),
+    ]);
+    expect(textCrop?.runningHead).toBe(50);
+    expect(textCrop?.crop.top).toBeCloseTo((90 - ROWS_PADDING) / 792);
+  });
+
+  it("keeps a line that opens only one page", () => {
+    const textCrop = resolvePdfTextCrop([
+      bodyPage(100, 688, [textLine(50)]),
+      bodyPage(),
+    ]);
+    expect(textCrop?.runningHead).toBeNull();
+    expect(textCrop?.crop.top).toBeCloseTo((40 - ROWS_PADDING) / 792);
+  });
+
+  it("keeps repeated titles set larger than the body, as on slides", () => {
+    const title = textLine(60, 24);
+    const textCrop = resolvePdfTextCrop([
+      bodyPage(110, 684, [title]),
+      bodyPage(110, 684, [title]),
+    ]);
+    expect(textCrop?.runningHead).toBeNull();
+    expect(textCrop?.crop.top).toBeCloseTo((36 - ROWS_PADDING) / 792);
+  });
+});
+
+describe("resolvePageRows", () => {
+  const runningHead = textLine(50, 9);
+  const textCrop = resolvePdfTextCrop([
+    bodyPage(100, 604, [runningHead]),
+    bodyPage(100, 604, [runningHead]),
+  ]);
+  if (!textCrop) throw new Error("Expected a text crop");
+  const shared = { top: textCrop.crop.top, height: textCrop.crop.height };
+
+  it("uses the shared rows for a page inside them", () => {
+    const rows = resolvePageRows(textCrop, bodyPage(100, 300, [runningHead]));
+    expect(rows).toEqual(shared);
+  });
+
+  it("widens the rows to text the shared crop would cut", () => {
+    const rows = resolvePageRows(textCrop, bodyPage(70, 714));
+    expect(rows.top).toBeCloseTo((60 - ROWS_PADDING) / 792);
+    expect(rows.top + rows.height).toBeCloseTo((714 + ROWS_PADDING) / 792);
+  });
+
+  it("shows the whole height of a page without text", () => {
+    expect(resolvePageRows(textCrop, BLANK_PAGE)).toMatchObject({
+      top: 0,
+      height: 1,
+    });
   });
 });
 
@@ -96,14 +196,14 @@ describe("measurePdfTextCrop", () => {
       2: [140, 400],
       3: null,
     });
-    const crop = await measurePdfTextCrop(pdf, 1);
+    const crop = (await measurePdfTextCrop(pdf, 1))?.crop;
     expect(crop?.left).toBeCloseTo((72 - 18.36) / 612);
     expect(crop?.width).toBeCloseTo((540 - 72 + 36.72) / 612);
   });
 
   it("uses the previous page when opening on the last one", async () => {
     const pdf = new FakePdfCropDocument({ 1: [140, 400], 2: [72, 400] });
-    const crop = await measurePdfTextCrop(pdf, 2);
+    const crop = (await measurePdfTextCrop(pdf, 2))?.crop;
     expect(crop?.width).toBeCloseTo((540 - 72 + 36.72) / 612);
   });
 
@@ -115,7 +215,7 @@ describe("measurePdfTextCrop", () => {
       4: [72, 468],
       5: [72, 468],
     });
-    const crop = await measurePdfTextCrop(pdf, 1);
+    const crop = (await measurePdfTextCrop(pdf, 1))?.crop;
     expect(crop?.width).toBeCloseTo((540 - 72 + 36.72) / 612);
   });
 
