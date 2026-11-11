@@ -5,6 +5,10 @@ specification. Components own their exact markup and defaults;
 [theme tokens](./src/app/globals.css) own color, radius, shadow, and layer values.
 Update this file when a shared convention changes, not whenever a control changes.
 
+The test for a line: would the next UI change on a different surface go wrong
+without it? What one surface does (its gestures, menu contents, option names)
+belongs to its component and tests, even under a feature heading below.
+
 ## Primitives first
 
 Reuse existing components rather than rebuilding their appearance or behavior.
@@ -113,12 +117,11 @@ this table, and the layer test together.
 ## Reading and editing
 
 - **PDFs:** on phones, use the full workspace width and one bottom reading bar
-  that reserves the safe area without covering content. Account for breadcrumb
-  and mobile-header height so only the reading region scrolls. Keep page navigation
-  visible with `size-10` targets; contents use a separate tray capped at half the
-  reading region. At `sm` and above, use the top toolbar and left contents sidebar.
-  Selected text gets one floating bar: Explain answers in place, Ask moves to the
-  assistant. The assistant's context line names the selection and can clear it.
+  that reserves the safe area; only the reading region scrolls. The title row
+  and reading bar hide together while reading down and return on a drag up or
+  a tap; zen mode does the same at any width. At `sm` and above, use the top
+  toolbar and left contents sidebar. Page color recolors the paper only,
+  independent of the app theme. Selected text gets one floating bar.
 - **Flashcards:** reuse `FlashcardCardEditor` everywhere. One toolbar follows the
   focused face; Front and muted Back form one panel matching the review card.
   Faces grow with content, never scroll independently, and only empty create
@@ -138,8 +141,8 @@ Dialogs and review sessions host the same assistant inside their own focus/scrol
 boundary. Nested hosts restore the previous host on close. Do not expose chat by
 raising its layer. The slash-command menu stays in flow above the composer field,
 using the shared Command primitives; keyboard focus stays in the textarea.
-`/new` and `/bypass` run from the menu. While learning support is off, an indicator
-separate from the material-context label says so and offers to turn it back on.
+While learning support is off, an indicator separate from the material-context
+label says so and offers to turn it back on.
 
 Proposals are reviewed where they change content, not in another overlay:
 

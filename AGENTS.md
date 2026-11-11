@@ -28,6 +28,8 @@ For isolated E2E services and migrations, follow [Development](docs/setup/develo
 - Document only what outlasts individual features: core concepts, setup, boundaries,
   and cross-feature decisions. Sub-features and fixes don't belong in docs; tests,
   schemas, constants, and production prompts own that detail.
+- A feature change edits a doc only when it changes a rule other features must
+  follow. Describing what the feature does is not a reason, in DESIGN.md included.
 - When a change removes or replaces one of those (say, folders or how they work),
   update its owning doc in the same change and delete what is no longer true.
 
