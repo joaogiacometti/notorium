@@ -548,15 +548,16 @@ describe("PDF reader links", () => {
     await openReader();
     const pages = readerScroller().firstElementChild;
     expect(pages?.getAttribute("data-pdf-page-tint")).toBe("original");
-    const trigger = container.querySelector('[aria-label="Zoom presets"]');
-    await act(async () => {
-      trigger?.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
-      );
-    });
+    act(() =>
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="View settings"]')
+        ?.click(),
+    );
     const dark = Array.from(
-      document.querySelectorAll<HTMLElement>('[role="menuitemradio"]'),
-    ).find((item) => item.textContent?.trim() === "Dark");
+      document.querySelectorAll<HTMLElement>(
+        '[data-slot="popover-content"] button',
+      ),
+    ).find((item) => item.textContent?.endsWith("Dark"));
     act(() => dark?.click());
     expect(pages?.getAttribute("data-pdf-page-tint")).toBe("dark");
 

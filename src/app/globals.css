@@ -543,7 +543,8 @@
    Sepia multiplies the page onto tinted paper, which leaves figures natural;
    dark inverts lightness and turns the hue back so colors stay recognizable,
    including the white react-pdf paints behind a page that is still drawing. */
-[data-pdf-page-tint="sepia"] [data-page-number] {
+[data-pdf-page-tint="sepia"] [data-page-number],
+[data-pdf-paper-swatch="sepia"] {
   background-color: oklch(0.94 0.035 85);
 }
 
@@ -551,12 +552,26 @@
   mix-blend-mode: multiply;
 }
 
-[data-pdf-page-tint="dark"] [data-page-number] {
+[data-pdf-page-tint="dark"] [data-page-number],
+[data-pdf-paper-swatch="dark"] {
   background-color: oklch(0.21 0 0);
 }
 
 [data-pdf-page-tint="dark"] .react-pdf__Page {
   filter: invert(0.9) hue-rotate(180deg);
+}
+
+/* The view settings swatches preview the same papers with sample text. */
+[data-pdf-paper-swatch="original"] {
+  background-color: oklch(1 0 0);
+}
+
+[data-pdf-paper-swatch] {
+  color: oklch(0.21 0 0);
+}
+
+[data-pdf-paper-swatch="dark"] {
+  color: oklch(0.9 0 0);
 }
 
 [data-pdf-page-tint="sepia"] [data-pdf-page-placeholder],

@@ -11,6 +11,7 @@ describe("PDF reading controls", () => {
   const onGoBack = vi.fn();
   const onPageJump = vi.fn();
   const onPageTintChange = vi.fn();
+  const onTrimMarginsChange = vi.fn();
 
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -42,7 +43,7 @@ describe("PDF reading controls", () => {
           onToggleContents={vi.fn()}
           trimMargins
           canTrimMargins
-          onTrimMarginsChange={vi.fn()}
+          onTrimMarginsChange={onTrimMarginsChange}
           pageTint="original"
           onPageTintChange={onPageTintChange}
         />,
@@ -50,9 +51,9 @@ describe("PDF reading controls", () => {
     );
   }
 
-  async function openReadingMenu() {
+  async function openMenu(label: string) {
     const trigger = container.querySelector<HTMLButtonElement>(
-      '[aria-label="Zoom presets"]',
+      `[aria-label="${label}"]`,
     );
     await act(async () => {
       trigger?.dispatchEvent(
@@ -61,38 +62,79 @@ describe("PDF reading controls", () => {
     });
   }
 
-  function menuItem(label: string): HTMLElement {
-    const item = Array.from(
-      document.querySelectorAll<HTMLElement>('[role="menuitem"]'),
-    ).find((candidate) => candidate.textContent?.trim() === label);
-    if (!item) throw new Error(`Expected menu item with label "${label}"`);
-    return item;
+  function viewSettings(): HTMLElement | null {
+    return document.querySelector<HTMLElement>('[data-slot="popover-content"]');
+  }
+
+  function openViewSettings() {
+    act(() =>
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="View settings"]')
+        ?.click(),
+    );
+  }
+
+  // The name a screen reader announces: decorative samples are left out.
+  function accessibleName(element: HTMLElement): string {
+    const label = element.getAttribute("aria-label");
+    if (label) return label;
+    const copy = element.cloneNode(true) as HTMLElement;
+    for (const hidden of copy.querySelectorAll("[aria-hidden]")) {
+      hidden.remove();
+    }
+    return copy.textContent?.trim() ?? "";
+  }
+
+  function settingsButton(label: string): HTMLButtonElement {
+    const button = Array.from(
+      viewSettings()?.querySelectorAll<HTMLButtonElement>("button") ?? [],
+    ).find((candidate) => accessibleName(candidate) === label);
+    if (!button) throw new Error(`Expected view setting "${label}"`);
+    return button;
   }
 
   it.each([
     ["Zoom in", 1.25],
     ["Zoom out", 0.75],
-  ] as const)(
-    "offers %s from the compact reading menu",
-    async (label, ratio) => {
-      renderToolbar();
-      await openReadingMenu();
-      act(() => menuItem(label).click());
-      expect(onZoomChange).toHaveBeenCalledWith({ kind: "ratio", ratio });
-    },
-  );
-
-  it("offers page colors from the reading menu", async () => {
+  ] as const)("offers %s from the compact view settings", (label, ratio) => {
     renderToolbar();
-    await openReadingMenu();
-    const sepia = Array.from(
-      document.querySelectorAll<HTMLElement>('[role="menuitemradio"]'),
-    ).find((item) => item.textContent?.trim() === "Sepia");
-    act(() => sepia?.click());
-    expect(onPageTintChange).toHaveBeenCalledWith("sepia");
+    openViewSettings();
+    act(() => settingsButton(label).click());
+    expect(onZoomChange).toHaveBeenCalledWith({ kind: "ratio", ratio });
   });
 
-  it("keeps return navigation in the toolbar, not the zoom menu", async () => {
+  it("offers page colors from view settings and stays open to compare them", () => {
+    renderToolbar();
+    openViewSettings();
+    act(() => settingsButton("Sepia").click());
+    expect(onPageTintChange).toHaveBeenCalledWith("sepia");
+    expect(settingsButton("Original").getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    act(() => settingsButton("Dark").click());
+    expect(onPageTintChange).toHaveBeenLastCalledWith("dark");
+  });
+
+  it("switches margin trimming from view settings", () => {
+    renderToolbar();
+    openViewSettings();
+    act(() =>
+      viewSettings()?.querySelector<HTMLElement>('[role="switch"]')?.click(),
+    );
+    expect(onTrimMarginsChange).toHaveBeenCalledWith(false);
+  });
+
+  it("keeps the zoom menu to zoom presets", async () => {
+    renderToolbar();
+    await openMenu("Zoom presets");
+    expect(
+      Array.from(
+        document.querySelectorAll<HTMLElement>('[role^="menuitem"]'),
+      ).map((item) => item.textContent?.trim()),
+    ).toEqual(["Page fit", "Page width", "Actual size"]);
+  });
+
+  it("keeps return navigation in the toolbar", () => {
     renderToolbar();
     const back = container.querySelector<HTMLButtonElement>(
       '[aria-label="Back to previous location"]',
@@ -100,21 +142,15 @@ describe("PDF reading controls", () => {
     expect(back?.disabled).toBe(false);
     act(() => back?.click());
     expect(onGoBack).toHaveBeenCalledOnce();
-    await openReadingMenu();
-    expect(
-      Array.from(document.querySelectorAll('[role="menuitem"]')).some((item) =>
-        item.textContent?.includes("Back to previous location"),
-      ),
-    ).toBe(false);
   });
 
   it.each([
     [0.25, "Zoom out"],
     [4, "Zoom in"],
-  ] as const)("disables zoom beyond the %s limit", async (ratio, label) => {
+  ] as const)("disables zoom beyond the %s limit", (ratio, label) => {
     renderToolbar(ratio, false);
-    await openReadingMenu();
-    expect(menuItem(label).getAttribute("aria-disabled")).toBe("true");
+    openViewSettings();
+    expect(settingsButton(label).disabled).toBe(true);
   });
 
   it("keeps previous and next page navigation available", () => {

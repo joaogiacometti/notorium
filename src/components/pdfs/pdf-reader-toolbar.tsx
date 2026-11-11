@@ -10,25 +10,25 @@ import {
 } from "lucide-react";
 import { type FormEvent, type RefObject, useState } from "react";
 import {
-  PDF_FIT_PAGE,
-  PDF_FIT_WIDTH,
   PDF_ZOOM_MAX,
   PDF_ZOOM_MIN,
   type PdfZoom,
   parsePageInput,
   stepPdfZoom,
 } from "@/components/pdfs/pdf-page-layout";
+import {
+  activePdfZoomPreset,
+  formatPdfZoom,
+  PDF_ZOOM_PRESETS,
+  PdfViewSettings,
+} from "@/components/pdfs/pdf-view-settings";
 import type { PdfPageTint } from "@/components/pdfs/use-pdf-page-tint";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -162,11 +162,6 @@ export function PdfReaderToolbar({
           zoom={zoom}
           zoomRatio={zoomRatio}
           onZoomChange={onZoomChange}
-          trimMargins={trimMargins}
-          canTrimMargins={canTrimMargins}
-          onTrimMarginsChange={onTrimMarginsChange}
-          pageTint={pageTint}
-          onPageTintChange={onPageTintChange}
         />
         <Button
           type="button"
@@ -181,39 +176,32 @@ export function PdfReaderToolbar({
         >
           <Plus className="size-4" />
         </Button>
+        <PdfViewSettings
+          zoom={zoom}
+          zoomRatio={zoomRatio}
+          onZoomChange={onZoomChange}
+          trimMargins={trimMargins}
+          canTrimMargins={canTrimMargins}
+          onTrimMarginsChange={onTrimMarginsChange}
+          pageTint={pageTint}
+          onPageTintChange={onPageTintChange}
+        />
       </div>
     </fieldset>
   );
 }
 
-const ZOOM_PRESETS: Record<string, PdfZoom> = {
-  page: PDF_FIT_PAGE,
-  width: PDF_FIT_WIDTH,
-  actual: { kind: "ratio", ratio: 1 },
-};
-
 type ZoomPresetMenuProps = Pick<
   PdfReaderToolbarProps,
-  | "zoom"
-  | "zoomRatio"
-  | "onZoomChange"
-  | "trimMargins"
-  | "canTrimMargins"
-  | "onTrimMarginsChange"
-  | "pageTint"
-  | "onPageTintChange"
+  "zoom" | "zoomRatio" | "onZoomChange"
 >;
 
-// The pdf.js viewer's zoom presets.
+// The pdf.js viewer's zoom presets. Wide layouts only: the phone reading bar
+// has no room for the percentage, so its zoom controls sit in view settings.
 function ZoomPresetMenu({
   zoom,
   zoomRatio,
   onZoomChange,
-  trimMargins,
-  canTrimMargins,
-  onTrimMarginsChange,
-  pageTint,
-  onPageTintChange,
 }: Readonly<ZoomPresetMenuProps>) {
   return (
     <DropdownMenu>
@@ -222,75 +210,29 @@ function ZoomPresetMenu({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-10 min-w-12 px-1 tabular-nums sm:h-8 sm:min-w-16 sm:px-3"
+          className="hidden h-8 min-w-16 tabular-nums sm:inline-flex"
           aria-label="Zoom presets"
         >
-          {Math.round(zoomRatio * 100)}%
+          {formatPdfZoom(zoomRatio)}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <div className="sm:hidden">
-          <DropdownMenuItem
-            disabled={zoomRatio <= PDF_ZOOM_MIN}
-            onSelect={() =>
-              onZoomChange({ kind: "ratio", ratio: stepPdfZoom(zoomRatio, -1) })
-            }
-          >
-            <Minus /> Zoom out
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={zoomRatio >= PDF_ZOOM_MAX}
-            onSelect={() =>
-              onZoomChange({ kind: "ratio", ratio: stepPdfZoom(zoomRatio, 1) })
-            }
-          >
-            <Plus /> Zoom in
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-        </div>
         <DropdownMenuRadioGroup
-          value={activeZoomPreset(zoom)}
+          value={activePdfZoomPreset(zoom)}
           onValueChange={(value) => {
-            const preset = ZOOM_PRESETS[value];
-            if (preset) onZoomChange(preset);
+            const preset = PDF_ZOOM_PRESETS.find(({ id }) => id === value);
+            if (preset) onZoomChange(preset.zoom);
           }}
         >
-          <DropdownMenuRadioItem value="page">Page fit</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="width">
-            Page width
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="actual">
-            Actual size
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuCheckboxItem
-          checked={trimMargins}
-          disabled={!canTrimMargins}
-          onCheckedChange={onTrimMarginsChange}
-        >
-          Trim margins
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel>Page color</DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={pageTint}
-          onValueChange={onPageTintChange}
-        >
-          <DropdownMenuRadioItem value="original">
-            Original
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="sepia">Sepia</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
+          {PDF_ZOOM_PRESETS.map((preset) => (
+            <DropdownMenuRadioItem key={preset.id} value={preset.id}>
+              {preset.label}
+            </DropdownMenuRadioItem>
+          ))}
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
-
-function activeZoomPreset(zoom: PdfZoom): string {
-  if (zoom.kind === "fit") return zoom.mode;
-  return zoom.ratio === 1 ? "actual" : "";
 }
 
 interface PageJumpFieldProps {
