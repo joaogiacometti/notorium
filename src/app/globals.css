@@ -538,6 +538,16 @@
   );
 }
 
+/* react-pdf wraps the reader's loading skeleton in its own block element;
+   it must fill the reader column like the loaded pages do, or the page
+   skeleton collapses and only the toolbar bar shows. */
+.react-pdf__message--loading {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
+  min-height: 0;
+}
+
 /* Paper colors for PDF pages (use-pdf-page-tint.ts). They recolor the
    document, not the app, so they are fixed values rather than theme tokens.
    Sepia multiplies the page onto tinted paper, which leaves figures natural;
