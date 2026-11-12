@@ -515,6 +515,23 @@ describe("PDF reader links", () => {
     expect(onChromeHiddenChange).toHaveBeenLastCalledWith(false);
   });
 
+  it("leaves the controls alone when a tap on the page closes an open panel", async () => {
+    await openReader();
+    act(() => FakeReaderResizeObserver.current?.resize(390, 700));
+    await act(async () => clickReaderButton("View settings"));
+    expect(document.querySelector('[data-slot="popover-content"]')).not.toBe(
+      null,
+    );
+    const scroller = readerScroller();
+
+    act(() => {
+      scroller.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+      scroller.click();
+    });
+
+    expect(onChromeHiddenChange).not.toHaveBeenCalled();
+  });
+
   it("keeps the controls for page jumps, links, wide columns, and the contents tray", async () => {
     await openReader();
     dragPages(400, 300);

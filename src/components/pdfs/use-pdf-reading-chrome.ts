@@ -9,6 +9,8 @@ const DRAG_THRESHOLD_PX = 16;
 // stray one-pixel deltas in either direction, which must not flip the controls.
 const WHEEL_PAUSE_MS = 200;
 const WHEEL_LINE_PX = 16;
+// Open menus and panels render inside this wrapper.
+const OPEN_OVERLAY_SELECTOR = "[data-radix-popper-content-wrapper]";
 
 interface PdfReadingChromeInput {
   scrollRef: RefObject<HTMLElement | null>;
@@ -34,6 +36,7 @@ export function usePdfReadingChrome({
   onHiddenChange,
 }: PdfReadingChromeInput): void {
   const dragStartRef = useRef<number | null>(null);
+  const tapClosesOverlayRef = useRef(false);
   const topBeforeChangeRef = useRef<number | null>(null);
 
   // Controls above the pages change where the scroller starts. Scrolling by
@@ -55,6 +58,14 @@ export function usePdfReadingChrome({
       if (!scroller || next === hidden) return;
       topBeforeChangeRef.current = scroller.getBoundingClientRect().top;
       onHiddenChange(next);
+    }
+
+    // A tap that closes a menu or panel does only that. Toggling the controls
+    // too would hide the panel's anchor before the panel saw the tap, leaving
+    // it open off screen until the controls came back.
+    function handlePointerDown() {
+      tapClosesOverlayRef.current =
+        document.querySelector(OPEN_OVERLAY_SELECTOR) !== null;
     }
 
     function handleTouchStart(event: TouchEvent) {
@@ -95,6 +106,10 @@ export function usePdfReadingChrome({
     // A mouse click places a caret or starts a selection; only a tap toggles.
     function handleClick(event: MouseEvent) {
       if ("pointerType" in event && event.pointerType === "mouse") return;
+      if (tapClosesOverlayRef.current) {
+        tapClosesOverlayRef.current = false;
+        return;
+      }
       const onControl =
         event.target instanceof Element &&
         event.target.closest("a, button, input");
@@ -102,6 +117,9 @@ export function usePdfReadingChrome({
       if (!onControl && !selecting) change(!hidden);
     }
 
+    scroller.addEventListener("pointerdown", handlePointerDown, {
+      capture: true,
+    });
     scroller.addEventListener("touchstart", handleTouchStart, {
       passive: true,
     });
@@ -109,6 +127,9 @@ export function usePdfReadingChrome({
     scroller.addEventListener("wheel", handleWheel, { passive: true });
     scroller.addEventListener("click", handleClick);
     return () => {
+      scroller.removeEventListener("pointerdown", handlePointerDown, {
+        capture: true,
+      });
       scroller.removeEventListener("touchstart", handleTouchStart);
       scroller.removeEventListener("touchmove", handleTouchMove);
       scroller.removeEventListener("wheel", handleWheel);
