@@ -205,7 +205,12 @@ function PdfPageColumn({
     visiblePage,
   );
   const renderWidth = pageWidth / crop.width;
-  const zoomRatio = actualSizeRatio(pageWidth, visiblePage);
+  // A chosen ratio is exact; the floored pixel width can read just below it,
+  // which would make zoom in step back to the same 25% value.
+  const zoomRatio =
+    zoom.kind === "ratio"
+      ? zoom.ratio
+      : actualSizeRatio(pageWidth, visiblePage);
   const slots = buildPageSlots(renderWidth, pageCount, {
     baseAspect: basePage.height / basePage.width,
     aspects: pageAspects,

@@ -1,6 +1,6 @@
 "use client";
 
-import { type RefObject, useEffect } from "react";
+import { type RefObject, useEffect, useEffectEvent } from "react";
 import { clampPdfZoom } from "@/components/pdfs/pdf-page-layout";
 
 const WHEEL_COMMIT_DELAY_MS = 180;
@@ -51,6 +51,16 @@ export function usePdfGestureZoom({
   zoom,
   onZoomCommit,
 }: PdfGestureZoomInput): void {
+  // Read at the moment they are needed, so a render during a gesture never
+  // re-attaches the listeners and drops the gesture's preview state.
+  const scaleFor = useEffectEvent(
+    (previewScale: number) => clampPdfZoom(zoom * previewScale) / zoom,
+  );
+  const commitZoom = useEffectEvent(
+    (previewScale: number, focus: PdfZoomFocus) =>
+      onZoomCommit(clampPdfZoom(zoom * previewScale), focus),
+  );
+
   useEffect(() => {
     const scroller = scrollRef.current;
     const content = contentRef.current;
@@ -73,7 +83,7 @@ export function usePdfGestureZoom({
     }
 
     function preview(scale: number) {
-      previewScale = clampPdfZoom(zoom * scale) / zoom;
+      previewScale = scaleFor(scale);
       if (content) content.style.transform = `scale(${previewScale})`;
     }
 
@@ -83,7 +93,7 @@ export function usePdfGestureZoom({
         content.style.transformOrigin = "";
       }
       if (previewScale !== 1 && focus) {
-        onZoomCommit(clampPdfZoom(zoom * previewScale), focus);
+        commitZoom(previewScale, focus);
       }
       previewScale = 1;
       focus = null;
@@ -126,11 +136,13 @@ export function usePdfGestureZoom({
     scroller.addEventListener("touchcancel", handleTouchEnd);
     return () => {
       window.clearTimeout(wheelTimer);
+      content.style.transform = "";
+      content.style.transformOrigin = "";
       scroller.removeEventListener("wheel", handleWheel);
       scroller.removeEventListener("touchstart", handleTouchStart);
       scroller.removeEventListener("touchmove", handleTouchMove);
       scroller.removeEventListener("touchend", handleTouchEnd);
       scroller.removeEventListener("touchcancel", handleTouchEnd);
     };
-  }, [scrollRef, contentRef, zoom, onZoomCommit]);
+  }, [scrollRef, contentRef]);
 }

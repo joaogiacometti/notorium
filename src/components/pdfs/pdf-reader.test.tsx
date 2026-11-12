@@ -614,6 +614,39 @@ describe("PDF reader links", () => {
     }
   });
 
+  it("finishes a wheel zoom that a re-render interrupts", async () => {
+    vi.useFakeTimers();
+    try {
+      await openReader();
+      const scroller = readerScroller();
+      const pages = scroller.firstElementChild as HTMLElement;
+      const firstPage = container.querySelector<HTMLElement>(
+        '[data-page-number="1"]',
+      );
+      const originalWidth = firstPage?.style.width;
+
+      act(() => {
+        scroller.dispatchEvent(
+          new WheelEvent("wheel", {
+            ctrlKey: true,
+            deltaY: -100,
+            clientX: 450,
+            clientY: 300,
+            cancelable: true,
+          }),
+        );
+      });
+      // Something else re-renders the reader while the gesture is running.
+      act(() => FakeReaderResizeObserver.current?.resize(900, 690));
+      act(() => vi.runAllTimers());
+
+      expect(pages.style.transform).toBe("");
+      expect(firstPage?.style.width).not.toBe(originalWidth);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("remembers the chosen zoom for the next PDF", async () => {
     await openReader();
     clickReaderButton("Zoom in");
@@ -629,6 +662,32 @@ describe("PDF reader links", () => {
       container.querySelector<HTMLElement>('[data-page-number="1"]')?.style
         .width,
     ).toBe(zoomedWidth);
+  });
+
+  it("zooms in from a zoom whose page width rounds down", async () => {
+    // At 50%, a 601pt page is 400.67px wide and renders at a whole 400px.
+    pdfFixture.getPage.mockImplementation(async () => ({
+      getViewport: () => ({ width: 601, height: 800 }),
+    }));
+    localStorage.setItem("notorium:pdf-zoom", "0.5");
+    try {
+      await openReader();
+      const pageWidth = () =>
+        container.querySelector<HTMLElement>('[data-page-number="1"]')?.style
+          .width;
+      const startWidth = pageWidth();
+
+      clickReaderButton("Zoom in");
+
+      expect(pageWidth()).not.toBe(startWidth);
+      expect(
+        container.querySelector('[aria-label="Zoom presets"]')?.textContent,
+      ).toBe("75%");
+    } finally {
+      pdfFixture.getPage.mockImplementation(async () => ({
+        getViewport: () => ({ width: 600, height: 800 }),
+      }));
+    }
   });
 
   it("remembers the chosen page color for the next PDF", async () => {
