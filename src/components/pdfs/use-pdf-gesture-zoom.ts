@@ -6,11 +6,25 @@ import { clampPdfZoom } from "@/components/pdfs/pdf-page-layout";
 const WHEEL_COMMIT_DELAY_MS = 180;
 const WHEEL_ZOOM_SENSITIVITY = 300;
 
+/** Where a zoom gesture is centered, in viewport coordinates. */
+export interface PdfZoomFocus {
+  clientX: number;
+  clientY: number;
+}
+
 interface PdfGestureZoomInput {
-  scrollRef: RefObject<HTMLDivElement | null>;
+  scrollRef: RefObject<HTMLElement | null>;
   contentRef: RefObject<HTMLDivElement | null>;
   zoom: number;
-  onZoomCommit: (zoom: number) => void;
+  onZoomCommit: (zoom: number, focus: PdfZoomFocus) => void;
+}
+
+function touchCenter(touches: TouchList): PdfZoomFocus {
+  const [first, second] = [touches[0], touches[1]];
+  return {
+    clientX: (first.clientX + second.clientX) / 2,
+    clientY: (first.clientY + second.clientY) / 2,
+  };
 }
 
 function touchDistance(touches: TouchList): number {
@@ -23,9 +37,10 @@ function touchDistance(touches: TouchList): number {
 
 /**
  * Pinch (touch) and Ctrl/⌘ + wheel (mouse, trackpad pinch) zoom the PDF
- * instead of the page. While the gesture runs the pages are only scaled with
- * a CSS transform; the new zoom is committed once, at the end, so pages
- * re-render sharply a single time.
+ * instead of the page, around the pointer or the middle of the fingers. While
+ * the gesture runs the pages are only scaled with a CSS transform about that
+ * point; the new zoom is committed once, at the end, with the point to keep
+ * in place, so pages re-render sharply a single time.
  *
  * @example
  * usePdfGestureZoom({ scrollRef, contentRef, zoom, onZoomCommit: setZoom });
@@ -46,6 +61,16 @@ export function usePdfGestureZoom({
     let previewScale = 1;
     let pinchStartDistance = 0;
     let wheelTimer: number | undefined;
+    let focus: PdfZoomFocus | null = null;
+
+    // The column holds every page, so scaling about any fixed corner of it
+    // would throw the pages being read far out of view.
+    function begin(point: PdfZoomFocus) {
+      if (!content) return;
+      focus = point;
+      const box = content.getBoundingClientRect();
+      content.style.transformOrigin = `${point.clientX - box.left}px ${point.clientY - box.top}px`;
+    }
 
     function preview(scale: number) {
       previewScale = clampPdfZoom(zoom * scale) / zoom;
@@ -53,14 +78,21 @@ export function usePdfGestureZoom({
     }
 
     function commit() {
-      if (content) content.style.transform = "";
-      if (previewScale !== 1) onZoomCommit(clampPdfZoom(zoom * previewScale));
+      if (content) {
+        content.style.transform = "";
+        content.style.transformOrigin = "";
+      }
+      if (previewScale !== 1 && focus) {
+        onZoomCommit(clampPdfZoom(zoom * previewScale), focus);
+      }
       previewScale = 1;
+      focus = null;
     }
 
     function handleWheel(event: WheelEvent) {
       if (!event.ctrlKey && !event.metaKey) return;
       event.preventDefault();
+      if (!focus) begin(event);
       preview(previewScale * Math.exp(-event.deltaY / WHEEL_ZOOM_SENSITIVITY));
       window.clearTimeout(wheelTimer);
       wheelTimer = window.setTimeout(commit, WHEEL_COMMIT_DELAY_MS);
@@ -69,6 +101,7 @@ export function usePdfGestureZoom({
     function handleTouchStart(event: TouchEvent) {
       if (event.touches.length === 2) {
         pinchStartDistance = touchDistance(event.touches);
+        begin(touchCenter(event.touches));
       }
     }
 

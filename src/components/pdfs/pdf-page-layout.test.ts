@@ -6,10 +6,12 @@ import {
   clampPdfZoom,
   cropPageSize,
   findPageAtOffset,
+  PDF_FIT_AUTO,
   PDF_FIT_PAGE,
   pageRenderPixelRatio,
   parsePageInput,
   readerColumnPadding,
+  renderWindowPages,
   resolvePageWidth,
   scrollAnchorAt,
   scrollOffsetOf,
@@ -51,6 +53,21 @@ describe("stepPdfZoom", () => {
   it("stays within the zoom bounds", () => {
     expect(stepPdfZoom(4, 1)).toBe(4);
     expect(stepPdfZoom(0.25, -1)).toBe(0.25);
+  });
+});
+
+describe("renderWindowPages", () => {
+  it("keeps the usual window when a page fills the column", () => {
+    expect(renderWindowPages(700, 1100)).toBe(2);
+    expect(renderWindowPages(700, 0)).toBe(2);
+  });
+
+  it("covers the column when zoomed-out pages are small", () => {
+    expect(renderWindowPages(1200, 280)).toBe(5);
+  });
+
+  it("stays bounded beside a very short page", () => {
+    expect(renderWindowPages(1200, 10)).toBe(12);
   });
 });
 
@@ -114,6 +131,19 @@ describe("resolvePageWidth", () => {
     expect(
       resolvePageWidth({ kind: "fit", mode: "width" }, desktop, page),
     ).toBe(1368);
+  });
+
+  it("fills the column width automatically until the page would be oversized", () => {
+    const laptop = { columnWidth: 900, columnHeight: 700, padding: 16 };
+    expect(resolvePageWidth(PDF_FIT_AUTO, laptop, page)).toBe(868);
+    expect(resolvePageWidth(PDF_FIT_AUTO, desktop, page)).toBe(1000);
+    expect(resolvePageWidth(PDF_FIT_AUTO, phone, page)).toBe(358);
+  });
+
+  it("fits a whole sideways page automatically, as for slides", () => {
+    const slide = { width: 800, height: 450 };
+    expect(resolvePageWidth(PDF_FIT_AUTO, desktop, slide)).toBe(1244);
+    expect(resolvePageWidth(PDF_FIT_AUTO, phone, slide)).toBe(358);
   });
 
   it("sizes a ratio against the page's actual size in CSS pixels", () => {

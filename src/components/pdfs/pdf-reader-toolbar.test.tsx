@@ -131,7 +131,7 @@ describe("PDF reading controls", () => {
       Array.from(
         document.querySelectorAll<HTMLElement>('[role^="menuitem"]'),
       ).map((item) => item.textContent?.trim()),
-    ).toEqual(["Page fit", "Page width", "Actual size"]);
+    ).toEqual(["Automatic", "Page fit", "Page width", "Actual size"]);
   });
 
   it("keeps return navigation in the toolbar", () => {

@@ -3,6 +3,7 @@
 import { Minus, Plus, SlidersHorizontal } from "lucide-react";
 import { useId } from "react";
 import {
+  PDF_FIT_AUTO,
   PDF_FIT_PAGE,
   PDF_FIT_WIDTH,
   PDF_ZOOM_MAX,
@@ -25,6 +26,7 @@ export const PDF_ZOOM_PRESETS: ReadonlyArray<{
   label: string;
   zoom: PdfZoom;
 }> = [
+  { id: "auto", label: "Automatic", zoom: PDF_FIT_AUTO },
   { id: "page", label: "Page fit", zoom: PDF_FIT_PAGE },
   { id: "width", label: "Page width", zoom: PDF_FIT_WIDTH },
   { id: "actual", label: "Actual size", zoom: { kind: "ratio", ratio: 1 } },
@@ -143,7 +145,7 @@ export function PdfViewSettings({
               </Button>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {PDF_ZOOM_PRESETS.map((preset) => (
               <Button
                 key={preset.id}

@@ -544,6 +544,76 @@ describe("PDF reader links", () => {
     expect(onChromeHiddenChange).toHaveBeenLastCalledWith(true);
   });
 
+  it("ignores a stray wheel wobble in zen mode", async () => {
+    await openReader(true, true);
+    act(() => {
+      readerScroller().dispatchEvent(new WheelEvent("wheel", { deltaY: -1 }));
+    });
+
+    expect(onChromeHiddenChange).not.toHaveBeenCalled();
+  });
+
+  it("focuses the pages on open so the scrolling keys work right away", async () => {
+    await openReader();
+
+    expect(document.activeElement).toBe(readerScroller());
+  });
+
+  it("keeps the text under the pointer in place through a wheel zoom", async () => {
+    vi.useFakeTimers();
+    try {
+      await openReader();
+      const scroller = readerScroller();
+      const firstPage = container.querySelector<HTMLElement>(
+        '[data-page-number="1"]',
+      );
+      const originalHeight = Number.parseFloat(firstPage?.style.height ?? "0");
+      act(() => {
+        scroller.scrollTop = 200;
+        scroller.dispatchEvent(new Event("scroll"));
+      });
+
+      // The pointer rests 300px below the column's top, 500px into page 1.
+      act(() => {
+        scroller.dispatchEvent(
+          new WheelEvent("wheel", {
+            ctrlKey: true,
+            deltaY: -100,
+            clientX: 450,
+            clientY: 300,
+            cancelable: true,
+          }),
+        );
+        vi.runAllTimers();
+      });
+
+      const zoomedHeight = Number.parseFloat(firstPage?.style.height ?? "0");
+      expect(zoomedHeight).toBeGreaterThan(originalHeight);
+      expect(scroller.scrollTop + 300).toBeCloseTo(
+        (500 * zoomedHeight) / originalHeight,
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("remembers the chosen zoom for the next PDF", async () => {
+    await openReader();
+    clickReaderButton("Zoom in");
+    const zoomedWidth = container.querySelector<HTMLElement>(
+      '[data-page-number="1"]',
+    )?.style.width;
+
+    act(() => root.unmount());
+    root = createRoot(container);
+    await openReader();
+
+    expect(
+      container.querySelector<HTMLElement>('[data-page-number="1"]')?.style
+        .width,
+    ).toBe(zoomedWidth);
+  });
+
   it("remembers the chosen page color for the next PDF", async () => {
     await openReader();
     const pages = readerScroller().firstElementChild;

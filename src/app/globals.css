@@ -574,9 +574,14 @@
   color: oklch(0.9 0 0);
 }
 
-[data-pdf-page-tint="sepia"] [data-pdf-page-placeholder],
-[data-pdf-page-tint="dark"] [data-pdf-page-placeholder] {
-  background-color: transparent;
+/* A page that has not drawn yet is already its paper, in any app theme, so
+   pages never flash from the theme's surface color to white. */
+[data-pdf-page-tint="original"] [data-page-number] {
+  background-color: oklch(1 0 0);
+}
+
+[data-pdf-page-placeholder] {
+  color: oklch(0.55 0 0);
 }
 
 /* The editor content scrolls (overflow-x: auto), so selection chrome stays

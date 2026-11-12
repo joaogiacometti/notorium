@@ -17,16 +17,14 @@ import {
   actualSizeRatio,
   buildPageSlots,
   cropPageSize,
-  PDF_FIT_WIDTH,
   PDF_NARROW_COLUMN_PX,
   PDF_NO_CROP,
   PDF_PAGE_GAP_PX,
-  PDF_RENDER_WINDOW_PAGES,
   type PdfCrop,
   type PdfRows,
-  type PdfZoom,
   pageRenderPixelRatio,
   readerColumnPadding,
+  renderWindowPages,
   resolvePageWidth,
 } from "@/components/pdfs/pdf-page-layout";
 import { PdfReaderToolbar } from "@/components/pdfs/pdf-reader-toolbar";
@@ -42,6 +40,10 @@ import {
   usePdfScrollLayout,
 } from "@/components/pdfs/use-pdf-scroll-layout";
 import { usePdfStudyContext } from "@/components/pdfs/use-pdf-study-context";
+import {
+  usePdfTrimMemory,
+  usePdfZoomMemory,
+} from "@/components/pdfs/use-pdf-view-memory";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -75,8 +77,8 @@ interface PdfReaderProps {
 }
 
 /**
- * A continuous, vertically scrolling PDF reader that fits pages to the
- * column width by default, zooms with buttons, pinch, or Ctrl/⌘ + wheel, renders only
+ * A continuous, vertically scrolling PDF reader that sizes pages
+ * automatically by default, zooms with buttons, pinch, or Ctrl/⌘ + wheel, renders only
  * the pages near the viewport, remembers the page being read, and offers
  * the selected or visible text to the study assistant. On phones and in zen
  * mode it asks its host to hide the controls while the reader moves down the pages.
@@ -175,13 +177,13 @@ function PdfPageColumn({
   chromeHidden,
   onChromeHiddenChange,
 }: Readonly<PdfPageColumnProps>) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState<PdfZoom>(PDF_FIT_WIDTH);
+  const [zoom, setZoom] = usePdfZoomMemory();
   const [contentsOpen, setContentsOpen] = useState(false);
   const contentsToggleRef = useRef<HTMLButtonElement>(null);
   // Null follows the screen: phones trim margins, wider screens do not.
-  const [trimMargins, setTrimMargins] = useState<boolean | null>(null);
+  const [trimMargins, setTrimMargins] = usePdfTrimMemory();
   const [pageAspects, setPageAspects] = useState<ReadonlyMap<number, number>>(
     () => new Map(),
   );
@@ -213,6 +215,20 @@ function PdfPageColumn({
   const pageHeights = slots.map((slot) => slot.height);
   const layout = usePdfScrollLayout({ scrollRef, pageHeights, initialPage });
   useImperativeHandle(navigationRef, () => layout);
+  const renderWindow = renderWindowPages(
+    column.height,
+    pageHeights[layout.currentPage - 1] ?? 0,
+  );
+
+  // Only the pages scroll, so the keys that scroll (arrows, Space, Page
+  // Up/Down, Home, End) work only while the pages hold focus: on open, and
+  // again once a jump from the page field leaves focus nowhere.
+  const currentPage = layout.currentPage;
+  useEffect(() => {
+    if (currentPage > 0 && document.activeElement === document.body) {
+      scrollRef.current?.focus({ preventScroll: true });
+    }
+  }, [currentPage]);
 
   // Most PDFs repeat one page shape, so a page matching the assumed shape
   // must not trigger a column-wide re-layout when it loads.
@@ -247,7 +263,10 @@ function PdfPageColumn({
     scrollRef,
     contentRef,
     zoom: zoomRatio,
-    onZoomCommit: (ratio) => setZoom({ kind: "ratio", ratio }),
+    onZoomCommit: (ratio, focus) => {
+      layout.holdPoint(focus);
+      setZoom({ kind: "ratio", ratio });
+    },
   });
   usePdfReadingChrome({
     scrollRef,
@@ -305,14 +324,17 @@ function PdfPageColumn({
             />
           </aside>
         )}
-        <div
+        <section
           ref={scrollRef}
-          className="min-h-0 min-w-0 flex-1 touch-pan-x touch-pan-y overflow-auto overscroll-contain bg-muted/40 sm:rounded-md"
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrolling region must take focus to scroll from the keyboard
+          tabIndex={0}
+          aria-label="PDF pages"
+          className="min-h-0 min-w-0 flex-1 touch-pan-x touch-pan-y overflow-auto overscroll-contain bg-muted/40 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-inset sm:rounded-md"
         >
           <div
             ref={contentRef}
             data-pdf-page-tint={pageTint}
-            className="flex w-fit min-w-full origin-top flex-col items-center"
+            className="flex w-fit min-w-full flex-col items-center"
             style={{ gap: PDF_PAGE_GAP_PX, padding }}
           >
             {slots.map((slot, index) => {
@@ -328,15 +350,14 @@ function PdfPageColumn({
                   height={slot.height}
                   renderHeight={slot.fullHeight}
                   rendered={
-                    Math.abs(pageNumber - layout.currentPage) <=
-                    PDF_RENDER_WINDOW_PAGES
+                    Math.abs(pageNumber - layout.currentPage) <= renderWindow
                   }
                   onLoad={handlePageLoad}
                 />
               );
             })}
           </div>
-        </div>
+        </section>
       </div>
     </>
   );
@@ -419,7 +440,7 @@ function PdfPagePlaceholder({ pageNumber }: Readonly<{ pageNumber: number }>) {
   return (
     <div
       data-pdf-page-placeholder
-      className="absolute inset-0 flex items-center justify-center bg-card text-sm text-muted-foreground tabular-nums"
+      className="absolute inset-0 flex items-center justify-center text-sm tabular-nums"
     >
       {pageNumber}
     </div>

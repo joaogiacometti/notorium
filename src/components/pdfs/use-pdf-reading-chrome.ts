@@ -5,9 +5,13 @@ import { type RefObject, useEffect, useLayoutEffect, useRef } from "react";
 // Finger travel before a drag counts as reading on, so a tap that wobbles
 // does not hide the controls.
 const DRAG_THRESHOLD_PX = 16;
+// Wheel travel only adds up while it keeps coming: a trackpad at rest sends
+// stray one-pixel deltas in either direction, which must not flip the controls.
+const WHEEL_PAUSE_MS = 200;
+const WHEEL_LINE_PX = 16;
 
 interface PdfReadingChromeInput {
-  scrollRef: RefObject<HTMLDivElement | null>;
+  scrollRef: RefObject<HTMLElement | null>;
   /** False where the controls always stay: wide screens outside zen mode. */
   enabled: boolean;
   hidden: boolean;
@@ -16,7 +20,8 @@ interface PdfReadingChromeInput {
 
 /**
  * Hides the reading controls while the reader drags or wheels down the pages
- * and brings them back when they go up or tap a page. It follows the gesture,
+ * and brings them back when they go up or tap a page. Both need a little
+ * travel first, so a wobble does nothing. It follows the gesture,
  * not the scroll position, so page jumps from the controls never hide them.
  *
  * @example
@@ -69,9 +74,22 @@ export function usePdfReadingChrome({
       change(travel > 0);
     }
 
+    let wheelTravel = 0;
+    let wheelAt = 0;
+
     function handleWheel(event: WheelEvent) {
       if (event.ctrlKey || event.metaKey || event.deltaY === 0) return;
-      change(event.deltaY > 0);
+      const delta =
+        event.deltaMode === WheelEvent.DOM_DELTA_PIXEL
+          ? event.deltaY
+          : event.deltaY * WHEEL_LINE_PX;
+      const turned = Math.sign(delta) !== Math.sign(wheelTravel);
+      if (turned || event.timeStamp - wheelAt > WHEEL_PAUSE_MS) wheelTravel = 0;
+      wheelAt = event.timeStamp;
+      wheelTravel += delta;
+      if (Math.abs(wheelTravel) < DRAG_THRESHOLD_PX) return;
+      wheelTravel = 0;
+      change(delta > 0);
     }
 
     // A mouse click places a caret or starts a selection; only a tap toggles.

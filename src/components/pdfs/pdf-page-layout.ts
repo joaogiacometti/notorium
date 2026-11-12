@@ -1,6 +1,9 @@
 export const PDF_PAGE_GAP_PX = 12;
 /** Pages this far from the current one stay rendered, with their text layers. */
 export const PDF_RENDER_WINDOW_PAGES = 2;
+// Zoomed far out, a tall column shows more pages than that; the cap keeps a
+// page much shorter than its neighbors from asking for a canvas per page.
+const PDF_RENDER_WINDOW_MAX_PAGES = 12;
 export const PDF_ZOOM_MIN = 0.25;
 export const PDF_ZOOM_MAX = 4;
 // Columns narrower than Tailwind's `sm` breakpoint are phones.
@@ -8,6 +11,28 @@ export const PDF_NARROW_COLUMN_PX = 640;
 // PDF sizes are in points (1/72 in); "actual size" shows them at CSS inches.
 const PDF_POINTS_TO_CSS_PX = 96 / 72;
 const PDF_ZOOM_STEP = 0.25;
+// Past this, a wide column makes page width show only a few lines a screen.
+const PDF_AUTO_ZOOM_MAX = 1.5;
+
+/**
+ * How many pages on each side of the current one stay rendered: enough to
+ * fill the column when pages are small, never fewer than the usual window.
+ *
+ * @example renderWindowPages(1200, 280); // 5
+ */
+export function renderWindowPages(
+  columnHeight: number,
+  pageHeight: number,
+): number {
+  if (!(pageHeight > 0)) return PDF_RENDER_WINDOW_PAGES;
+  const pagesPerColumn = Math.ceil(
+    columnHeight / (pageHeight + PDF_PAGE_GAP_PX),
+  );
+  return Math.min(
+    PDF_RENDER_WINDOW_MAX_PAGES,
+    Math.max(PDF_RENDER_WINDOW_PAGES, pagesPerColumn),
+  );
+}
 
 /** Top offset of every page in the scroll column, with a gap between pages. */
 export function buildPageTops(pageHeights: number[], gap: number): number[] {
@@ -74,13 +99,15 @@ export function scrollOffsetOf(
 }
 
 /**
- * How the reader sizes pages, after the pdf.js viewer: fit the whole page,
- * fit the column width, or a fixed ratio of the page's actual (printed) size.
+ * How the reader sizes pages, after the pdf.js viewer: automatically, fit the
+ * whole page, fit the column width, or a fixed ratio of the page's actual
+ * (printed) size.
  */
 export type PdfZoom =
-  | { kind: "fit"; mode: "page" | "width" }
+  | { kind: "fit"; mode: "auto" | "page" | "width" }
   | { kind: "ratio"; ratio: number };
 
+export const PDF_FIT_AUTO: PdfZoom = { kind: "fit", mode: "auto" };
 export const PDF_FIT_PAGE: PdfZoom = { kind: "fit", mode: "page" };
 export const PDF_FIT_WIDTH: PdfZoom = { kind: "fit", mode: "width" };
 
@@ -163,7 +190,9 @@ export function readerColumnPadding(columnWidth: number): number {
 /**
  * Rendered page width for a zoom setting. Page fit shows a whole page on a
  * desktop and fits a phone's width; page width fills the column, so a page
- * can be taller than the screen. Pass a cropped page size (`cropPageSize`) to
+ * can be taller than the screen. Automatic is page width for upright pages
+ * and page fit for sideways ones (slides), never enlarged past a comfortable
+ * reading size on a wide column. Pass a cropped page size (`cropPageSize`) to
  * size only the part of the page left visible.
  *
  * @example resolvePageWidth(PDF_FIT_PAGE, { columnWidth: 1400, columnHeight: 732, padding: 16 }, { width: 500, height: 700 }); // 500
@@ -179,8 +208,13 @@ export function resolvePageWidth(
   const widthFit = frame.columnWidth - frame.padding * 2;
   const heightFit =
     ((frame.columnHeight - frame.padding * 2) * page.width) / page.height;
-  const fitted =
-    zoom.mode === "width" ? widthFit : Math.min(widthFit, heightFit);
+  const pageFit = Math.min(widthFit, heightFit);
+  if (zoom.mode === "auto") {
+    const largest = page.width * PDF_POINTS_TO_CSS_PX * PDF_AUTO_ZOOM_MAX;
+    const fitted = page.width > page.height ? pageFit : widthFit;
+    return Math.max(0, Math.floor(Math.min(fitted, largest)));
+  }
+  const fitted = zoom.mode === "width" ? widthFit : pageFit;
   return Math.max(0, Math.floor(fitted));
 }
 

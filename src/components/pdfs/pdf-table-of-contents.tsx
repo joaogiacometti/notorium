@@ -138,6 +138,7 @@ function PdfContentsBody({
         >
           <PdfContentsList
             items={contents.items}
+            nested={contents.items.some((item) => item.items.length > 0)}
             navigating={navigating}
             pendingDestination={pendingDestination}
             onSelect={navigateToContents}
@@ -156,6 +157,8 @@ function PdfContentsBody({
 
 interface PdfContentsListProps {
   items: PdfContentsItems;
+  /** The outline has sections somewhere, so every row keeps a toggle slot. */
+  nested: boolean;
   navigating: boolean;
   pendingDestination: unknown;
   onSelect: (destination: unknown) => Promise<void>;
@@ -163,6 +166,7 @@ interface PdfContentsListProps {
 
 function PdfContentsList({
   items,
+  nested,
   navigating,
   pendingDestination,
   onSelect,
@@ -174,6 +178,7 @@ function PdfContentsList({
           // biome-ignore lint/suspicious/noArrayIndexKey: PDF outline order is immutable; indices disambiguate repeated titles and destinations
           key={`${index}-${item.title}`}
           item={item}
+          nested={nested}
           navigating={navigating}
           pendingDestination={pendingDestination}
           onSelect={onSelect}
@@ -189,6 +194,7 @@ interface PdfContentsEntryProps extends Omit<PdfContentsListProps, "items"> {
 
 function PdfContentsEntry({
   item,
+  nested,
   navigating,
   pendingDestination,
   onSelect,
@@ -211,6 +217,9 @@ function PdfContentsEntry({
           >
             <ChevronRight className={cn("size-4", expanded && "rotate-90")} />
           </Button>
+        )}
+        {nested && !hasSections && (
+          <span aria-hidden className="size-8 shrink-0" />
         )}
         {item.dest ? (
           <Button
@@ -239,6 +248,7 @@ function PdfContentsEntry({
         <div id={sectionsId} hidden={!expanded} className="pl-4">
           <PdfContentsList
             items={item.items}
+            nested={nested}
             navigating={navigating}
             pendingDestination={pendingDestination}
             onSelect={onSelect}
