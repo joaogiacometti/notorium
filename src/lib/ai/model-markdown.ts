@@ -25,11 +25,6 @@ function sanitizeNodes(nodes: JSONContent[]): JSONContent[] {
     .filter((node) => !MODEL_DROPPED_NODES.has(node.type ?? ""))
     .map((node) => {
       const result: JSONContent = { ...node };
-      if (node.type === "heading")
-        result.attrs = {
-          ...node.attrs,
-          level: Math.min(node.attrs?.level ?? 1, 3),
-        };
       if (node.marks)
         result.marks = node.marks.filter(
           (mark) =>

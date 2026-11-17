@@ -166,9 +166,9 @@ describe("model Markdown import", () => {
       nodes.flatMap((node) => node.marks ?? []).map((mark) => mark.attrs?.href),
     ).toEqual(["https://example.com"]);
     expect(documentText(value)).not.toMatch(/alert|onerror/);
-    expect(value.content.at(-1)).toMatchObject({
-      type: "heading",
-      attrs: { level: 3 },
+    expect(value.content.at(-1)).toEqual({
+      type: "paragraph",
+      content: [{ type: "text", text: "Deep" }],
     });
     expect(richTextDocumentSchema.safeParse(value).success).toBe(true);
   });
