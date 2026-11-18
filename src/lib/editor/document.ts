@@ -1,7 +1,10 @@
 import { getSchema, type JSONContent } from "@tiptap/core";
 import { isAllowedUri } from "@tiptap/extension-link";
 import { z } from "zod";
-import { buildDocumentExtensions } from "@/lib/editor/document-extensions";
+import {
+  buildDocumentExtensions,
+  HEADING_LEVELS,
+} from "@/lib/editor/document-extensions";
 
 export interface RichTextDocument {
   version: 1;
@@ -107,7 +110,10 @@ function validateDocumentShape(value: unknown): value is RichTextDocument {
     )
       return false;
     if (node.type === "image" && !safeUrl(node.attrs?.src)) return false;
-    if (node.type === "heading" && ![1, 2, 3].includes(node.attrs?.level))
+    if (
+      node.type === "heading" &&
+      !(HEADING_LEVELS as readonly unknown[]).includes(node.attrs?.level)
+    )
       return false;
     if (
       node.type === "noteLink" &&

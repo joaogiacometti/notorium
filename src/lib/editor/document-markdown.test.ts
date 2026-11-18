@@ -100,4 +100,10 @@ describe("document Markdown", () => {
     );
     expect(documentFromMarkdown("")).toEqual(testDocument("<p></p>"));
   });
+
+  it("reads headings deeper than the editor supports as paragraphs", () => {
+    expect(documentFromMarkdown("### Kept\n\n#### **Deep**")).toEqual(
+      testDocument("<h3>Kept</h3><p><strong>Deep</strong></p>"),
+    );
+  });
 });

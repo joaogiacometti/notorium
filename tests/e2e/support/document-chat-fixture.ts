@@ -26,7 +26,7 @@ export class DocumentChatFixture {
         {
           firstBlockId: draft.blocks[0].id,
           lastBlockId: draft.blocks[0].id,
-          html: "<p>A clearer explanation.</p>",
+          markdown: "A clearer explanation.",
         },
       ],
     };

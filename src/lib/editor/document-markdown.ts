@@ -5,7 +5,10 @@ import {
   documentSchema,
   type RichTextDocument,
 } from "@/lib/editor/document";
-import { buildDocumentExtensions } from "@/lib/editor/document-extensions";
+import {
+  buildDocumentExtensions,
+  HEADING_LEVELS,
+} from "@/lib/editor/document-extensions";
 
 let manager: MarkdownManager | undefined;
 function markdownManager(): MarkdownManager {
@@ -77,6 +80,12 @@ function splitBlocks(nodes: JSONContent[]): JSONContent[] {
 }
 
 function normalizeNode(node: JSONContent): JSONContent {
+  // Markdown allows six heading levels; deeper ones read as paragraphs.
+  if (
+    node.type === "heading" &&
+    !(HEADING_LEVELS as readonly unknown[]).includes(node.attrs?.level)
+  )
+    return normalizeNode({ type: "paragraph", content: node.content });
   if (node.type === "text")
     return { ...node, text: node.text?.replaceAll(/\s*\n\s*/g, " ") };
   if (!node.content || node.type === "codeBlock") return node;

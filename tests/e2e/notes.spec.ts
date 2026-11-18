@@ -264,7 +264,7 @@ test("creates a flashcard from the open note through the assistant after confirm
       blocks: [
         {
           id: "b0",
-          html: `<p>${content} Retrieval improves with practice.</p>`,
+          markdown: `${content} Retrieval improves with practice.`,
         },
       ],
       partial: false,

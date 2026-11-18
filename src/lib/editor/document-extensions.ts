@@ -34,6 +34,9 @@ const CommonMarkOrderedList = OrderedList.extend({
   },
 });
 
+/** Heading levels the document schema accepts. */
+export const HEADING_LEVELS = [1, 2, 3] as const;
+
 /** Shared supported document schema for editor, validation and rendering. */
 export function buildDocumentExtensions(
   options: {
@@ -44,7 +47,7 @@ export function buildDocumentExtensions(
 ) {
   return [
     StarterKit.configure({
-      heading: { levels: [1, 2, 3] },
+      heading: { levels: [...HEADING_LEVELS] },
       codeBlock: false,
       orderedList: false,
       trailingNode: options.editable ? {} : false,
