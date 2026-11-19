@@ -5,12 +5,18 @@ const {
   getAuthenticatedUserIdMock,
   resetFsrsOptimizationForUserMock,
   updateUserFake,
+  updateUserTimeZoneFake,
   requestHeaders,
 } = vi.hoisted(() => ({
   getAuthenticatedUserIdMock: vi.fn(),
   resetFsrsOptimizationForUserMock: vi.fn(),
   updateUserFake: vi.fn(),
+  updateUserTimeZoneFake: vi.fn(),
   requestHeaders: new Headers({ cookie: "session-fixture" }),
+}));
+
+vi.mock("@/lib/server/revalidate-views", () => ({
+  revalidateAppShell: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -29,6 +35,7 @@ vi.mock("@/features/flashcards/fsrs/settings-mutations", () => ({
 
 vi.mock("@/features/user/mutations", () => ({
   updateUserAccessStatusForUser: vi.fn(),
+  updateUserTimeZoneForUser: updateUserTimeZoneFake,
 }));
 
 vi.mock("@/lib/auth/access-control", () => ({
@@ -74,6 +81,30 @@ describe("account actions", () => {
       body: { name: "New name" },
     });
   });
+
+  it.each(["UTC", "America/Sao_Paulo", "Asia/Tokyo"])(
+    "saves %s for the signed-in user",
+    async (zone) => {
+      const { updateTimeZone } = await import("@/app/actions/account");
+      expect(await updateTimeZone(zone)).toEqual({ success: true });
+      expect(updateUserTimeZoneFake).toHaveBeenCalledExactlyOnceWith(
+        "user-1",
+        zone,
+      );
+    },
+  );
+
+  it.each(["", "Mars/Olympus", "+03:00"])(
+    "rejects an unsupported time zone (%s) before writing",
+    async (zone) => {
+      const { updateTimeZone } = await import("@/app/actions/account");
+      expect(await updateTimeZone(zone)).toMatchObject({
+        success: false,
+        errorCode: "account.invalidData",
+      });
+      expect(updateUserTimeZoneFake).not.toHaveBeenCalled();
+    },
+  );
 
   it("rejects invalid names without updating the user", async () => {
     const { updateAccount } = await import("@/app/actions/account");

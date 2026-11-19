@@ -4,6 +4,7 @@ import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import type { AccountMutationResult } from "@/features/account/mutations";
 import { deleteAccountForUser } from "@/features/account/mutations";
+import { timeZoneSchema } from "@/features/account/time-zones";
 import {
   type UpdateAccountForm,
   updateAccountSchema,
@@ -17,7 +18,10 @@ import {
   type UpdateFsrsOptimizationPreferencesForm,
   updateFsrsOptimizationPreferencesSchema,
 } from "@/features/flashcards/fsrs/validation";
-import { updateUserAccessStatusForUser } from "@/features/user/mutations";
+import {
+  updateUserAccessStatusForUser,
+  updateUserTimeZoneForUser,
+} from "@/features/user/mutations";
 import { isAdminUser } from "@/lib/auth/access-control";
 import { getAuth, getAuthenticatedUserId } from "@/lib/auth/auth";
 import {
@@ -28,6 +32,7 @@ import type {
   FlashcardOptimizationResult,
   MutationResult,
 } from "@/lib/server/api-contracts";
+import { revalidateAppShell } from "@/lib/server/revalidate-views";
 import { actionError } from "@/lib/server/server-action-errors";
 import {
   type UpdateUserAccessInput,
@@ -57,6 +62,22 @@ export async function updateAccount(
         return actionError("account.updateFailed");
       }
 
+      return { success: true };
+    },
+  );
+}
+
+export async function updateTimeZone(
+  timeZone: string,
+): Promise<MutationResult> {
+  return runValidatedUserAction(
+    "account.updateTimeZone",
+    timeZoneSchema,
+    timeZone,
+    "account.invalidData",
+    async (userId, zone) => {
+      await updateUserTimeZoneForUser(userId, zone);
+      revalidateAppShell();
       return { success: true };
     },
   );

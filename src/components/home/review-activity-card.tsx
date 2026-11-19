@@ -32,12 +32,15 @@ function cellBackground(level: number): string {
   return `color-mix(in oklab, var(--chart-2) ${levelOpacity[level]}%, transparent)`;
 }
 
+const activityDateFormat = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
 function formatCellLabel(point: ReviewActivityPoint): string {
-  const label = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(`${point.date}T00:00:00.000Z`));
+  const label = activityDateFormat.format(new Date(point.date));
   const noun = point.count === 1 ? "review" : "reviews";
   return `${point.count} ${noun} on ${label}`;
 }

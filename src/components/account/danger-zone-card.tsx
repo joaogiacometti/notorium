@@ -2,14 +2,11 @@
 
 import { useState } from "react";
 import { DeleteAccountDialog } from "@/components/account/delete-account-dialog";
-import {
-  SettingsRow,
-  SettingsSection,
-} from "@/components/account/settings-section";
+import { SettingsCard } from "@/components/account/settings-section";
 import { Button } from "@/components/ui/button";
 
 /**
- * Account deletion entry point as a flat settings row. Opens the confirmation
+ * Account deletion entry point as a danger-toned settings card. Opens the confirmation
  * dialog before the destructive action runs.
  *
  * @example
@@ -20,22 +17,20 @@ export function DangerZoneCard() {
 
   return (
     <>
-      <SettingsSection title="Danger zone">
-        <SettingsRow
-          label="Delete account"
-          description="Permanently removes your folders, notes, and flashcards. This cannot be undone."
-          keywords="remove danger erase"
-          action={
-            <Button
-              variant="destructive"
-              onClick={() => setDeleteDialogOpen(true)}
-              className="w-full sm:w-fit"
-            >
-              Delete account
-            </Button>
-          }
-        />
-      </SettingsSection>
+      <SettingsCard
+        title="Delete account"
+        description="Permanently removes your folders, notes, flashcards, and review history. This cannot be undone."
+        keywords="remove danger erase"
+        tone="danger"
+        control={
+          <Button
+            variant="destructive"
+            onClick={() => setDeleteDialogOpen(true)}
+          >
+            Delete account
+          </Button>
+        }
+      />
       <DeleteAccountDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}

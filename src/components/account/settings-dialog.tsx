@@ -1,17 +1,22 @@
 "use client";
 
 import { Loader2, Search, X } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
+import { AccountAvatar } from "@/components/account/account-avatar";
 import { AccountProfileCard } from "@/components/account/account-profile-card";
 import { AppearanceCard } from "@/components/account/appearance-card";
 import { DangerZoneCard } from "@/components/account/danger-zone-card";
 import { FlashcardOptimizationCard } from "@/components/account/flashcard-optimization-card";
-import { SettingsSearchProvider } from "@/components/account/settings-section";
+import {
+  SettingsPage,
+  SettingsSearchProvider,
+} from "@/components/account/settings-section";
 import {
   type SettingsSection,
   type SettingsSectionId,
   settingsSections,
 } from "@/components/account/settings-sections";
+import { TimeZoneCard } from "@/components/account/time-zone-card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,9 +39,9 @@ interface SettingsDialogProps {
 }
 
 /**
- * RemNote/Notion-style settings overlay: a sidebar (search + section list) on
- * the left and either the active section or cross-section search results on the
- * right. Replaces the former `/account` page.
+ * Settings overlay: a sidebar (search, grouped section list, signed-in account)
+ * on the left and either the active section's cards or cross-section search
+ * results on the right.
  *
  * @example
  * <SettingsDialog open={open} onOpenChange={setOpen} activeSection="account"
@@ -69,34 +74,31 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex h-[80vh] max-h-[40rem] w-full max-w-3xl flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl sm:flex-row">
+      <DialogContent className="flex h-[85vh] max-h-[42rem] w-full max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl sm:flex-row">
         <SettingsSidebar
           sections={settingsSections}
           activeSection={activeSection}
           onSelectSection={handleSelectSection}
           query={query}
           onQueryChange={setQuery}
+          settings={settings}
         />
-        <div className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="min-w-0 flex-1 overflow-y-auto p-4 sm:px-8 sm:py-7">
           <DialogDescription className="sr-only">
             Manage your account, appearance, and flashcard settings.
           </DialogDescription>
           <SettingsSearchProvider query={query}>
-            {searching ? (
-              <SearchResults
-                query={query}
-                settings={settings}
-                isLoading={isLoading}
-                onRetry={onRetry}
-              />
-            ) : (
-              <SettingsSectionContent
-                activeSection={activeSection}
-                settings={settings}
-                isLoading={isLoading}
-                onRetry={onRetry}
-              />
+            {searching && (
+              <h2 className="mb-4 text-base font-semibold tracking-tight">
+                {`"${query.trim()}"`}
+              </h2>
             )}
+            <SettingsSectionContent
+              activeSection={searching ? "all" : activeSection}
+              settings={settings}
+              isLoading={isLoading}
+              onRetry={onRetry}
+            />
           </SettingsSearchProvider>
         </div>
       </DialogContent>
@@ -104,12 +106,17 @@ export function SettingsDialog({
   );
 }
 
+const sectionGroups = [
+  ...new Set(settingsSections.map((section) => section.group)),
+];
+
 interface SettingsSidebarProps {
   sections: SettingsSection[];
   activeSection: SettingsSectionId;
   onSelectSection: (section: SettingsSectionId) => void;
   query: string;
   onQueryChange: (query: string) => void;
+  settings: AccountSettings | undefined;
 }
 
 function SettingsSidebar({
@@ -118,10 +125,11 @@ function SettingsSidebar({
   onSelectSection,
   query,
   onQueryChange,
+  settings,
 }: Readonly<SettingsSidebarProps>) {
   const searching = query.trim().length > 0;
   return (
-    <nav className="shrink-0 border-b bg-muted/50 p-2 sm:w-48 sm:border-r sm:border-b-0 sm:p-3">
+    <nav className="flex shrink-0 flex-col border-b bg-muted/50 p-2 sm:w-56 sm:border-r sm:border-b-0 sm:p-3">
       <DialogTitle className="px-2 pb-2">Settings</DialogTitle>
       <div className="relative px-1 sm:px-0">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground sm:left-2.5" />
@@ -144,80 +152,56 @@ function SettingsSidebar({
         ) : null}
       </div>
       {searching ? null : (
-        <div className="mt-2 flex gap-1 overflow-x-auto sm:flex-col sm:gap-0.5 sm:overflow-visible">
-          {sections.map((section) => {
-            const Icon = section.icon;
-            const active = section.id === activeSection;
-            return (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => onSelectSection(section.id)}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground",
-                  active && "bg-muted text-foreground",
-                )}
-              >
-                <Icon className="size-4 shrink-0" />
-                {section.label}
-              </button>
-            );
-          })}
+        <div className="mt-2 flex gap-1 overflow-x-auto sm:mt-3 sm:block sm:space-y-3 sm:overflow-visible">
+          {sectionGroups.map((group) => (
+            <div key={group} className="contents sm:block">
+              <p className="hidden px-2 pb-1 text-xs font-medium text-muted-foreground sm:block">
+                {group}
+              </p>
+              <div className="contents sm:grid sm:gap-0.5">
+                {sections
+                  .filter((section) => section.group === group)
+                  .map((section) => {
+                    const Icon = section.icon;
+                    const active = section.id === activeSection;
+                    return (
+                      <button
+                        key={section.id}
+                        type="button"
+                        onClick={() => onSelectSection(section.id)}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "flex shrink-0 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground",
+                          active && "bg-muted font-medium text-foreground",
+                        )}
+                      >
+                        <Icon className="size-4 shrink-0" />
+                        {section.label}
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
+      {settings ? (
+        <div className="mt-auto hidden items-center gap-2.5 border-t px-1 pt-3 sm:flex">
+          <AccountAvatar name={settings.name} className="size-8 text-xs" />
+          <div className="min-w-0 text-sm">
+            <p className="truncate">{settings.name}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {settings.email}
+            </p>
+          </div>
+        </div>
+      ) : null}
     </nav>
   );
 }
 
-interface SearchResultsProps {
-  query: string;
-  settings: AccountSettings | undefined;
-  isLoading: boolean;
-  onRetry: () => void;
-}
-
-function SearchResults({
-  query,
-  settings,
-  isLoading,
-  onRetry,
-}: Readonly<SearchResultsProps>) {
-  return (
-    <div>
-      <h2 className="mb-2 text-base font-semibold tracking-tight">
-        {`"${query.trim()}"`}
-      </h2>
-      {settings ? (
-        <AllSettings settings={settings} />
-      ) : (
-        <SettingsLoadingState isLoading={isLoading} onRetry={onRetry} />
-      )}
-    </div>
-  );
-}
-
-/**
- * Every section rendered at once so each row can self-filter against the active
- * search query. Section titles hide themselves while searching.
- */
-function AllSettings({ settings }: Readonly<{ settings: AccountSettings }>) {
-  return (
-    <>
-      <AccountProfileCard
-        name={settings.name}
-        email={settings.email}
-        createdAt={settings.createdAt}
-      />
-      <AppearanceCard />
-      <FlashcardOptimizationCard settings={settings.fsrsOptimization} />
-      <DangerZoneCard />
-    </>
-  );
-}
-
 interface SettingsSectionContentProps {
-  activeSection: SettingsSectionId;
+  activeSection: SettingsSectionId | "all";
   settings: AccountSettings | undefined;
   isLoading: boolean;
   onRetry: () => void;
@@ -229,34 +213,69 @@ function SettingsSectionContent({
   isLoading,
   onRetry,
 }: Readonly<SettingsSectionContentProps>) {
+  const searching = activeSection === "all";
+  const shows = (section: SettingsSectionId) =>
+    searching || activeSection === section;
+
   if (activeSection === "appearance") {
-    return <AppearanceCard />;
+    return (
+      <SectionPage id="appearance">
+        <AppearanceCard />
+      </SectionPage>
+    );
   }
 
   if (!settings) {
-    return <SettingsLoadingState isLoading={isLoading} onRetry={onRetry} />;
-  }
-
-  return <LoadedSection activeSection={activeSection} settings={settings} />;
-}
-
-function LoadedSection({
-  activeSection,
-  settings,
-}: Readonly<{ activeSection: SettingsSectionId; settings: AccountSettings }>) {
-  if (activeSection === "flashcards") {
-    return <FlashcardOptimizationCard settings={settings.fsrsOptimization} />;
+    const loading = (
+      <SettingsLoadingState isLoading={isLoading} onRetry={onRetry} />
+    );
+    return searching ? (
+      loading
+    ) : (
+      <SectionPage id={activeSection}>{loading}</SectionPage>
+    );
   }
 
   return (
-    <div className="space-y-8">
-      <AccountProfileCard
-        name={settings.name}
-        email={settings.email}
-        createdAt={settings.createdAt}
-      />
-      <DangerZoneCard />
+    <div className="space-y-4">
+      {shows("account") && (
+        <SectionPage id="account">
+          <AccountProfileCard
+            name={settings.name}
+            email={settings.email}
+            memberSince={settings.memberSince}
+          />
+          <TimeZoneCard
+            timeZone={settings.timeZone}
+            options={settings.timeZoneOptions}
+          />
+          <DangerZoneCard />
+        </SectionPage>
+      )}
+      {searching && (
+        <SectionPage id="appearance">
+          <AppearanceCard />
+        </SectionPage>
+      )}
+      {shows("flashcards") && (
+        <SectionPage id="flashcards">
+          <FlashcardOptimizationCard settings={settings.fsrsOptimization} />
+        </SectionPage>
+      )}
     </div>
+  );
+}
+
+function SectionPage({
+  id,
+  children,
+}: Readonly<{ id: SettingsSectionId; children: ReactNode }>) {
+  const section = settingsSections.find((entry) => entry.id === id);
+  if (!section) return null;
+  return (
+    <SettingsPage title={section.label} description={section.description}>
+      {children}
+    </SettingsPage>
   );
 }
 

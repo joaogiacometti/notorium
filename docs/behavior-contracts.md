@@ -12,6 +12,7 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 
 ## Review and Persistence
 
+- User-facing calendar dates, daily review activity, and streaks use the account time zone, defaulting to UTC. Changing it preserves recorded instants and scheduled due times.
 - Deleting a card or folder preserves historical review activity and FSRS optimization input. Undoing the latest regular grade restores its prior scheduling state and removes that grade's history entry.
 - Exam grading and study-later marks do not change regular spaced-repetition scheduling. Explicit card edits, resets, and deletes remain writes.
 - Archived cards leave every review queue, due count, review total, and exam, and cannot be graded; archiving and unarchiving keep content, history, and scheduling state. Archiving clears the study-later mark, and only active cards can take one.

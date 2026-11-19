@@ -1,40 +1,26 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Controller, useForm, useFormState } from "react-hook-form";
 import { toast } from "sonner";
 import {
   optimizeFlashcardScheduler,
   resetFlashcardSchedulerOptimization,
   updateFsrsOptimizationPreferences,
 } from "@/app/actions/account";
-import {
-  SettingsRow,
-  SettingsSection,
-} from "@/components/account/settings-section";
+import { SettingsCard } from "@/components/account/settings-section";
 import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 import { AsyncButtonContent } from "@/components/shared/async-button-content";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import {
-  type UpdateFsrsOptimizationPreferencesForm,
-  updateFsrsOptimizationPreferencesSchema,
-} from "@/features/flashcards/fsrs/validation";
 import { invalidateAccountSettings } from "@/lib/client-cache/invalidation";
-import { formatDateLong } from "@/lib/dates/format";
-import type { FlashcardOptimizationSettings } from "@/lib/server/api-contracts";
+import type { AccountSettings } from "@/lib/server/api-contracts";
 import { resolveActionErrorMessage } from "@/lib/server/server-action-errors";
 
 interface FlashcardOptimizationCardProps {
-  settings: FlashcardOptimizationSettings;
-}
-
-function getLastOptimizedLabel(lastOptimizedAt: string | null): string {
-  return lastOptimizedAt ? formatDateLong(lastOptimizedAt) : "Never optimized";
+  settings: AccountSettings["fsrsOptimization"];
 }
 
 export function FlashcardOptimizationCard({
@@ -46,23 +32,17 @@ export function FlashcardOptimizationCard({
   const [isOptimizing, startOptimization] = useTransition();
   const [isResetting, startReset] = useTransition();
   const [isSaving, startSaving] = useTransition();
-  const form = useForm<UpdateFsrsOptimizationPreferencesForm>({
-    resolver: zodResolver(updateFsrsOptimizationPreferencesSchema),
-    defaultValues: {
-      automaticOptimizationEnabled: settings.automaticOptimizationEnabled,
-    },
-  });
-  // Compared with the last saved value, not the `settings` prop, which stays
-  // stale until the refreshed settings query resolves.
-  const { isDirty: preferencesChanged } = useFormState({
-    control: form.control,
-  });
+  // Mirrors the saved value so the switch responds immediately; reverted if
+  // the save fails.
+  const [automaticEnabled, setAutomaticEnabled] = useState(
+    settings.automaticOptimizationEnabled,
+  );
 
   async function handleOptimizeNow() {
     startOptimization(async () => {
       const result = await optimizeFlashcardScheduler();
       if (result.success) {
-        toast.success("FSRS optimization completed.");
+        toast.success("Scheduler optimized.");
         router.refresh();
         await invalidateAccountSettings(queryClient);
         return;
@@ -77,7 +57,7 @@ export function FlashcardOptimizationCard({
       const result = await resetFlashcardSchedulerOptimization();
       if (result.success) {
         setResetOpen(false);
-        toast.success("FSRS optimization reset.");
+        toast.success("Scheduler reset to defaults.");
         router.refresh();
         await invalidateAccountSettings(queryClient);
         return;
@@ -87,106 +67,112 @@ export function FlashcardOptimizationCard({
     });
   }
 
-  async function onSubmit(data: UpdateFsrsOptimizationPreferencesForm) {
+  function handleAutomaticChange(enabled: boolean) {
+    setAutomaticEnabled(enabled);
     startSaving(async () => {
-      const result = await updateFsrsOptimizationPreferences(data);
+      const result = await updateFsrsOptimizationPreferences({
+        automaticOptimizationEnabled: enabled,
+      });
       if (result.success) {
-        form.reset(data);
-        toast.success("FSRS optimization preferences saved.");
+        toast.success(
+          enabled
+            ? "Automatic optimization turned on."
+            : "Automatic optimization turned off.",
+        );
         router.refresh();
         await invalidateAccountSettings(queryClient);
         return;
       }
 
+      setAutomaticEnabled(!enabled);
       toast.error(resolveActionErrorMessage(result));
     });
   }
+
+  const busy = isOptimizing || isResetting;
 
   return (
     <>
-      <SettingsSection title="Flashcards">
-        <SettingsRow
-          label="FSRS optimization"
-          description={`Last optimized: ${getLastOptimizedLabel(settings.lastOptimizedAt)}`}
-          keywords="flashcard scheduler optimize review"
-          action={
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-              <Button
-                type="button"
-                onClick={handleOptimizeNow}
-                disabled={isOptimizing || isResetting}
-                className="w-full sm:w-fit"
-              >
-                <AsyncButtonContent
-                  pending={isOptimizing}
-                  idleLabel="Optimize now"
-                  pendingLabel="Optimizing…"
-                />
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => setResetOpen(true)}
-                disabled={isOptimizing || isResetting}
-                className="w-full sm:w-fit"
-              >
-                <RotateCcw className="size-4" />
-                Reset
-              </Button>
-            </div>
-          }
-        />
-
-        <SettingsRow
-          label="Automatic optimization"
-          description="Run FSRS optimization every 30 days when the scheduled workflow runs."
-          keywords="flashcard scheduler auto fsrs"
-          action={
-            <form
-              id="form-fsrs-optimization"
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="flex items-center gap-3"
+      <SettingsCard
+        title="Scheduler optimization"
+        description="FSRS learns from your review history to predict when you'll forget each card."
+        keywords="fsrs flashcard scheduler optimize review last optimized"
+        control={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setResetOpen(true)}
+              disabled={busy}
             >
-              <Controller
-                name="automaticOptimizationEnabled"
-                control={form.control}
-                render={({ field }) => (
-                  <Switch
-                    id="automatic-optimization-toggle"
-                    aria-label="Automatic optimization"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                )}
+              <RotateCcw />
+              Reset to defaults
+            </Button>
+            <Button type="button" onClick={handleOptimizeNow} disabled={busy}>
+              <AsyncButtonContent
+                pending={isOptimizing}
+                idleIcon={<Sparkles />}
+                idleLabel="Optimize now"
+                pendingLabel="Optimizing…"
               />
-              <Button
-                type="submit"
-                form="form-fsrs-optimization"
-                disabled={isSaving || !preferencesChanged}
-                size="sm"
-              >
-                <AsyncButtonContent
-                  pending={isSaving}
-                  idleLabel="Save"
-                  pendingLabel="Saving…"
-                />
-              </Button>
-            </form>
-          }
-        />
-      </SettingsSection>
+            </Button>
+          </>
+        }
+      >
+        <dl className="grid grid-cols-3 divide-x rounded-md border">
+          <OptimizationStat
+            label="Last optimized"
+            value={settings.lastOptimizedOn ?? "Never"}
+          />
+          <OptimizationStat
+            label="Reviews logged"
+            value={settings.reviewCount}
+          />
+          <OptimizationStat
+            label="Used in last run"
+            value={settings.optimizedReviewCount}
+          />
+        </dl>
+      </SettingsCard>
+
+      <SettingsCard
+        title="Automatic optimization"
+        description="Re-optimize every 30 days when the scheduled workflow runs."
+        keywords="fsrs flashcard scheduler auto"
+        control={
+          <Switch
+            id="automatic-optimization-toggle"
+            aria-label="Automatic optimization"
+            checked={automaticEnabled}
+            onCheckedChange={handleAutomaticChange}
+            disabled={isSaving}
+          />
+        }
+      />
 
       <ActionConfirmationDialog
         open={resetOpen}
         onOpenChange={setResetOpen}
-        title="Reset optimization"
+        title="Reset to defaults"
         description="Resetting will discard the current optimized FSRS tuning and restore the default scheduler. Your review history and flashcard progress will be kept."
-        confirmLabel="Reset"
+        confirmLabel="Reset to defaults"
         pendingLabel="Resetting…"
         confirmVariant="destructive"
         isPending={isResetting}
         onConfirm={handleReset}
       />
     </>
+  );
+}
+
+function OptimizationStat({
+  label,
+  value,
+}: Readonly<{ label: string; value: string | number }>) {
+  return (
+    <div className="min-w-0 px-3.5 py-2.5">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 truncate font-semibold tabular-nums">{value}</dd>
+    </div>
   );
 }

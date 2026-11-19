@@ -51,7 +51,7 @@ it("refreshes the cached settings after a rename so reopening shows the new name
         <AccountProfileCard
           name="Ada"
           email="ada@example.com"
-          createdAt="2026-01-01T00:00:00.000Z"
+          memberSince="January 1, 2026"
         />
       </QueryClientProvider>,
     );
@@ -77,4 +77,45 @@ it("refreshes the cached settings after a rename so reopening shows the new name
   expect(
     queryClient.getQueryState(libraryKeys.accountSettings)?.isInvalidated,
   ).toBe(true);
+});
+
+it("shows Save only after an edit and Cancel restores the saved name", async () => {
+  await act(async () => {
+    root.render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AccountProfileCard
+          name="Ada"
+          email="ada@example.com"
+          memberSince="January 1, 2026"
+        />
+      </QueryClientProvider>,
+    );
+  });
+
+  const findButton = (label: string) =>
+    Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === label,
+    );
+  const input = container.querySelector<HTMLInputElement>("#form-account-name");
+  if (!input) throw new Error("Display name input missing");
+  expect(findButton("Save")).toBeUndefined();
+  expect(findButton("Cancel")).toBeUndefined();
+
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )?.set?.call(input, "Grace");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  expect(findButton("Save")?.disabled).toBe(false);
+
+  await act(async () => {
+    findButton("Cancel")?.dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+  });
+  expect(input.value).toBe("Ada");
+  expect(findButton("Save")).toBeUndefined();
+  expect(updateAccountMock).not.toHaveBeenCalled();
 });

@@ -1,11 +1,12 @@
 "use client";
 
 import { createContext, type ReactNode, useContext } from "react";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 /**
- * Active settings search query (already lowercased), shared so sections and
- * rows can self-filter. Empty string means "not searching" — show everything.
+ * Active settings search query (already lowercased), shared so pages and cards
+ * can self-filter. Empty string means "not searching" — show everything.
  */
 const SettingsSearchContext = createContext("");
 
@@ -24,80 +25,102 @@ function useSettingsSearch() {
   return useContext(SettingsSearchContext);
 }
 
-interface SettingsSectionProps {
+interface SettingsPageProps {
   title: string;
+  description: string;
   children: ReactNode;
 }
 
 /**
- * Flat (RemNote-style) settings group: a section heading above a list of rows
- * separated by dividers. While a search is active the heading is hidden so
- * matching rows from every section read as one flat list.
+ * One settings section: a page title and description above its cards. While a
+ * search is active the header hides so matching cards read as one list.
  *
  * @example
- * <SettingsSection title="Appearance">
- *   <SettingsRow label="Theme" action={<ThemeSelect />} />
- * </SettingsSection>
+ * <SettingsPage title="Appearance" description="Choose how Notorium looks.">
+ *   <SettingsCard title="Theme">…</SettingsCard>
+ * </SettingsPage>
  */
-export function SettingsSection({
+export function SettingsPage({
   title,
+  description,
   children,
-}: Readonly<SettingsSectionProps>) {
+}: Readonly<SettingsPageProps>) {
   const query = useSettingsSearch();
   return (
-    <section>
+    <section className="space-y-4">
       {query ? null : (
-        <h2 className="mb-2 text-base font-semibold tracking-tight">{title}</h2>
+        <header className="space-y-1">
+          <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </header>
       )}
-      <div className="divide-y divide-border/60">{children}</div>
+      {children}
     </section>
   );
 }
 
-interface SettingsRowProps {
-  label: string;
-  description?: ReactNode;
-  /** Extra terms (space-separated) the search should match this row on. */
+interface SettingsCardProps {
+  title: string;
+  /** What the setting does, or metadata for an identity card. */
+  description: ReactNode;
+  /** Leading visual for the header, such as an avatar. */
+  media?: ReactNode;
+  /** Extra terms (space-separated) the search should match this card on. */
   keywords?: string;
-  action?: ReactNode;
+  /** The card's control or actions, aligned with the title. */
+  control?: ReactNode;
+  tone?: "default" | "danger";
   children?: ReactNode;
-  className?: string;
 }
 
 /**
- * One settings row: label and optional sub-text on the left, an action control
- * on the right. Full-width controls (inputs, grids) go in `children`. The row
- * removes itself when a search is active and neither its label nor keywords
- * match the query.
+ * One group of settings with a fixed anatomy: a header (title, description,
+ * and one control or action group on the right) and an optional body for
+ * richer content. The card removes itself when a search is active and neither
+ * its title nor keywords match the query.
  *
  * @example
- * <SettingsRow label="Email" description="ada@example.com" keywords="address" />
+ * <SettingsCard title="Time zone" description="…" control={<Picker />} />
  */
-export function SettingsRow({
-  label,
+export function SettingsCard({
+  title,
   description,
+  media,
   keywords,
-  action,
+  control,
+  tone = "default",
   children,
-  className,
-}: Readonly<SettingsRowProps>) {
+}: Readonly<SettingsCardProps>) {
   const query = useSettingsSearch();
-  if (query && !`${label} ${keywords ?? ""}`.toLowerCase().includes(query)) {
+  if (query && !`${title} ${keywords ?? ""}`.toLowerCase().includes(query)) {
     return null;
   }
 
   return (
-    <div className={cn("py-4 first:pt-0 last:pb-0", className)}>
+    <Card
+      data-slot="settings-card"
+      className={cn(
+        "gap-0 p-5 shadow-none",
+        tone === "danger" && "border-destructive/45",
+      )}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 space-y-0.5">
-          <p className="font-medium">{label}</p>
-          {description ? (
+        <div className="flex min-w-0 items-center gap-3">
+          {media}
+          <div className="min-w-0 space-y-1">
+            <h3 className="truncate text-base font-semibold tracking-tight">
+              {title}
+            </h3>
             <div className="text-sm text-muted-foreground">{description}</div>
-          ) : null}
+          </div>
         </div>
-        {action ? <div className="shrink-0">{action}</div> : null}
+        {control ? (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {control}
+          </div>
+        ) : null}
       </div>
-      {children ? <div className="mt-3">{children}</div> : null}
-    </div>
+      {children ? <div className="mt-4">{children}</div> : null}
+    </Card>
   );
 }

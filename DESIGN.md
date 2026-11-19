@@ -24,6 +24,7 @@ Do not hand-edit `src/components/ui/`; compose its primitives.
 | Detail page                     | `DetailPageLayout`                                            |
 | Feature index                   | `FeaturePageShell`                                            |
 | Home card header                | `DashboardCardHeader`                                         |
+| Settings group                  | `SettingsCard` inside a `SettingsPage`                        |
 
 Page components live in [shared components](./src/components/shared/). Raw buttons
 are for custom controls such as segmented toggles and drop zones, not ordinary actions.
@@ -64,6 +65,8 @@ are for custom controls such as segmented toggles and drop zones, not ordinary a
 ## Surfaces, color, and type
 
 Keep the UI flat: no decorative gradients, shadows, or nested bordered panels.
+Settings dialog groups are the one exception: each is a flat `SettingsCard` whose
+header holds its title, description, and controls; richer content goes below.
 Use `Card` for panels, plain `border-border`, and theme radius defaults: controls
 and badges use `rounded-md`, panels/dialogs `rounded-lg`. Reserve `rounded-full`
 for avatars, status dots, and progress bars. Floating surfaces may use `shadow-md`

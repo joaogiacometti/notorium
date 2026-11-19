@@ -430,6 +430,22 @@ function getSeedRatingForCardReview(
   return pattern[cardPosition % pattern.length];
 }
 
+export async function seedReviewActivity(userId: string, reviewedAt: Date) {
+  const id = crypto.randomUUID();
+  await getDb().insert(flashcardReviewLog).values({
+    id,
+    userId,
+    flashcardId: crypto.randomUUID(),
+    rating: "good",
+    reviewedAt,
+  });
+  return async () => {
+    await getDb()
+      .delete(flashcardReviewLog)
+      .where(eq(flashcardReviewLog.id, id));
+  };
+}
+
 async function seedFsrsReviewLogs(
   userId: string,
   flashcardIds: string[],

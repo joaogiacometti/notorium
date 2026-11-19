@@ -9,6 +9,7 @@ import {
   readFsrsSchedulerSettings,
   resetFsrsSchedulerSettings,
   seedFsrsSchedulerSettings,
+  seedReviewActivity,
 } from "./support/db";
 
 const optimizationReviewCount = 64;
@@ -25,7 +26,7 @@ async function openAccountPage(page: Page) {
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await expect(
-    dialog.getByText("FSRS optimization", { exact: true }),
+    dialog.getByText("Scheduler optimization", { exact: true }),
   ).toBeVisible();
 }
 
@@ -87,12 +88,14 @@ test("can reset flashcard optimization without deleting review history", async (
     registerCleanup(() => resetFsrsSchedulerSettings(e2eUser.userId));
 
     await openAccountPage(page);
-    await expect(page.getByText("Last optimized:")).toBeVisible();
+    await expect(
+      page.getByText("Last optimized", { exact: true }),
+    ).toBeVisible();
 
-    await page.getByRole("button", { name: "Reset", exact: true }).click();
-    const dialog = page.getByRole("dialog", { name: "Reset optimization" });
+    await page.getByRole("button", { name: "Reset to defaults" }).click();
+    const dialog = page.getByRole("dialog", { name: "Reset to defaults" });
     await expect(dialog).toBeVisible();
-    await dialog.getByRole("button", { name: "Reset", exact: true }).click();
+    await dialog.getByRole("button", { name: "Reset to defaults" }).click();
 
     await expect
       .poll(async () => {
@@ -137,4 +140,50 @@ test("settings deep link does not reopen after a server action and reload", asyn
   ).toBeVisible();
   await expect(dialog).toHaveCount(0);
   await page.getByRole("button", { name: "Expand sidebar" }).click();
+});
+
+test("account time zone persists and moves review activity to the local day", async ({
+  page,
+  e2eUser,
+}) => {
+  await runWithCleanup(async (registerCleanup) => {
+    const reviewedAt = new Date();
+    reviewedAt.setUTCDate(reviewedAt.getUTCDate() - 7);
+    reviewedAt.setUTCHours(1, 0, 0, 0);
+    registerCleanup(await seedReviewActivity(e2eUser.userId, reviewedAt));
+
+    function reviewLabel(timeZone: string) {
+      const label = new Intl.DateTimeFormat("en-US", {
+        timeZone,
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(reviewedAt);
+      return `1 review on ${label}`;
+    }
+
+    await page.goto("/?settings=account");
+    await expect(page.getByTitle(reviewLabel("UTC"))).toHaveCount(1);
+    await page
+      .getByRole("textbox", { name: "Search settings" })
+      .fill("timezone");
+    await page.getByRole("button", { name: "Time zone: UTC" }).click();
+    await page.getByPlaceholder("Search time zones…").fill("Sao Paulo");
+    await page.getByRole("option", { name: "America/Sao Paulo" }).click();
+    const saved = page.getByRole("button", {
+      name: "Time zone: America/Sao_Paulo",
+    });
+    await expect(saved).toBeEnabled();
+    await expect(page.getByTitle(reviewLabel("America/Sao_Paulo"))).toHaveCount(
+      1,
+    );
+
+    await page.goto("/?settings=account");
+    await saved.click();
+    await page.getByRole("option", { name: /^UTC\b/ }).click();
+    await expect(
+      page.getByRole("button", { name: "Time zone: UTC" }),
+    ).toBeEnabled();
+    await expect(page.getByTitle(reviewLabel("UTC"))).toHaveCount(1);
+  });
 });

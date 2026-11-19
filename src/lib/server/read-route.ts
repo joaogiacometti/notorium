@@ -12,6 +12,7 @@ interface ReadRouteUser {
   name: string;
   email: string;
   createdAt: Date;
+  timeZone: string;
 }
 
 /** Input schema for read routes that take no parameters. */

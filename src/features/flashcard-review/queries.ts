@@ -14,6 +14,7 @@ import {
   getFolderPathMapForUser,
 } from "@/features/folders/queries";
 import { LIMITS } from "@/lib/config/limits";
+import { calendarDay } from "@/lib/dates/format";
 import type {
   FlashcardEntity,
   FlashcardReviewActivity,
@@ -155,30 +156,34 @@ export async function getFlashcardReviewSummaryForUser(
  * Kept lean — only the heatmap aggregation, no card/rating breakdowns.
  *
  * @example
- * const activity = await getFlashcardReviewActivityForUser(userId, new Date());
+ * const activity = await getFlashcardReviewActivityForUser(userId, new Date(), "UTC");
  */
 export async function getFlashcardReviewActivityForUser(
   userId: string,
   now: Date,
+  timeZone: string,
 ): Promise<FlashcardReviewActivity> {
-  const heatmapStart = new Date(now);
-  heatmapStart.setHours(0, 0, 0, 0);
-  heatmapStart.setDate(heatmapStart.getDate() - (heatmapDays - 1));
+  const today = new Date(calendarDay(now, timeZone));
+  const heatmapStart = new Date(today);
+  heatmapStart.setUTCDate(today.getUTCDate() - (heatmapDays - 1));
+  // Scan one extra UTC day so the index covers every local midnight, including
+  // offset changes. Only the requested local dates enter the heatmap below.
+  const scanStart = new Date(heatmapStart);
+  scanStart.setUTCDate(scanStart.getUTCDate() - 1);
 
   const heatmapRows = await getDb()
     .select({
-      date: sql<string>`to_char(date_trunc('day', ${flashcardReviewLog.reviewedAt}), 'YYYY-MM-DD')`,
+      date: sql<string>`to_char(${flashcardReviewLog.reviewedAt} at time zone 'UTC' at time zone ${timeZone}, 'YYYY-MM-DD')`,
       count: count(),
     })
     .from(flashcardReviewLog)
     .where(
       and(
         eq(flashcardReviewLog.userId, userId),
-        gte(flashcardReviewLog.reviewedAt, heatmapStart),
+        gte(flashcardReviewLog.reviewedAt, scanStart),
       ),
     )
-    .groupBy(sql`date_trunc('day', ${flashcardReviewLog.reviewedAt})`)
-    .orderBy(sql`date_trunc('day', ${flashcardReviewLog.reviewedAt})`);
+    .groupBy(sql`1`);
 
   const countByDate = new Map(heatmapRows.map((row) => [row.date, row.count]));
 
@@ -186,7 +191,7 @@ export async function getFlashcardReviewActivityForUser(
     { length: heatmapDays },
     (_, index) => {
       const date = new Date(heatmapStart);
-      date.setDate(heatmapStart.getDate() + index);
+      date.setUTCDate(heatmapStart.getUTCDate() + index);
       const key = date.toISOString().slice(0, 10);
 
       return { date: key, count: countByDate.get(key) ?? 0 };

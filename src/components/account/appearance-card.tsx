@@ -1,12 +1,9 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { SettingsCard } from "@/components/account/settings-section";
 import {
-  SettingsRow,
-  SettingsSection,
-} from "@/components/account/settings-section";
-import {
-  ThemePreview,
+  ThemeScenePreview,
   themeDescriptionById,
   themeLabelByKey,
 } from "@/components/navbar/theme-options";
@@ -15,9 +12,9 @@ import { type AppTheme, themeOptions } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 /**
- * Appearance settings: app theme selection. Theme is persisted through
- * `useThemeControl`. The check icon's space is always reserved so selecting a
- * theme never reflows the row height.
+ * Appearance settings: app theme selection as preview tiles. Theme is persisted
+ * through `useThemeControl`. The check icon's space is always reserved so
+ * selecting a theme never shifts the label.
  */
 export function AppearanceCard() {
   const { currentTheme, resolvedTheme, mounted, setAppTheme } =
@@ -30,50 +27,47 @@ export function AppearanceCard() {
   }
 
   return (
-    <SettingsSection title="Appearance">
-      <SettingsRow
-        label="Theme"
-        description={`System currently resolves to ${resolvedThemeLabel}.`}
-        keywords="appearance dark light mode color"
-      >
-        <div className="grid gap-1.5 sm:grid-cols-2">
-          {themeOptions.map((option) => {
-            const isSelected = mounted && option.id === currentTheme;
+    <SettingsCard
+      title="Theme"
+      description={`Saved to your account and applied on every device. System currently resolves to ${resolvedThemeLabel}.`}
+      keywords="appearance dark light mode color"
+    >
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {themeOptions.map((option) => {
+          const isSelected = mounted && option.id === currentTheme;
 
-            return (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => handleThemeChange(option.id)}
-                aria-pressed={isSelected}
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => handleThemeChange(option.id)}
+              aria-pressed={isSelected}
+              className="group rounded-lg text-left outline-none"
+            >
+              <ThemeScenePreview
+                themeId={option.id}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors",
-                  isSelected
-                    ? "border-border bg-muted text-foreground"
-                    : "hover:border-border hover:bg-muted/50",
+                  "h-20 outline-2 outline-offset-2 outline-transparent transition-colors group-hover:outline-border group-focus-visible:outline-ring",
+                  isSelected && "outline-primary group-hover:outline-primary",
                 )}
-              >
-                <ThemePreview themeId={option.id} isSelected={isSelected} />
-                <div className="grid min-w-0 flex-1 gap-0.5">
-                  <span className="text-sm leading-none font-medium">
-                    {themeLabelByKey[option.labelKey]}
-                  </span>
-                  <span className="line-clamp-1 text-xs text-muted-foreground">
-                    {themeDescriptionById[option.id]}
-                  </span>
-                </div>
+              />
+              <span className="mt-2 flex items-center gap-1.5 text-sm font-medium">
                 <Check
                   aria-hidden
                   className={cn(
-                    "size-4 shrink-0 text-foreground",
+                    "size-3.5 shrink-0 text-primary",
                     isSelected ? "opacity-100" : "opacity-0",
                   )}
                 />
-              </button>
-            );
-          })}
-        </div>
-      </SettingsRow>
-    </SettingsSection>
+                {themeLabelByKey[option.labelKey]}
+              </span>
+              <span className="line-clamp-2 text-xs text-muted-foreground">
+                {themeDescriptionById[option.id]}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </SettingsCard>
   );
 }

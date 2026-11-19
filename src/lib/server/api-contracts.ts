@@ -128,7 +128,12 @@ export interface AccountSettings {
   name: string;
   email: string;
   createdAt: string;
-  fsrsOptimization: FlashcardOptimizationSettings;
+  timeZone: string;
+  timeZoneOptions: string[];
+  memberSince: string;
+  fsrsOptimization: FlashcardOptimizationSettings & {
+    lastOptimizedOn: string | null;
+  };
 }
 
 export interface ReviewActivityPoint {

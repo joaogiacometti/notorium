@@ -83,9 +83,7 @@ function mockReviewTrendOnce(value: unknown) {
   selectMock.mockImplementationOnce(() => ({
     from: () => ({
       where: () => ({
-        groupBy: () => ({
-          orderBy: vi.fn().mockResolvedValue(value),
-        }),
+        groupBy: vi.fn().mockResolvedValue(value),
       }),
     }),
   }));
@@ -115,6 +113,7 @@ describe("getFlashcardReviewActivityForUser", () => {
     const result = await getFlashcardReviewActivityForUser(
       "user-1",
       new Date("2026-04-12T15:00:00.000Z"),
+      "UTC",
     );
 
     expect(eqMock).toHaveBeenCalledWith(
@@ -125,17 +124,8 @@ describe("getFlashcardReviewActivityForUser", () => {
       "flashcard_review_log_reviewed_at_column",
       expect.any(Date),
     );
-    const expectedHeatmapStart = new Date("2026-04-12T15:00:00.000Z");
-    expectedHeatmapStart.setHours(0, 0, 0, 0);
-    expectedHeatmapStart.setDate(expectedHeatmapStart.getDate() - 364);
-
-    expect(
-      (
-        vi.mocked(gteMock).mock.calls[0]?.[1] as Date | undefined
-      )?.toISOString(),
-    ).toBe(expectedHeatmapStart.toISOString());
-
     expect(result.heatmap).toHaveLength(365);
+    expect(result.heatmap[0].date).toBe("2025-04-13");
     expect(result.heatmap.at(-1)).toEqual({ date: "2026-04-12", count: 2 });
     expect(result.heatmap.filter((point) => point.count > 0)).toEqual([
       { date: "2026-04-08", count: 3 },
@@ -145,6 +135,19 @@ describe("getFlashcardReviewActivityForUser", () => {
     expect(result.streak).toEqual({ current: 1, longest: 1 });
   });
 
+  it("ends the heatmap on the user’s local day across the spring DST transition", async () => {
+    mockReviewTrendOnce([{ date: "2026-03-08", count: 2 }]);
+    const { getFlashcardReviewActivityForUser } = await import("./queries");
+    const result = await getFlashcardReviewActivityForUser(
+      "user-1",
+      new Date("2026-03-09T03:30:00Z"),
+      "America/New_York",
+    );
+
+    expect(result.heatmap.at(-1)).toEqual({ date: "2026-03-08", count: 2 });
+    expect(result.streak.current).toBe(1);
+  });
+
   it("returns a zero-filled heatmap when there are no reviews", async () => {
     mockReviewTrendOnce([]);
 
@@ -152,6 +155,7 @@ describe("getFlashcardReviewActivityForUser", () => {
     const result = await getFlashcardReviewActivityForUser(
       "user-1",
       new Date("2026-04-12T15:00:00.000Z"),
+      "UTC",
     );
 
     expect(result.heatmap).toHaveLength(365);

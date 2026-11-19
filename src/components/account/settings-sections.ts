@@ -6,14 +6,35 @@ export type SettingsSectionId = "account" | "appearance" | "flashcards";
 export interface SettingsSection {
   id: SettingsSectionId;
   label: string;
+  description: string;
+  /** Sidebar heading the section is listed under. */
+  group: "Personal" | "Study";
   icon: LucideIcon;
 }
 
 /** Sidebar entries for the settings dialog, in display order. */
 export const settingsSections: SettingsSection[] = [
-  { id: "account", label: "Account", icon: User },
-  { id: "appearance", label: "Appearance", icon: Palette },
-  { id: "flashcards", label: "Flashcards", icon: Layers },
+  {
+    id: "account",
+    label: "Account",
+    description: "Your profile and how dates are shown to you.",
+    group: "Personal",
+    icon: User,
+  },
+  {
+    id: "appearance",
+    label: "Appearance",
+    description: "Choose how Notorium looks on this account.",
+    group: "Personal",
+    icon: Palette,
+  },
+  {
+    id: "flashcards",
+    label: "Flashcards",
+    description: "Tune how your reviews are scheduled.",
+    group: "Study",
+    icon: Layers,
+  },
 ];
 
 /**

@@ -2,7 +2,7 @@ import type { AppTheme, themeOptions } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 /**
- * Shared theme presentation metadata and preview swatch. Used by both the
+ * Shared theme presentation metadata and preview. Used by both the
  * navbar/floating `ModeToggle` dropdown and the account settings appearance
  * card so labels, descriptions, icons, and previews stay in one place.
  */
@@ -48,45 +48,63 @@ const themePreviewPaletteById: Record<
   },
 };
 
-export function ThemePreview({
+function SceneLayer({
   themeId,
-  isSelected,
-}: Readonly<{ themeId: AppTheme; isSelected: boolean }>) {
+  className,
+}: Readonly<{ themeId: Exclude<AppTheme, "system">; className?: string }>) {
+  const palette = themePreviewPaletteById[themeId];
   return (
     <span
+      className={cn("absolute inset-0 flex gap-1 p-1.5", className)}
+      style={{ backgroundColor: palette.background }}
+    >
+      <span
+        className="w-1/4 rounded-sm"
+        style={{ backgroundColor: palette.muted }}
+      />
+      <span
+        className="relative flex-1 rounded-sm border"
+        style={{ backgroundColor: palette.card, borderColor: palette.muted }}
+      >
+        <span
+          className="absolute right-1.5 bottom-1.5 h-1/5 w-1/3 rounded-[2px]"
+          style={{ backgroundColor: palette.primary }}
+        />
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Larger theme thumbnail drawn as a miniature app (sidebar, card, primary
+ * button). System splits light and dark diagonally. Size it through
+ * `className`.
+ */
+export function ThemeScenePreview({
+  themeId,
+  className,
+}: Readonly<{ themeId: AppTheme; className?: string }>) {
+  return (
+    <span
+      aria-hidden
       className={cn(
-        "inline-flex h-7 w-10 items-center justify-center rounded-md border p-0.5",
-        isSelected && "border-foreground/35",
+        "relative block overflow-hidden rounded-md border",
+        className,
       )}
     >
       {themeId === "system" ? (
-        <span className="flex h-full w-full overflow-hidden rounded-sm">
-          <span className="h-full w-1/2 bg-background" />
-          <span className="h-full w-1/2 bg-foreground/80" />
-        </span>
-      ) : (
-        <span
-          className="flex h-full w-full flex-col overflow-hidden rounded-sm"
-          style={{
-            backgroundColor: themePreviewPaletteById[themeId].background,
-          }}
-        >
-          <span
-            className="h-2/5"
-            style={{ backgroundColor: themePreviewPaletteById[themeId].muted }}
+        <>
+          <SceneLayer
+            themeId="light"
+            className="[clip-path:polygon(0_0,100%_0,0_100%)]"
           />
-          <span
-            className="h-3/5 px-0.5 py-0.5"
-            style={{ backgroundColor: themePreviewPaletteById[themeId].card }}
-          >
-            <span
-              className="block h-full w-full rounded-[2px]"
-              style={{
-                backgroundColor: themePreviewPaletteById[themeId].primary,
-              }}
-            />
-          </span>
-        </span>
+          <SceneLayer
+            themeId="dark"
+            className="[clip-path:polygon(100%_0,100%_100%,0_100%)]"
+          />
+        </>
+      ) : (
+        <SceneLayer themeId={themeId} />
       )}
     </span>
   );

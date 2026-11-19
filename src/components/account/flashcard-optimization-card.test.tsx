@@ -105,6 +105,7 @@ vi.mock("@/lib/server/server-action-errors", () => ({
 const settings = {
   automaticOptimizationEnabled: false,
   lastOptimizedAt: null,
+  lastOptimizedOn: null,
   optimizedReviewCount: 0,
   reviewCount: 72,
 };
@@ -169,9 +170,7 @@ describe("FlashcardOptimizationCard", () => {
     });
 
     expect(optimizeFlashcardSchedulerMock).toHaveBeenCalledOnce();
-    expect(toastSuccessMock).toHaveBeenCalledWith(
-      "FSRS optimization completed.",
-    );
+    expect(toastSuccessMock).toHaveBeenCalledWith("Scheduler optimized.");
     expect(routerRefreshMock).toHaveBeenCalledOnce();
     // The dialog reads settings from the client cache, so "Last optimized"
     // only updates once that cache is refreshed.
@@ -188,7 +187,7 @@ describe("FlashcardOptimizationCard", () => {
     });
 
     const resetButton = Array.from(container.querySelectorAll("button")).find(
-      (element) => element.textContent === "Reset",
+      (element) => element.textContent === "Reset to defaults",
     );
     await act(async () => {
       resetButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -196,7 +195,7 @@ describe("FlashcardOptimizationCard", () => {
 
     const dialog = container.querySelector('[role="dialog"]');
     expect(dialog?.getAttribute("data-confirm-variant")).toBe("destructive");
-    expect(container.textContent).toContain("Reset optimization");
+    expect(container.textContent).toContain("Reset to defaults");
     expect(container.textContent).toContain(
       "discard the current optimized FSRS tuning",
     );
@@ -209,32 +208,14 @@ describe("FlashcardOptimizationCard", () => {
     });
 
     expect(resetFlashcardSchedulerOptimizationMock).toHaveBeenCalledOnce();
-    expect(toastSuccessMock).toHaveBeenCalledWith("FSRS optimization reset.");
+    expect(toastSuccessMock).toHaveBeenCalledWith(
+      "Scheduler reset to defaults.",
+    );
     expect(routerRefreshMock).toHaveBeenCalledOnce();
     expect(isAccountSettingsInvalidated()).toBe(true);
   });
 
-  it("enables the automatic optimization save action after the switch changes", async () => {
-    await act(async () => {
-      renderCard();
-    });
-
-    const saveButton = Array.from(container.querySelectorAll("button")).find(
-      (element) => element.textContent === "Save",
-    );
-
-    expect(saveButton).toBeTruthy();
-    expect(saveButton?.hasAttribute("disabled")).toBe(true);
-
-    const toggle = container.querySelector("#automatic-optimization-toggle");
-    await act(async () => {
-      toggle?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(saveButton?.hasAttribute("disabled")).toBe(false);
-  });
-
-  it("saves automatic optimization preferences", async () => {
+  it("saves automatic optimization as soon as the switch changes", async () => {
     updateFsrsOptimizationPreferencesMock.mockResolvedValueOnce({
       success: true,
     });
@@ -248,20 +229,33 @@ describe("FlashcardOptimizationCard", () => {
       toggle?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    const saveButton = Array.from(container.querySelectorAll("button")).find(
-      (element) => element.textContent === "Save",
-    );
-    await act(async () => {
-      saveButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
     expect(updateFsrsOptimizationPreferencesMock).toHaveBeenCalledWith({
       automaticOptimizationEnabled: true,
     });
     expect(toastSuccessMock).toHaveBeenCalledWith(
-      "FSRS optimization preferences saved.",
+      "Automatic optimization turned on.",
     );
+    expect(toggle?.getAttribute("aria-pressed")).toBe("true");
     expect(isAccountSettingsInvalidated()).toBe(true);
-    expect(saveButton?.hasAttribute("disabled")).toBe(true);
+  });
+
+  it("reverts the switch when saving automatic optimization fails", async () => {
+    updateFsrsOptimizationPreferencesMock.mockResolvedValueOnce({
+      success: false,
+      error: "Couldn't save.",
+    });
+
+    await act(async () => {
+      renderCard();
+    });
+
+    const toggle = container.querySelector("#automatic-optimization-toggle");
+    await act(async () => {
+      toggle?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(toastErrorMock).toHaveBeenCalledOnce();
+    expect(toggle?.getAttribute("aria-pressed")).toBe("false");
+    expect(isAccountSettingsInvalidated()).toBe(false);
   });
 });

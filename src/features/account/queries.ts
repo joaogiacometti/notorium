@@ -1,4 +1,6 @@
+import { timeZoneOptions } from "@/features/account/time-zones";
 import { getFsrsOptimizationSettings } from "@/features/flashcards/fsrs/settings-queries";
+import { formatDateLong } from "@/lib/dates/format";
 import type { AccountSettings } from "@/lib/server/api-contracts";
 
 interface AccountSettingsUser {
@@ -6,6 +8,7 @@ interface AccountSettingsUser {
   name: string;
   email: string;
   createdAt: Date;
+  timeZone: string;
 }
 
 /**
@@ -24,6 +27,14 @@ export async function getAccountSettingsForUser(
     name: user.name,
     email: user.email,
     createdAt: new Date(user.createdAt).toISOString(),
-    fsrsOptimization,
+    timeZone: user.timeZone,
+    timeZoneOptions,
+    memberSince: formatDateLong(user.createdAt, user.timeZone),
+    fsrsOptimization: {
+      ...fsrsOptimization,
+      lastOptimizedOn: fsrsOptimization.lastOptimizedAt
+        ? formatDateLong(fsrsOptimization.lastOptimizedAt, user.timeZone)
+        : null,
+    },
   };
 }

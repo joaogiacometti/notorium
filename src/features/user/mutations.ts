@@ -11,6 +11,13 @@ import type { UpdateUserAccessInput } from "@/lib/validations/access-control";
 
 export type UserMutationResult = { success: true } | ActionErrorResult;
 
+export async function updateUserTimeZoneForUser(
+  userId: string,
+  timeZone: string,
+): Promise<void> {
+  await getDb().update(user).set({ timeZone }).where(eq(user.id, userId));
+}
+
 export async function updateUserThemeForUser(
   userId: string,
   theme: AppTheme,

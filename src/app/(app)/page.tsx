@@ -22,7 +22,11 @@ export default async function HomePage() {
   const userId = session.user.id;
   const now = new Date();
 
-  const reviewActivityPromise = getFlashcardReviewActivityForUser(userId, now);
+  const reviewActivityPromise = getFlashcardReviewActivityForUser(
+    userId,
+    now,
+    session.user.timeZone,
+  );
   const [summary, recentDocuments] = await Promise.all([
     getFlashcardReviewSummaryForUser(userId, now),
     getRecentDocumentsForUser(userId, RECENT_DOCUMENTS_LIMIT),

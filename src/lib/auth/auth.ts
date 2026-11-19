@@ -53,6 +53,14 @@ function createAuth() {
       },
     },
     user: {
+      additionalFields: {
+        timeZone: {
+          type: "string",
+          required: true,
+          defaultValue: "UTC",
+          input: false,
+        },
+      },
       deleteUser: {
         enabled: true,
       },
