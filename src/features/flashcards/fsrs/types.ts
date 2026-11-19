@@ -13,9 +13,11 @@ export const gradeLabels: Record<ReviewGrade, string> = {
 export interface ScheduleFlashcardReviewInput {
   card: Pick<
     FlashcardEntity,
+    | "id"
     | "state"
     | "dueAt"
     | "stability"
+    | "stabilityFast"
     | "difficulty"
     | "intervalDays"
     | "learningStep"
@@ -26,7 +28,7 @@ export interface ScheduleFlashcardReviewInput {
   grade: ReviewGrade;
   now?: Date;
   desiredRetention?: number;
-  weights?: number[];
+  weights?: readonly number[];
   enableFuzz?: boolean;
 }
 
@@ -34,14 +36,14 @@ export interface SchedulerOutput {
   state: FlashcardEntity["state"];
   dueAt: Date;
   stability: string;
+  stabilityFast: string;
   difficulty: string;
   intervalDays: number;
-  learningStep: number | null;
-  lastReviewedAt: Date;
+  learningStep: number;
+  lastReviewedAt: Date | null;
   reviewCount: number;
   lapseCount: number;
   updatedAt: Date;
-  daysElapsed: number;
 }
 
 export interface ParsedFsrsWeightsResult {
@@ -51,6 +53,6 @@ export interface ParsedFsrsWeightsResult {
 
 export interface FsrsSchedulerValidationInput {
   desiredRetention: number;
-  weights: number[];
+  weights: readonly number[];
   maxNewCardEasyIntervalDays?: number;
 }

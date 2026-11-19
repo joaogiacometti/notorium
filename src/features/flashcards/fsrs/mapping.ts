@@ -1,9 +1,15 @@
-import { type Card, createEmptyCard, type Grade, Rating, State } from "ts-fsrs";
+import { type Grade, Rating, State } from "ts-fsrs";
 import {
+  type FsrsCard,
+  type FsrsScheduler,
+  fsrsSchedulerDefinition,
+} from "@/features/flashcards/fsrs/definition";
+import {
+  formatFsrsNumber,
   normalizeDate,
   normalizeNonNegativeInteger,
+  normalizeNonNegativeNumber,
   normalizeOptionalDate,
-  parseNullableNumeric,
 } from "@/features/flashcards/fsrs/normalization";
 import type {
   ReviewGrade,
@@ -11,81 +17,104 @@ import type {
 } from "@/features/flashcards/fsrs/types";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
-export function mapStateToFsrs(state: FlashcardEntity["state"]): State {
-  switch (state) {
-    case "learning":
-      return State.Learning;
-    case "review":
-      return State.Review;
-    case "relearning":
-      return State.Relearning;
-    default:
-      return State.New;
-  }
-}
+type FlashcardState = FlashcardEntity["state"];
 
-export function mapStateFromFsrs(state: State): FlashcardEntity["state"] {
-  switch (state) {
-    case State.Learning:
-      return "learning";
-    case State.Review:
-      return "review";
-    case State.Relearning:
-      return "relearning";
-    default:
-      return "new";
-  }
+const fsrsStateByFlashcardState = {
+  new: State.New,
+  learning: State.Learning,
+  review: State.Review,
+  relearning: State.Relearning,
+} as const satisfies Record<FlashcardState, State>;
+
+const flashcardStateByFsrsState: Record<State, FlashcardState> = {
+  [State.New]: "new",
+  [State.Learning]: "learning",
+  [State.Review]: "review",
+  [State.Relearning]: "relearning",
+};
+
+// ts-fsrs groups learning and relearning under one queue status.
+const scheduleStatusByState = {
+  new: "new",
+  learning: "learning",
+  review: "review",
+  relearning: "learning",
+} as const satisfies Record<FlashcardState, string>;
+
+const ratingByGrade = {
+  again: Rating.Again,
+  hard: Rating.Hard,
+  good: Rating.Good,
+  easy: Rating.Easy,
+} as const satisfies Record<ReviewGrade, Grade>;
+
+export function mapStateFromFsrs(state: State): FlashcardState {
+  return flashcardStateByFsrsState[state];
 }
 
 export function mapGradeToRating(grade: ReviewGrade): Grade {
-  switch (grade) {
-    case "again":
-      return Rating.Again as Grade;
-    case "hard":
-      return Rating.Hard as Grade;
-    case "easy":
-      return Rating.Easy as Grade;
-    default:
-      return Rating.Good as Grade;
-  }
+  return ratingByGrade[grade];
 }
 
+function requireMemoryValue(
+  value: string | null,
+  field: string,
+  cardId: string,
+): number {
+  const parsed = value === null ? Number.NaN : Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`Flashcard ${cardId} has no valid FSRS-7 ${field}`);
+  }
+  return parsed;
+}
+
+/**
+ * Convert a stored flashcard into a scheduler card. New cards always start
+ * from the scheduler's own initial state; learned cards must carry a complete
+ * FSRS-7 memory state, which is never invented here.
+ */
 export function buildFsrsCard(
+  scheduler: FsrsScheduler,
   card: ScheduleFlashcardReviewInput["card"],
   now: Date,
-): Card {
-  if (card.state === "new") {
-    const due = normalizeDate(card.dueAt, now);
-    const freshCard = createEmptyCard(due);
+): FsrsCard {
+  const dueAt = normalizeDate(card.dueAt, now);
 
-    return {
-      ...freshCard,
-      due,
-      state: State.New,
-    };
+  if (card.state === "new") {
+    return scheduler.newCard({ now: dueAt, cardId: card.id });
   }
 
-  const due = normalizeDate(card.dueAt, now);
-  const lastReview = normalizeOptionalDate(card.lastReviewedAt);
-  const daysElapsed = lastReview
-    ? Math.max(
-        0,
-        Math.round(
-          (now.getTime() - lastReview.getTime()) / (24 * 60 * 60 * 1000),
-        ),
-      )
-    : 0;
-
-  return {
-    due,
-    stability: parseNullableNumeric(card.stability),
-    difficulty: parseNullableNumeric(card.difficulty),
-    elapsed_days: daysElapsed,
-    scheduled_days: normalizeNonNegativeInteger(card.intervalDays),
-    learning_steps: normalizeNonNegativeInteger(card.learningStep),
+  return fsrsSchedulerDefinition.schema.card.parse({
+    cardId: card.id,
+    dueAt,
+    lastReviewAt: normalizeOptionalDate(card.lastReviewedAt) ?? null,
+    stability: requireMemoryValue(card.stability, "stability", card.id),
+    stabilityFast: requireMemoryValue(
+      card.stabilityFast,
+      "stabilityFast",
+      card.id,
+    ),
+    difficulty: requireMemoryValue(card.difficulty, "difficulty", card.id),
+    state: fsrsStateByFlashcardState[card.state],
+    scheduleStatus: scheduleStatusByState[card.state],
+    scheduledDays: normalizeNonNegativeNumber(card.intervalDays),
+    learningStep: normalizeNonNegativeInteger(card.learningStep),
     reps: normalizeNonNegativeInteger(card.reviewCount),
     lapses: normalizeNonNegativeInteger(card.lapseCount),
-    state: mapStateToFsrs(card.state),
-    last_review: lastReview,
+  });
+}
+
+export function toSchedulingState(card: FsrsCard) {
+  return {
+    state: mapStateFromFsrs(card.state),
+    dueAt: card.dueAt,
+    stability: formatFsrsNumber(card.stability),
+    stabilityFast: formatFsrsNumber(card.stabilityFast),
+    difficulty: formatFsrsNumber(card.difficulty),
+    intervalDays: card.scheduledDays,
+    learningStep: card.learningStep,
+    lastReviewedAt: card.lastReviewAt,
+    reviewCount: card.reps,
+    lapseCount: card.lapses,
   };
 }

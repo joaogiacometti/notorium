@@ -26,8 +26,8 @@ interface FsrsBindingModule {
   computeParameters: (
     trainSet: FsrsBindingItemInstance[],
     options: {
+      modelVersion: "FSRS-7";
       enableShortTerm: boolean;
-      numRelearningSteps?: number;
       timeout?: number;
     },
   ) => Promise<number[]>;
@@ -48,13 +48,24 @@ function mapRatingToBindingRating(
   return 4;
 }
 
-function hasValidOptimizationHistory(
-  logs: FlashcardReviewLogEntity[],
-): boolean {
-  return logs.some((log) => log.daysElapsed > 0);
+const millisecondsPerDay = 24 * 60 * 60 * 1000;
+
+// FSRS-7 trains on fractional days between actual review times; the first
+// review of a history has no elapsed time.
+function getElapsedDays(cardLogs: FlashcardReviewLogEntity[]): number[] {
+  return cardLogs.map((log, index) => {
+    const previous = cardLogs[index - 1];
+    return previous
+      ? Math.max(
+          0,
+          (log.reviewedAt.getTime() - previous.reviewedAt.getTime()) /
+            millisecondsPerDay,
+        )
+      : 0;
+  });
 }
 
-function getEligibleCardLogs(logs: FlashcardReviewLogEntity[]) {
+function groupLogsByCard(logs: FlashcardReviewLogEntity[]) {
   const logsByFlashcardId = new Map<string, FlashcardReviewLogEntity[]>();
 
   for (const log of logs) {
@@ -67,31 +78,30 @@ function getEligibleCardLogs(logs: FlashcardReviewLogEntity[]) {
     logsByFlashcardId.set(log.flashcardId, [log]);
   }
 
-  return [...logsByFlashcardId.values()]
-    .map((cardLogs) =>
-      [...cardLogs].sort(
-        (left, right) => left.reviewedAt.getTime() - right.reviewedAt.getTime(),
-      ),
-    )
-    .filter(hasValidOptimizationHistory);
+  return [...logsByFlashcardId.values()].map((cardLogs) =>
+    [...cardLogs].sort(
+      (left, right) => left.reviewedAt.getTime() - right.reviewedAt.getTime(),
+    ),
+  );
 }
 
 async function buildTrainingSet(logs: FlashcardReviewLogEntity[]) {
-  const eligibleCardLogs = getEligibleCardLogs(logs);
+  const cardHistories = groupLogsByCard(logs);
 
-  if (eligibleCardLogs.length === 0) {
+  if (cardHistories.length === 0) {
     return [];
   }
 
   const { FSRSBindingItem, FSRSBindingReview } = await getFsrsBindingModule();
   const trainingSet: FsrsBindingItemInstance[] = [];
 
-  for (const cardLogs of eligibleCardLogs) {
+  for (const cardLogs of cardHistories) {
+    const elapsedDays = getElapsedDays(cardLogs);
     const reviews = cardLogs.map(
-      (log) =>
+      (log, index) =>
         new FSRSBindingReview(
           mapRatingToBindingRating(log.rating),
-          log.daysElapsed,
+          elapsedDays[index] ?? 0,
         ),
     );
 
@@ -101,8 +111,8 @@ async function buildTrainingSet(logs: FlashcardReviewLogEntity[]) {
 
     for (let index = 1; index < reviews.length; index++) {
       const slice = reviews.slice(0, index + 1);
-      // FSRS binding requires at least one review with delta_t > 0; slices
-      // built from same-day re-reviews would abort the Rust process otherwise.
+      // The binding rejects items without a review after elapsed time, such
+      // as slices of reviews recorded at the same instant.
       if (slice.some((r) => r.deltaT > 0)) {
         trainingSet.push(new FSRSBindingItem(slice));
       }
@@ -127,8 +137,8 @@ export async function optimizeFsrsParameters(
 
   const { computeParameters } = await getFsrsBindingModule();
   return await computeParameters(trainingSet, {
+    modelVersion: "FSRS-7",
     enableShortTerm: true,
-    numRelearningSteps: 1,
     timeout: 10_000,
   });
 }

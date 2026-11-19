@@ -40,6 +40,7 @@ function makeCard(
     state: "new",
     dueAt,
     stability: null,
+    stabilityFast: null,
     difficulty: null,
     intervalDays: 0,
     learningStep: null,
@@ -541,8 +542,9 @@ describe("scheduleGradeAt", () => {
     const dueAt = new Date("2026-03-07T12:10:00.000Z");
     const card = makeCard("a", dueAt, {
       state: "learning",
-      stability: "0.2120",
-      difficulty: "6.4133",
+      stability: "0.1104",
+      stabilityFast: "0.0883",
+      difficulty: "6.1686",
       learningStep: 1,
       lastReviewedAt: new Date("2026-03-07T12:00:00.000Z"),
       reviewCount: 1,

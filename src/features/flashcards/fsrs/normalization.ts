@@ -35,22 +35,6 @@ export function formatFsrsNumber(value: number): string {
   return (isFiniteNumber(value) ? value : 0).toFixed(4);
 }
 
-export function parseNullableNumeric(
-  value: string | number | null | undefined,
-): number {
-  if (typeof value === "number") {
-    return isFiniteNumber(value) ? value : 0;
-  }
-
-  if (typeof value === "string") {
-    const parsed = Number.parseFloat(value);
-
-    return isFiniteNumber(parsed) ? parsed : 0;
-  }
-
-  return 0;
-}
-
 export function normalizeNonNegativeInteger(
   value: number | null | undefined,
   fallback: number = 0,
@@ -62,9 +46,12 @@ export function normalizeNonNegativeInteger(
   return Math.max(0, Math.floor(value));
 }
 
-export function normalizeFsrsOutputNumber(
-  value: number,
-  fallback: number,
+export function normalizeNonNegativeNumber(
+  value: number | null | undefined,
 ): number {
-  return isFiniteNumber(value) ? value : fallback;
+  if (typeof value !== "number" || !isFiniteNumber(value)) {
+    return 0;
+  }
+
+  return Math.max(0, value);
 }

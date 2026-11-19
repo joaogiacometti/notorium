@@ -30,6 +30,7 @@ type ReviewableFlashcard = Pick<
   | "state"
   | "dueAt"
   | "stability"
+  | "stabilityFast"
   | "difficulty"
   | "intervalDays"
   | "learningStep"
@@ -255,6 +256,7 @@ export async function getReviewableFlashcardForUser(
       state: flashcard.state,
       dueAt: flashcard.dueAt,
       stability: flashcard.stability,
+      stabilityFast: flashcard.stabilityFast,
       difficulty: flashcard.difficulty,
       intervalDays: flashcard.intervalDays,
       learningStep: flashcard.learningStep,

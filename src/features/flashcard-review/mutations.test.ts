@@ -192,6 +192,7 @@ describe("reviewFlashcardForUser", () => {
       state: "review",
       dueAt: new Date("2026-03-13T11:00:00.000Z"),
       stability: "10.0000",
+      stabilityFast: "8.0000",
       difficulty: "5.0000",
       intervalDays: 10,
       learningStep: 0,
@@ -205,6 +206,7 @@ describe("reviewFlashcardForUser", () => {
       state: "review",
       dueAt: new Date("2026-03-20T12:00:00.000Z"),
       stability: "12.0000",
+      stabilityFast: "9.0000",
       difficulty: "5.5000",
       intervalDays: 7,
       learningStep: 0,
@@ -212,7 +214,6 @@ describe("reviewFlashcardForUser", () => {
       reviewCount: 11,
       lapseCount: 0,
       updatedAt: now,
-      daysElapsed: 10,
     });
     transactionMock.mockImplementationOnce(async (callback) =>
       callback({
@@ -260,6 +261,7 @@ describe("reviewFlashcardForUser", () => {
     expect(setMock).toHaveBeenCalledWith(
       expect.objectContaining({
         dueAt: new Date("2026-03-20T12:00:00.000Z"),
+        stabilityFast: "9.0000",
         reviewCount: 11,
         updatedAt: now,
       }),
@@ -270,7 +272,9 @@ describe("reviewFlashcardForUser", () => {
         userId: "user-1",
         rating: "good",
         reviewedAt: now,
-        daysElapsed: 10,
+        previousSchedulingState: expect.objectContaining({
+          stabilityFast: "8.0000",
+        }),
       }),
     );
     vi.useRealTimers();
@@ -301,7 +305,6 @@ describe("reviewFlashcardForUser", () => {
       reviewCount: 1,
       lapseCount: 0,
       updatedAt: new Date("2026-03-13T12:00:00.000Z"),
-      daysElapsed: 0,
     });
     transactionMock.mockRejectedValueOnce(new Error("db down"));
 
@@ -340,7 +343,6 @@ describe("reviewFlashcardForUser", () => {
       dueAt: new Date("2026-03-15T00:05:00.000Z"),
       reviewCount: 2,
       updatedAt: dueAt,
-      daysElapsed: 0,
     });
     transactionMock.mockImplementationOnce(async (callback) =>
       callback({ update: updateMock, insert: insertMock }),
@@ -392,7 +394,6 @@ describe("reviewFlashcardForUser", () => {
       dueAt: new Date("2026-03-13T12:01:00.000Z"),
       reviewCount: 1,
       updatedAt: now,
-      daysElapsed: 0,
     });
     transactionMock.mockImplementationOnce(async (callback) =>
       callback({ update: updateMock, insert: insertMock }),
@@ -428,6 +429,7 @@ describe("reviewFlashcardForUser", () => {
           state: "review",
           dueAt: "2026-03-13T11:00:00.000Z",
           stability: "10.0000",
+          stabilityFast: "8.0000",
           difficulty: "5.0000",
           intervalDays: 10,
           learningStep: 0,
@@ -473,9 +475,53 @@ describe("reviewFlashcardForUser", () => {
     expect(setMock).toHaveBeenCalledWith(
       expect.objectContaining({
         dueAt: new Date("2026-03-13T11:00:00.000Z"),
+        stabilityFast: "8.0000",
         reviewCount: 10,
       }),
     );
     expect(deleteMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses to undo a review graded before FSRS-7 memory existed", async () => {
+    limitMock.mockResolvedValueOnce([
+      {
+        id: "review-log-1",
+        reviewedAt: new Date("2026-03-13T12:00:00.000Z"),
+        reviewCountAfter: 11,
+        previousSchedulingState: {
+          state: "review",
+          dueAt: "2026-03-13T11:00:00.000Z",
+          stability: "10.0000",
+          difficulty: "5.0000",
+          intervalDays: 10,
+          learningStep: 0,
+          lastReviewedAt: "2026-03-03T12:00:00.000Z",
+          reviewCount: 10,
+          lapseCount: 0,
+        },
+      },
+    ]);
+    transactionMock.mockImplementationOnce(async (callback) =>
+      callback({
+        select: selectMock,
+        update: updateMock,
+        delete: deleteMock,
+      }),
+    );
+
+    const { undoFlashcardReviewForUser } = await import(
+      "@/features/flashcard-review/mutations"
+    );
+    const result = await undoFlashcardReviewForUser("user-1", {
+      id: "flashcard-1",
+      reviewLogId: "review-log-1",
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      errorCode: "flashcards.review.undoUnavailable",
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+    expect(deleteMock).not.toHaveBeenCalled();
   });
 });

@@ -2,6 +2,7 @@ import { relations, sql } from "drizzle-orm";
 import type { AnyPgColumn, IndexBuilder } from "drizzle-orm/pg-core";
 import {
   boolean,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -243,8 +244,12 @@ export const flashcard = pgTable(
     state: flashcardStateEnum("state").notNull().default("new"),
     dueAt: timestamp("due_at").defaultNow().notNull(),
     stability: numeric("stability", { precision: 10, scale: 4 }),
+    // FSRS-7 fast memory trace. Null only for learned cards whose memory has
+    // not been rebuilt from review history yet; new cards start at zero.
+    stabilityFast: numeric("stability_fast", { precision: 10, scale: 4 }),
     difficulty: numeric("difficulty", { precision: 10, scale: 4 }),
-    intervalDays: integer("interval_days").notNull().default(0),
+    // Fractional days: FSRS-7 schedules sub-day intervals.
+    intervalDays: doublePrecision("interval_days").notNull().default(0),
     learningStep: integer("learning_step"),
     lastReviewedAt: timestamp("last_reviewed_at"),
     reviewCount: integer("review_count").notNull().default(0),
@@ -349,7 +354,6 @@ export const flashcardReviewLog = pgTable(
     ).$type<FlashcardReviewSchedulingSnapshot>(),
     rating: flashcardReviewRatingEnum("rating").notNull(),
     reviewedAt: timestamp("reviewed_at").notNull(),
-    daysElapsed: integer("days_elapsed").notNull().default(0),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

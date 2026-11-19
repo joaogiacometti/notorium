@@ -26,6 +26,7 @@ function getFlashcardReviewUpdateValues(
     state: nextState.state,
     dueAt: nextState.dueAt,
     stability: nextState.stability,
+    stabilityFast: nextState.stabilityFast,
     difficulty: nextState.difficulty,
     intervalDays: nextState.intervalDays,
     learningStep: nextState.learningStep,
@@ -43,6 +44,7 @@ const flashcardReviewSelection = {
   state: flashcard.state,
   dueAt: flashcard.dueAt,
   stability: flashcard.stability,
+  stabilityFast: flashcard.stabilityFast,
   difficulty: flashcard.difficulty,
   intervalDays: flashcard.intervalDays,
   learningStep: flashcard.learningStep,
@@ -59,6 +61,7 @@ function getPreviousSchedulingState(
     | "state"
     | "dueAt"
     | "stability"
+    | "stabilityFast"
     | "difficulty"
     | "intervalDays"
     | "learningStep"
@@ -71,6 +74,7 @@ function getPreviousSchedulingState(
     state: card.state,
     dueAt: card.dueAt.toISOString(),
     stability: card.stability,
+    stabilityFast: card.stabilityFast,
     difficulty: card.difficulty,
     intervalDays: card.intervalDays,
     learningStep: card.learningStep,
@@ -78,6 +82,12 @@ function getPreviousSchedulingState(
     reviewCount: card.reviewCount,
     lapseCount: card.lapseCount,
   };
+}
+
+function canRestoreSchedulingState(
+  snapshot: FlashcardReviewSchedulingSnapshot,
+): boolean {
+  return snapshot.state === "new" || snapshot.stabilityFast != null;
 }
 
 function restoreSchedulingState(
@@ -88,6 +98,7 @@ function restoreSchedulingState(
     state: snapshot.state,
     dueAt: new Date(snapshot.dueAt),
     stability: snapshot.stability,
+    stabilityFast: snapshot.stabilityFast ?? null,
     difficulty: snapshot.difficulty,
     intervalDays: snapshot.intervalDays,
     learningStep: snapshot.learningStep,
@@ -186,7 +197,6 @@ async function applyFlashcardReviewForUser(
         previousSchedulingState: getPreviousSchedulingState(existingCard),
         rating: data.grade,
         reviewedAt,
-        daysElapsed: nextState.daysElapsed,
       });
 
       return updatedCard;
@@ -251,7 +261,8 @@ export async function undoFlashcardReviewForUser(
       const latestReview = await getLatestReviewForUndo(tx, userId, data);
       if (
         !latestReview?.previousSchedulingState ||
-        latestReview.reviewCountAfter === null
+        latestReview.reviewCountAfter === null ||
+        !canRestoreSchedulingState(latestReview.previousSchedulingState)
       ) {
         return null;
       }

@@ -263,6 +263,7 @@ export function gradeFlashcardLocally(
     state: next.state,
     dueAt: next.dueAt,
     stability: next.stability,
+    stabilityFast: next.stabilityFast,
     difficulty: next.difficulty,
     intervalDays: next.intervalDays,
     learningStep: next.learningStep,

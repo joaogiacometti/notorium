@@ -44,6 +44,7 @@ function makeCard(): FlashcardReviewEntity {
     state: "new",
     dueAt: new Date("2026-03-07T11:00:00.000Z"),
     stability: null,
+    stabilityFast: null,
     difficulty: null,
     intervalDays: 0,
     learningStep: null,

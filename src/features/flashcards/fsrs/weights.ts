@@ -1,14 +1,15 @@
 import {
-  defaultSchedulerParameters,
+  defaultFsrsDesiredRetention,
+  defaultFsrsWeights,
   fsrsWeightCount,
 } from "@/features/flashcards/fsrs/constants";
 import type { ParsedFsrsWeightsResult } from "@/features/flashcards/fsrs/types";
 
 export function getDefaultFsrsWeights(): number[] {
-  return [...defaultSchedulerParameters.w];
+  return [...defaultFsrsWeights];
 }
 
-export function areFsrsWeightsWellFormed(weights: number[]): boolean {
+export function areFsrsWeightsWellFormed(weights: readonly number[]): boolean {
   return (
     weights.length === fsrsWeightCount &&
     weights.every((weight) => Number.isFinite(weight) && weight >= 0)
@@ -20,7 +21,7 @@ export function isFsrsDesiredRetentionValid(value: number): boolean {
 }
 
 export function normalizeFsrsWeights(
-  weights: number[] | null | undefined,
+  weights: readonly number[] | null | undefined,
 ): number[] {
   if (!weights || !areFsrsWeightsWellFormed(weights)) {
     return getDefaultFsrsWeights();
@@ -30,7 +31,7 @@ export function normalizeFsrsWeights(
 }
 
 export function getDefaultFsrsDesiredRetention(): number {
-  return defaultSchedulerParameters.request_retention;
+  return defaultFsrsDesiredRetention;
 }
 
 export function normalizeFsrsDesiredRetention(

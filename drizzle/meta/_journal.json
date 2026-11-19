@@ -575,6 +575,13 @@
       "when": 1795051175527,
       "tag": "0081_loving_talkback",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1795054663494,
+      "tag": "0082_new_shadow_king",
+      "breakpoints": true
     }
   ]
 }

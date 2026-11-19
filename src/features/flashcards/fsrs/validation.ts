@@ -1,4 +1,4 @@
-import { createEmptyCard, type Grade, Rating } from "ts-fsrs";
+import { Rating } from "ts-fsrs";
 import { z } from "zod";
 
 import {
@@ -6,13 +6,8 @@ import {
   schedulerValidationMaxNewCardEasyIntervalDays,
   schedulerValidationProbeNow,
 } from "@/features/flashcards/fsrs/constants";
+import { createScheduler } from "@/features/flashcards/fsrs/definition";
 import { mapStateFromFsrs } from "@/features/flashcards/fsrs/mapping";
-import {
-  isValidDate,
-  normalizeDate,
-  normalizeNonNegativeInteger,
-} from "@/features/flashcards/fsrs/normalization";
-import { createScheduler } from "@/features/flashcards/fsrs/scheduler";
 import type { FsrsSchedulerValidationInput } from "@/features/flashcards/fsrs/types";
 import {
   areFsrsWeightsWellFormed,
@@ -105,54 +100,37 @@ export function isFsrsSchedulerSettingsValid({
       weights,
       enableFuzz: false,
     });
-    const probeCard = createEmptyCard(schedulerValidationProbeNow);
-    const again = scheduler.next(
-      probeCard,
-      schedulerValidationProbeNow,
-      Rating.Again as Grade,
-    ).card;
-    const hard = scheduler.next(
-      probeCard,
-      schedulerValidationProbeNow,
-      Rating.Hard as Grade,
-    ).card;
-    const good = scheduler.next(
-      probeCard,
-      schedulerValidationProbeNow,
-      Rating.Good as Grade,
-    ).card;
-    const easy = scheduler.next(
-      probeCard,
-      schedulerValidationProbeNow,
-      Rating.Easy as Grade,
-    ).card;
+    const probeCard = scheduler.newCard({ now: schedulerValidationProbeNow });
+    const outcomes = new Map(
+      Array.from(
+        scheduler.preview({
+          card: probeCard,
+          now: schedulerValidationProbeNow,
+        }),
+        ({ grade, card }) => [grade, card] as const,
+      ),
+    );
+    const again = outcomes.get(Rating.Again);
+    const hard = outcomes.get(Rating.Hard);
+    const good = outcomes.get(Rating.Good);
+    const easy = outcomes.get(Rating.Easy);
 
-    const againDue = normalizeDate(again.due, schedulerValidationProbeNow);
-    const hardDue = normalizeDate(hard.due, schedulerValidationProbeNow);
-    const goodDue = normalizeDate(good.due, schedulerValidationProbeNow);
-    const easyDue = normalizeDate(easy.due, schedulerValidationProbeNow);
-
-    if (
-      !isValidDate(againDue) ||
-      !isValidDate(hardDue) ||
-      !isValidDate(goodDue) ||
-      !isValidDate(easyDue)
-    ) {
+    if (!again || !hard || !good || !easy) {
       return false;
     }
 
-    const easyIntervalDays = normalizeNonNegativeInteger(easy.scheduled_days);
+    // FSRS-7 may let the model skip learning steps, so only the boundary
+    // grades have a fixed outcome: Again keeps learning, Easy graduates.
     const isNewFlowStateValid =
       mapStateFromFsrs(again.state) === "learning" &&
-      mapStateFromFsrs(hard.state) === "learning" &&
-      mapStateFromFsrs(good.state) === "learning" &&
       mapStateFromFsrs(easy.state) === "review";
     const isDueOrderValid =
-      againDue.getTime() <= hardDue.getTime() &&
-      hardDue.getTime() <= goodDue.getTime() &&
-      goodDue.getTime() <= easyDue.getTime();
+      again.dueAt.getTime() <= hard.dueAt.getTime() &&
+      hard.dueAt.getTime() <= good.dueAt.getTime() &&
+      good.dueAt.getTime() <= easy.dueAt.getTime();
     const isEasyIntervalValid =
-      easyIntervalDays > 0 && easyIntervalDays <= maxNewCardEasyIntervalDays;
+      easy.scheduledDays > 0 &&
+      easy.scheduledDays <= maxNewCardEasyIntervalDays;
 
     const result =
       isNewFlowStateValid && isDueOrderValid && isEasyIntervalValid;

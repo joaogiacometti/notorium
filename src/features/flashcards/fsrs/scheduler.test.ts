@@ -7,28 +7,20 @@ import {
   scheduleFlashcardReview,
   serializeFsrsWeights,
 } from "@/features/flashcards/fsrs";
-import type { FlashcardEntity } from "@/lib/server/api-contracts";
 
 const now = new Date("2026-03-04T12:00:00.000Z");
 
-type SchedulerCard = Pick<
-  FlashcardEntity,
-  | "state"
-  | "dueAt"
-  | "stability"
-  | "difficulty"
-  | "intervalDays"
-  | "learningStep"
-  | "lastReviewedAt"
-  | "reviewCount"
-  | "lapseCount"
->;
+type SchedulerCard = Parameters<typeof scheduleFlashcardReview>[0]["card"];
+
+const dayMs = 24 * 60 * 60 * 1000;
 
 function makeCard(overrides: Partial<SchedulerCard> = {}): SchedulerCard {
   return {
+    id: "card-1",
     state: "new",
     dueAt: now,
     stability: null,
+    stabilityFast: null,
     difficulty: null,
     intervalDays: 0,
     learningStep: 0,
@@ -39,14 +31,28 @@ function makeCard(overrides: Partial<SchedulerCard> = {}): SchedulerCard {
   };
 }
 
+function makeReviewCard(overrides: Partial<SchedulerCard> = {}) {
+  return makeCard({
+    state: "review",
+    stability: "10.0000",
+    stabilityFast: "8.0000",
+    difficulty: "5.0000",
+    intervalDays: 10,
+    lastReviewedAt: new Date(now.getTime() - 10 * dayMs),
+    reviewCount: 10,
+    ...overrides,
+  });
+}
+
 describe("getInitialFlashcardSchedulingState", () => {
-  it("creates a new-due card ready for FSRS scheduling", () => {
+  it("creates a new-due card with an empty FSRS-7 memory", () => {
     const result = getInitialFlashcardSchedulingState(now);
 
     expect(result).toEqual({
       state: "new",
       dueAt: now,
       stability: "0.0000",
+      stabilityFast: "0.0000",
       difficulty: "0.0000",
       intervalDays: 0,
       learningStep: 0,
@@ -59,7 +65,7 @@ describe("getInitialFlashcardSchedulingState", () => {
 });
 
 describe("scheduleFlashcardReview", () => {
-  it("moves a new card into learning on again", () => {
+  it("keeps a new card in its first learning step on again", () => {
     const result = scheduleFlashcardReview({
       card: makeCard(),
       grade: "again",
@@ -68,97 +74,96 @@ describe("scheduleFlashcardReview", () => {
     });
 
     expect(result.state).toBe("learning");
-    expect(result.stability).toBe("0.2120");
-    expect(result.difficulty).toBe("6.4133");
-    expect(result.learningStep).toBe(0);
     expect(result.reviewCount).toBe(1);
     expect(result.dueAt.toISOString()).toBe("2026-03-04T12:01:00.000Z");
+    expect(Number(result.stabilityFast)).toBeGreaterThan(0);
   });
 
-  it("graduates a learning card with FSRS review timing", () => {
+  it("lets the model skip learning steps when it predicts a longer interval", () => {
     const result = scheduleFlashcardReview({
-      card: makeCard({
-        state: "learning",
-        stability: "2.3065",
-        difficulty: "2.1181",
-        learningStep: 1,
-        lastReviewedAt: now,
-        reviewCount: 1,
-      }),
+      card: makeCard(),
       grade: "good",
       now,
       enableFuzz: false,
     });
 
     expect(result.state).toBe("review");
-    expect(result.intervalDays).toBe(2);
-    expect(result.difficulty).toBe("2.1112");
-    expect(result.reviewCount).toBe(2);
-    expect(result.dueAt.toISOString()).toBe("2026-03-06T12:00:00.000Z");
+    expect(result.intervalDays).toBeGreaterThan(1);
   });
 
-  it("applies FSRS long-term scheduling for hard on a review card", () => {
+  it("schedules fractional sub-day intervals inside learning", () => {
     const result = scheduleFlashcardReview({
-      card: makeCard({
-        state: "review",
-        dueAt: now,
-        stability: "10.0000",
-        difficulty: "5.0000",
-        intervalDays: 10,
-        learningStep: 0,
-        lastReviewedAt: new Date("2026-02-22T12:00:00.000Z"),
-        reviewCount: 10,
-      }),
+      card: makeCard(),
+      grade: "hard",
+      now,
+      enableFuzz: false,
+    });
+
+    expect(result.state).toBe("learning");
+    expect(result.intervalDays).toBeGreaterThan(0);
+    expect(result.intervalDays).toBeLessThan(1);
+    expect(result.dueAt.getTime() - now.getTime()).toBeCloseTo(
+      result.intervalDays * dayMs,
+      -1,
+    );
+  });
+
+  it("extends a review card's interval on hard and updates both traces", () => {
+    const card = makeReviewCard();
+    const result = scheduleFlashcardReview({
+      card,
       grade: "hard",
       now,
       enableFuzz: false,
     });
 
     expect(result.state).toBe("review");
-    expect(result.intervalDays).toBe(23);
-    expect(result.stability).toBe("23.2469");
-    expect(result.difficulty).toBe("6.6660");
+    expect(result.intervalDays).toBeGreaterThan(card.intervalDays);
+    expect(result.stability).not.toBe(card.stability);
+    expect(result.stabilityFast).not.toBe(card.stabilityFast);
     expect(result.reviewCount).toBe(11);
-    expect(result.daysElapsed).toBe(10);
-    expect(result.dueAt.toISOString()).toBe("2026-03-27T12:00:00.000Z");
+    expect(result.lastReviewedAt).toEqual(now);
   });
 
   it("moves a failed review card into relearning", () => {
     const result = scheduleFlashcardReview({
-      card: makeCard({
-        state: "review",
-        dueAt: now,
-        stability: "10.0000",
-        difficulty: "5.0000",
-        intervalDays: 10,
-        learningStep: 0,
-        lastReviewedAt: new Date("2026-02-22T12:00:00.000Z"),
-        reviewCount: 10,
-      }),
+      card: makeReviewCard(),
       grade: "again",
       now,
       enableFuzz: false,
     });
 
     expect(result.state).toBe("relearning");
-    expect(result.intervalDays).toBe(0);
-    expect(result.stability).toBe("1.3920");
-    expect(result.difficulty).toBe("8.3418");
+    expect(result.intervalDays).toBeLessThan(1);
     expect(result.lapseCount).toBe(1);
-    expect(result.dueAt.toISOString()).toBe("2026-03-04T12:10:00.000Z");
+  });
+
+  it("refuses a learned card without a fast trace instead of inventing one", () => {
+    expect(() =>
+      scheduleFlashcardReview({
+        card: makeReviewCard({ stabilityFast: null }),
+        grade: "good",
+        now,
+      }),
+    ).toThrow("stabilityFast");
+  });
+
+  it("fuzzes the same card review identically on every run", () => {
+    const schedule = (id: string) =>
+      scheduleFlashcardReview({
+        card: makeReviewCard({ id }),
+        grade: "good",
+        now,
+      }).dueAt.toISOString();
+
+    expect(schedule("card-a")).toBe(schedule("card-a"));
   });
 
   it("falls back to now when persisted review dates are invalid", () => {
     const result = scheduleFlashcardReview({
-      card: makeCard({
-        state: "review",
+      card: makeReviewCard({
         dueAt: new Date("invalid"),
-        stability: "10.0000",
-        difficulty: "5.0000",
-        intervalDays: 10,
-        learningStep: 0,
         lastReviewedAt: new Date("invalid"),
-        reviewCount: 10,
       }),
       grade: "good",
       now,
@@ -166,19 +171,14 @@ describe("scheduleFlashcardReview", () => {
     });
 
     expect(Number.isNaN(result.dueAt.getTime())).toBe(false);
-    expect(Number.isNaN(result.lastReviewedAt.getTime())).toBe(false);
+    expect(result.lastReviewedAt).toEqual(now);
   });
 
-  it("sanitizes invalid persisted numeric scheduling state", () => {
+  it("sanitizes invalid persisted counters", () => {
     const result = scheduleFlashcardReview({
-      card: makeCard({
-        state: "review",
-        dueAt: now,
-        stability: "NaN",
-        difficulty: "NaN",
+      card: makeReviewCard({
         intervalDays: Number.NaN,
         learningStep: Number.NaN,
-        lastReviewedAt: now,
         reviewCount: Number.NaN,
         lapseCount: Number.NaN,
       }),
@@ -187,26 +187,15 @@ describe("scheduleFlashcardReview", () => {
       enableFuzz: false,
     });
 
-    expect(result.stability).not.toBe("NaN");
-    expect(result.difficulty).not.toBe("NaN");
     expect(Number.isNaN(result.intervalDays)).toBe(false);
-    expect(Number.isNaN(result.learningStep ?? 0)).toBe(false);
-    expect(Number.isNaN(result.reviewCount)).toBe(false);
-    expect(Number.isNaN(result.lapseCount)).toBe(false);
+    expect(Number.isNaN(result.learningStep)).toBe(false);
+    expect(result.reviewCount).toBe(1);
+    expect(result.lapseCount).toBe(0);
   });
 
   it("uses canonical new-card scheduling even with stale persisted fields", () => {
     const clean = scheduleFlashcardReview({
-      card: makeCard({
-        state: "new",
-        intervalDays: 0,
-        learningStep: 0,
-        reviewCount: 0,
-        lapseCount: 0,
-        stability: null,
-        difficulty: null,
-        lastReviewedAt: null,
-      }),
+      card: makeCard(),
       grade: "easy",
       now,
       enableFuzz: false,
@@ -214,12 +203,12 @@ describe("scheduleFlashcardReview", () => {
 
     const stale = scheduleFlashcardReview({
       card: makeCard({
-        state: "new",
         intervalDays: 400,
         learningStep: 9,
         reviewCount: 120,
         lapseCount: 12,
         stability: "99.9999",
+        stabilityFast: "99.9999",
         difficulty: "1.0000",
         lastReviewedAt: new Date("2025-01-01T12:00:00.000Z"),
       }),
@@ -246,7 +235,8 @@ describe("isFsrsSchedulerSettingsValid", () => {
 
   it("rejects obviously unstable scheduler weights", () => {
     const unstableWeights = getDefaultFsrsWeights();
-    unstableWeights[3] = 500;
+    // Easy initial stability far beyond the new-card easy interval limit.
+    unstableWeights[3] = 100;
 
     expect(
       isFsrsSchedulerSettingsValid({
@@ -280,25 +270,26 @@ describe("isFsrsSchedulerSettingsValid", () => {
 
 describe("isFsrsSchedulerSettingsValid exception handling", () => {
   afterEach(() => {
-    vi.doUnmock("ts-fsrs");
+    vi.doUnmock("@/features/flashcards/fsrs/definition");
     vi.resetModules();
   });
 
   it("returns false and caches probe failures when scheduler construction throws", async () => {
     vi.resetModules();
 
-    const fsrsFactoryMock = vi.fn(() => {
+    const createSchedulerMock = vi.fn(() => {
       throw new Error("scheduler init failed");
     });
 
-    vi.doMock("ts-fsrs", async (importOriginal) => {
-      const actual = await importOriginal<typeof import("ts-fsrs")>();
-
-      return {
-        ...actual,
-        fsrs: fsrsFactoryMock,
-      };
-    });
+    vi.doMock(
+      "@/features/flashcards/fsrs/definition",
+      async (importOriginal) => ({
+        ...(await importOriginal<
+          typeof import("@/features/flashcards/fsrs/definition")
+        >()),
+        createScheduler: createSchedulerMock,
+      }),
+    );
 
     const {
       getDefaultFsrsDesiredRetention,
@@ -313,7 +304,7 @@ describe("isFsrsSchedulerSettingsValid exception handling", () => {
 
     expect(isFsrsSchedulerSettingsValid(validationInput)).toBe(false);
     expect(isFsrsSchedulerSettingsValid(validationInput)).toBe(false);
-    expect(fsrsFactoryMock).toHaveBeenCalledTimes(1);
+    expect(createSchedulerMock).toHaveBeenCalledTimes(1);
   });
 });
 

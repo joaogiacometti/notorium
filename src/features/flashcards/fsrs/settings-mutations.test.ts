@@ -1,4 +1,7 @@
+import { FSRS7_DEFAULT_WEIGHTS } from "ts-fsrs/models/fsrs-7";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const storedWeights = JSON.stringify(FSRS7_DEFAULT_WEIGHTS);
 
 const selectMock = vi.fn();
 const updateWhereMock = vi.fn();
@@ -211,7 +214,7 @@ describe("optimizeFsrsParametersForUser optimizer outcomes", () => {
         id: "settings-1",
         userId: "user-1",
         desiredRetention: "0.900",
-        weights: "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]",
+        weights: storedWeights,
         optimizedReviewCount: 64,
       },
     ]);
@@ -239,7 +242,7 @@ describe("optimizeFsrsParametersForUser optimizer outcomes", () => {
         id: "settings-1",
         userId: "user-1",
         desiredRetention: "0.900",
-        weights: "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]",
+        weights: storedWeights,
         optimizedReviewCount: 64,
       },
     ]);
@@ -248,7 +251,6 @@ describe("optimizeFsrsParametersForUser optimizer outcomes", () => {
       {
         flashcardId: "card-1",
         rating: "good",
-        daysElapsed: 1,
         reviewedAt: new Date("2026-01-02T00:00:00.000Z"),
       },
     ]);
@@ -278,7 +280,7 @@ describe("optimizeFsrsParametersForUser optimizer outcomes", () => {
         id: "settings-1",
         userId: "user-1",
         desiredRetention: "0.900",
-        weights: "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]",
+        weights: storedWeights,
         optimizedReviewCount: 64,
       },
     ]);
@@ -287,7 +289,6 @@ describe("optimizeFsrsParametersForUser optimizer outcomes", () => {
       {
         flashcardId: "card-1",
         rating: "good",
-        daysElapsed: 1,
         reviewedAt: new Date("2026-01-02T00:00:00.000Z"),
       },
     ]);
@@ -324,7 +325,7 @@ describe("optimizeFsrsParametersForUser optimizer outcomes", () => {
         id: "settings-1",
         userId: "user-1",
         desiredRetention: "0.900",
-        weights: "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]",
+        weights: storedWeights,
         optimizedReviewCount: 64,
       },
     ]);
@@ -333,7 +334,6 @@ describe("optimizeFsrsParametersForUser optimizer outcomes", () => {
       {
         flashcardId: "card-1",
         rating: "good",
-        daysElapsed: 1,
         reviewedAt: new Date("2026-01-02T00:00:00.000Z"),
       },
     ]);
@@ -382,7 +382,6 @@ describe("optimizeFsrsParametersForUser", () => {
       {
         flashcardId: "card-1",
         rating: "good",
-        daysElapsed: 1,
         reviewedAt: new Date("2026-01-02T00:00:00.000Z"),
       },
     ]);
@@ -462,7 +461,6 @@ describe("optimizeFsrsParametersForUser", () => {
       {
         flashcardId: "card-1",
         rating: "good",
-        daysElapsed: 1,
         reviewedAt: new Date("2026-01-02T00:00:00.000Z"),
       },
     ]);
@@ -601,7 +599,6 @@ describe("optimizeAutomaticFsrsParameters", () => {
       {
         flashcardId: "card-1",
         rating: "good",
-        daysElapsed: 1,
         reviewedAt: new Date("2026-02-01T00:00:00.000Z"),
       },
     ]);

@@ -83,6 +83,7 @@ export type FlashcardReviewEntity = Pick<
   | "state"
   | "dueAt"
   | "stability"
+  | "stabilityFast"
   | "difficulty"
   | "intervalDays"
   | "learningStep"

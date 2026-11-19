@@ -1,21 +1,9 @@
-import { createEmptyCard, fsrs, generatorParameters } from "ts-fsrs";
-
-import {
-  defaultDifficultyValue,
-  defaultSchedulerParameters,
-  defaultStabilityValue,
-} from "@/features/flashcards/fsrs/constants";
+import { createScheduler } from "@/features/flashcards/fsrs/definition";
 import {
   buildFsrsCard,
   mapGradeToRating,
-  mapStateFromFsrs,
+  toSchedulingState,
 } from "@/features/flashcards/fsrs/mapping";
-import {
-  formatFsrsNumber,
-  normalizeDate,
-  normalizeFsrsOutputNumber,
-  normalizeNonNegativeInteger,
-} from "@/features/flashcards/fsrs/normalization";
 import type {
   ScheduleFlashcardReviewInput,
   SchedulerOutput,
@@ -27,43 +15,14 @@ import {
   normalizeFsrsWeights,
 } from "@/features/flashcards/fsrs/weights";
 
-export function createScheduler({
-  desiredRetention,
-  weights,
-  enableFuzz,
-}: {
-  desiredRetention: number;
-  weights: number[];
-  enableFuzz: boolean;
-}) {
-  return fsrs(
-    generatorParameters({
-      w: weights,
-      request_retention: desiredRetention,
-      enable_fuzz: enableFuzz,
-      enable_short_term: true,
-      learning_steps: defaultSchedulerParameters.learning_steps,
-      relearning_steps: defaultSchedulerParameters.relearning_steps,
-      maximum_interval: defaultSchedulerParameters.maximum_interval,
-    }),
-  );
-}
-
 export function getInitialFlashcardSchedulingState(now: Date = new Date()) {
-  const card = createEmptyCard(now);
+  const scheduler = createScheduler({
+    desiredRetention: getDefaultFsrsDesiredRetention(),
+    weights: getDefaultFsrsWeights(),
+    enableFuzz: false,
+  });
 
-  return {
-    state: mapStateFromFsrs(card.state),
-    dueAt: card.due,
-    stability: formatFsrsNumber(card.stability),
-    difficulty: formatFsrsNumber(card.difficulty),
-    intervalDays: card.scheduled_days,
-    learningStep: card.learning_steps,
-    lastReviewedAt: card.last_review ?? null,
-    reviewCount: card.reps,
-    lapseCount: card.lapses,
-    updatedAt: now,
-  };
+  return { ...toSchedulingState(scheduler.newCard({ now })), updatedAt: now };
 }
 
 export function scheduleFlashcardReview({
@@ -79,36 +38,11 @@ export function scheduleFlashcardReview({
     weights: normalizeFsrsWeights(weights),
     enableFuzz,
   });
-  const currentCard = buildFsrsCard(card, now);
-  const next = scheduler.next(currentCard, now, mapGradeToRating(grade));
-  const nextCard = next.card;
-  const dueAt = normalizeDate(nextCard.due, now);
-  const lastReviewedAt = normalizeDate(nextCard.last_review ?? now, now);
-  const stability = normalizeFsrsOutputNumber(
-    nextCard.stability,
-    defaultStabilityValue,
-  );
-  const difficulty = normalizeFsrsOutputNumber(
-    nextCard.difficulty,
-    defaultDifficultyValue,
-  );
-  const intervalDays = normalizeNonNegativeInteger(nextCard.scheduled_days);
-  const learningStep = normalizeNonNegativeInteger(nextCard.learning_steps);
-  const reviewCount = normalizeNonNegativeInteger(nextCard.reps);
-  const lapseCount = normalizeNonNegativeInteger(nextCard.lapses);
-  const daysElapsed = normalizeNonNegativeInteger(next.log.elapsed_days);
+  const next = scheduler.review({
+    card: buildFsrsCard(scheduler, card, now),
+    grade: mapGradeToRating(grade),
+    now,
+  });
 
-  return {
-    state: mapStateFromFsrs(nextCard.state),
-    dueAt,
-    stability: formatFsrsNumber(stability),
-    difficulty: formatFsrsNumber(difficulty),
-    intervalDays,
-    learningStep,
-    lastReviewedAt,
-    reviewCount,
-    lapseCount,
-    updatedAt: now,
-    daysElapsed,
-  };
+  return { ...toSchedulingState(next.card), updatedAt: now };
 }

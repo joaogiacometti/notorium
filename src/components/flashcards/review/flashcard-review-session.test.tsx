@@ -339,6 +339,7 @@ describe("FlashcardReviewSession", () => {
       ...makeCard(id),
       state: "review",
       stability: "10.0000",
+      stabilityFast: "8.0000",
       difficulty: "5.0000",
       intervalDays: 10,
       lastReviewedAt: new Date("2026-02-25T11:00:00.000Z"),
