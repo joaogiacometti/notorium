@@ -6,6 +6,7 @@ const { getFsrsOptimizationSettingsMock } = vi.hoisted(() => ({
 
 vi.mock("@/features/flashcards/fsrs/settings-queries", () => ({
   getFsrsOptimizationSettings: getFsrsOptimizationSettingsMock,
+  readFsrsSettings: async () => ({ newCardsPerDay: 15 }),
 }));
 
 const sessionUser = {
@@ -52,6 +53,7 @@ describe("getAccountSettingsForUser", () => {
       createdAt: "2024-01-02T00:00:00.000Z",
       timeZone: "America/Sao_Paulo",
       timeZoneOptions: expect.arrayContaining(["UTC", "Asia/Tokyo"]),
+      newCardsPerDay: 15,
       fsrsOptimization: {
         lastOptimizedOn: null,
         automaticOptimizationEnabled: false,

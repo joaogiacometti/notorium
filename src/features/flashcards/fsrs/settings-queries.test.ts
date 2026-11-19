@@ -70,6 +70,7 @@ describe("readFsrsSettings", () => {
       optimizedReviewCount: 0,
       lastOptimizedAt: null,
       automaticOptimizationEnabled: false,
+      newCardsPerDay: 20,
     });
     expect(insertMock).not.toHaveBeenCalled();
   });

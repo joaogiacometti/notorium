@@ -1,5 +1,8 @@
 import { timeZoneOptions } from "@/features/account/time-zones";
-import { getFsrsOptimizationSettings } from "@/features/flashcards/fsrs/settings-queries";
+import {
+  getFsrsOptimizationSettings,
+  readFsrsSettings,
+} from "@/features/flashcards/fsrs/settings-queries";
 import { formatDateLong } from "@/lib/dates/format";
 import type { AccountSettings } from "@/lib/server/api-contracts";
 
@@ -21,7 +24,10 @@ interface AccountSettingsUser {
 export async function getAccountSettingsForUser(
   user: AccountSettingsUser,
 ): Promise<AccountSettings> {
-  const fsrsOptimization = await getFsrsOptimizationSettings(user.id);
+  const [fsrsOptimization, { newCardsPerDay }] = await Promise.all([
+    getFsrsOptimizationSettings(user.id),
+    readFsrsSettings(user.id),
+  ]);
 
   return {
     name: user.name,
@@ -30,6 +36,7 @@ export async function getAccountSettingsForUser(
     timeZone: user.timeZone,
     timeZoneOptions,
     memberSince: formatDateLong(user.createdAt, user.timeZone),
+    newCardsPerDay,
     fsrsOptimization: {
       ...fsrsOptimization,
       lastOptimizedOn: fsrsOptimization.lastOptimizedAt

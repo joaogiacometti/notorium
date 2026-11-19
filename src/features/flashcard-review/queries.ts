@@ -1,10 +1,28 @@
-import { and, asc, count, eq, gte, inArray, type SQL, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  eq,
+  gte,
+  inArray,
+  not,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, flashcardReviewLog, folder } from "@/db/schema";
 import {
   buildDueAtFilter,
+  newFlashcardFilter,
+  reviewQueueGroupOrder,
   studyLaterLastOrder,
 } from "@/features/flashcard-review/due-filter";
+import {
+  getNewCardAllowanceForToday,
+  getRemainingNewCardsForToday,
+  localReviewDay,
+} from "@/features/flashcard-review/new-card-limit";
 import { computeReviewStreaks } from "@/features/flashcard-review/streaks";
 import { activeFlashcardFilter } from "@/features/flashcards/active-filter";
 import { readFsrsSettings } from "@/features/flashcards/fsrs/settings-queries";
@@ -93,20 +111,54 @@ function resolveDueLimit(limit: number | undefined): number {
     : LIMITS.reviewDueLimitDefault;
 }
 
+/**
+ * Due cards a session may show: every started card, plus the first
+ * `newCardAllowance` new cards in queue order.
+ */
+function buildQueueableFilter(
+  scopeFilters: SQL<unknown>[],
+  now: Date,
+  newCardAllowance: number,
+): SQL<unknown> {
+  const dueFilter = buildDueAtFilter(now);
+  if (newCardAllowance <= 0) {
+    return and(...scopeFilters, dueFilter, not(newFlashcardFilter())) as SQL;
+  }
+
+  const allowedNewCards = getDb()
+    .select({ id: flashcard.id })
+    .from(flashcard)
+    .where(and(...scopeFilters, dueFilter, newFlashcardFilter()))
+    .orderBy(
+      studyLaterLastOrder(),
+      asc(flashcard.dueAt),
+      asc(flashcard.createdAt),
+    )
+    .limit(newCardAllowance);
+
+  return and(
+    ...scopeFilters,
+    dueFilter,
+    or(not(newFlashcardFilter()), inArray(flashcard.id, allowedNewCards)),
+  ) as SQL;
+}
+
 async function selectDueFlashcards(
   userId: string,
   scopeFilters: SQL<unknown>[],
   folderPathMap: Map<string, string>,
   now: Date,
   limit: number,
+  newCardAllowance: number,
 ): Promise<FlashcardReviewEntity[]> {
   const rows = await getDb()
     .select({ flashcard, folderName: folder.name })
     .from(flashcard)
     .innerJoin(folder, eq(flashcard.folderId, folder.id))
-    .where(and(...scopeFilters, buildDueAtFilter(now)))
+    .where(buildQueueableFilter(scopeFilters, now, newCardAllowance))
     .orderBy(
       studyLaterLastOrder(),
+      reviewQueueGroupOrder(now),
       asc(flashcard.dueAt),
       asc(flashcard.createdAt),
     )
@@ -121,33 +173,51 @@ async function selectDueFlashcards(
 async function countScopedFlashcards(
   scopeFilters: SQL<unknown>[],
   now: Date,
+  newCardAllowance: number,
 ): Promise<FlashcardReviewSummary> {
+  const dueFilter = buildDueAtFilter(now);
   const rows = await getDb()
     .select({
       total: count(),
-      due: sql<number>`count(*) filter (where ${buildDueAtFilter(now)})`.mapWith(
-        Number,
-      ),
+      dueStarted:
+        sql<number>`count(*) filter (where ${dueFilter} and not ${newFlashcardFilter()})`.mapWith(
+          Number,
+        ),
+      dueNew:
+        sql<number>`count(*) filter (where ${dueFilter} and ${newFlashcardFilter()})`.mapWith(
+          Number,
+        ),
     })
     .from(flashcard)
     .where(and(...scopeFilters));
 
-  return { dueCount: rows[0]?.due ?? 0, totalCount: rows[0]?.total ?? 0 };
+  const row = rows[0];
+  return {
+    dueCount:
+      (row?.dueStarted ?? 0) + Math.min(row?.dueNew ?? 0, newCardAllowance),
+    totalCount: row?.total ?? 0,
+  };
 }
 
 /**
  * Due and total card counts for the user, optionally scoped to a folder
- * subtree. Feeds the home dashboard and the review hub badges.
+ * subtree. Due new cards are capped at what today's new-card limit allows.
+ * Feeds the home dashboard and the review hub badges.
  *
  * @example
- * const { dueCount } = await getFlashcardReviewSummaryForUser(userId, new Date());
+ * const { dueCount } = await getFlashcardReviewSummaryForUser(userId, new Date(), "UTC");
  */
 export async function getFlashcardReviewSummaryForUser(
   userId: string,
   now: Date,
+  timeZone: string,
   options: Pick<GetDueFlashcardsOptions, "folderId" | "folderIds"> = {},
 ): Promise<FlashcardReviewSummary> {
-  return countScopedFlashcards(await getScopedFilters(userId, options), now);
+  const [scopeFilters, newCardAllowance] = await Promise.all([
+    getScopedFilters(userId, options),
+    getNewCardAllowanceForToday(userId, now, timeZone),
+  ]);
+  return countScopedFlashcards(scopeFilters, now, newCardAllowance);
 }
 
 /**
@@ -173,7 +243,7 @@ export async function getFlashcardReviewActivityForUser(
 
   const heatmapRows = await getDb()
     .select({
-      date: sql<string>`to_char(${flashcardReviewLog.reviewedAt} at time zone 'UTC' at time zone ${timeZone}, 'YYYY-MM-DD')`,
+      date: localReviewDay(timeZone),
       count: count(),
     })
     .from(flashcardReviewLog)
@@ -206,13 +276,15 @@ export async function getFlashcardReviewActivityForUser(
 
 /**
  * The due-card batch, counts, and scheduler settings for a review session.
+ * Started cards come before new ones, and new cards stop at today's limit.
  * Scope filters are resolved once and shared by the card and count queries.
  *
  * @example
- * const state = await getFlashcardReviewStateForUser(userId, { limit: 50 });
+ * const state = await getFlashcardReviewStateForUser(userId, "UTC", { limit: 50 });
  */
 export async function getFlashcardReviewStateForUser(
   userId: string,
+  timeZone: string,
   options: GetDueFlashcardsOptions = {},
 ): Promise<FlashcardReviewState> {
   const now = new Date();
@@ -221,6 +293,12 @@ export async function getFlashcardReviewStateForUser(
     getScopedFilters(userId, options),
     getFolderPathMapForUser(userId),
   ]);
+  const newCardAllowance = await getRemainingNewCardsForToday(
+    userId,
+    now,
+    timeZone,
+    settings.newCardsPerDay,
+  );
   const [cards, summary] = await Promise.all([
     selectDueFlashcards(
       userId,
@@ -228,8 +306,9 @@ export async function getFlashcardReviewStateForUser(
       folderPathMap,
       now,
       resolveDueLimit(options.limit),
+      newCardAllowance,
     ),
-    countScopedFlashcards(scopeFilters, now),
+    countScopedFlashcards(scopeFilters, now, newCardAllowance),
   ]);
 
   return {

@@ -1,3 +1,5 @@
+import { LIMITS } from "@/lib/config/limits";
+
 export type ActionErrorParams = Record<string, string | number>;
 
 export type ActionErrorResult = {
@@ -91,6 +93,9 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     "Invalid FSRS optimization settings.",
   "flashcards.fsrsOptimization.updateFailed":
     "Failed to update FSRS optimization settings.",
+  "flashcards.newCardsPerDay.invalidData": `New cards per day must be a whole number from 0 to ${LIMITS.newCardsPerDayMax}.`,
+  "flashcards.newCardsPerDay.updateFailed":
+    "Failed to save new cards per day. Try again.",
   "limits.folderLimit": (params) =>
     `System limit reached: you can have up to ${params?.max} folders.`,
   "limits.childFolderLimit": (params) =>

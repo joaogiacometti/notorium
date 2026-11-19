@@ -12,6 +12,7 @@ import {
   normalizeFsrsDesiredRetention,
   parseFsrsWeightsWithValidity,
 } from "@/features/flashcards/fsrs";
+import { LIMITS } from "@/lib/config/limits";
 import type {
   FlashcardOptimizationSettings,
   FlashcardReviewLogEntity,
@@ -25,6 +26,7 @@ export interface FsrsSettings {
   optimizedReviewCount: number;
   lastOptimizedAt: Date | null;
   automaticOptimizationEnabled: boolean;
+  newCardsPerDay: number;
   shouldResetPersistedValues: boolean;
 }
 
@@ -36,6 +38,7 @@ type FsrsSchedulerValues = Pick<
   | "optimizedReviewCount"
   | "lastOptimizedAt"
   | "automaticOptimizationEnabled"
+  | "newCardsPerDay"
 >;
 
 function parseDesiredRetention(value: string | number): number {
@@ -81,6 +84,7 @@ export function normalizeSettings(
       optimizedReviewCount: 0,
       lastOptimizedAt: null,
       automaticOptimizationEnabled: row.automaticOptimizationEnabled ?? false,
+      newCardsPerDay: row.newCardsPerDay,
       shouldResetPersistedValues,
     };
   }
@@ -92,6 +96,7 @@ export function normalizeSettings(
     optimizedReviewCount: row.optimizedReviewCount,
     lastOptimizedAt: row.lastOptimizedAt,
     automaticOptimizationEnabled: row.automaticOptimizationEnabled ?? false,
+    newCardsPerDay: row.newCardsPerDay,
     shouldResetPersistedValues,
   };
 }
@@ -134,6 +139,7 @@ export async function readFsrsSettings(
       optimizedReviewCount: 0,
       lastOptimizedAt: null,
       automaticOptimizationEnabled: false,
+      newCardsPerDay: LIMITS.newCardsPerDayDefault,
     };
   }
 
@@ -202,5 +208,6 @@ function toSchedulerValues(settings: FsrsSettings): FsrsSchedulerValues {
     optimizedReviewCount: settings.optimizedReviewCount,
     lastOptimizedAt: settings.lastOptimizedAt,
     automaticOptimizationEnabled: settings.automaticOptimizationEnabled,
+    newCardsPerDay: settings.newCardsPerDay,
   };
 }

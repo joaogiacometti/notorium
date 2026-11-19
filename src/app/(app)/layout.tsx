@@ -11,7 +11,9 @@ export default async function AuthenticatedAppLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const authState = await getOptionalSessionAccess();
   const session = authState?.session ?? null;
-  const tree = session ? await getFolderTreeForUser(session.user.id) : null;
+  const tree = session
+    ? await getFolderTreeForUser(session.user.id, session.user.timeZone)
+    : null;
   const accountName =
     session?.user.name?.trim() || session?.user.email || "Account";
 

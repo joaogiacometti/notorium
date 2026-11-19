@@ -19,24 +19,41 @@ function isStudyLater(card: FlashcardReviewEntity): boolean {
   return card.studyLaterAt !== null;
 }
 
+// Queue groups in order: started cards due now, new cards, learning cards
+// shown ahead of time; then the same three for study-later cards. Mirrors the
+// server's `studyLaterLastOrder` and `reviewQueueGroupOrder`.
+function queueGroup(card: FlashcardReviewEntity, now: Date): number {
+  let group = 0;
+  if (card.state === "new") {
+    group = 1;
+  } else if (card.dueAt.getTime() > now.getTime()) {
+    group = 2;
+  }
+  return (isStudyLater(card) ? 3 : 0) + group;
+}
+
 function shouldQueueBefore(
   card: FlashcardReviewEntity,
   candidate: FlashcardReviewEntity,
+  now: Date,
 ): boolean {
-  if (isStudyLater(card) !== isStudyLater(candidate)) {
-    return isStudyLater(candidate);
+  const cardGroup = queueGroup(card, now);
+  const candidateGroup = queueGroup(candidate, now);
+  if (cardGroup !== candidateGroup) {
+    return candidateGroup > cardGroup;
   }
 
   return candidate.dueAt.getTime() > card.dueAt.getTime();
 }
 
-function insertCardByDueAt(
+function insertCardInQueue(
   cards: FlashcardReviewEntity[],
   card: FlashcardReviewEntity,
+  now: Date,
 ): FlashcardReviewEntity[] {
   const nextCards = [...cards];
   const insertIndex = nextCards.findIndex((candidate) =>
-    shouldQueueBefore(card, candidate),
+    shouldQueueBefore(card, candidate, now),
   );
 
   if (insertIndex === -1) {
@@ -49,19 +66,18 @@ function insertCardByDueAt(
 }
 
 /**
- * Stable split that keeps study-later cards behind every other card, matching
- * the server's `studyLaterLastOrder`.
+ * Stable sort into queue groups: started cards due now, new cards, learning
+ * cards shown ahead of time, then study-later cards, matching the server's
+ * review-queue sort. Order within a group is kept.
  *
  * @example
- * const cards = orderStudyLaterLast([...current.cards, ...incoming.cards]);
+ * const cards = orderReviewQueue([...current.cards, ...incoming.cards], new Date());
  */
-export function orderStudyLaterLast(
+export function orderReviewQueue(
   cards: FlashcardReviewEntity[],
+  now: Date,
 ): FlashcardReviewEntity[] {
-  return [
-    ...cards.filter((card) => !isStudyLater(card)),
-    ...cards.filter(isStudyLater),
-  ];
+  return [...cards].sort((a, b) => queueGroup(a, now) - queueGroup(b, now));
 }
 
 /**
@@ -100,7 +116,7 @@ export function applyReviewedFlashcardToState(
 
   if (isCardDueWithLearnAhead(flashcard, now)) {
     return {
-      cards: insertCardByDueAt(remainingCards, flashcard),
+      cards: insertCardInQueue(remainingCards, flashcard, now),
       summary: state.summary,
       scheduler: state.scheduler,
     };
@@ -149,7 +165,7 @@ export function mergeFlashcardReviewStates(
   const actualDueCount = countDueCards(cards, now);
 
   return {
-    cards: orderStudyLaterLast(cards),
+    cards: orderReviewQueue(cards, now),
     summary: {
       ...incoming.summary,
       dueCount: Math.max(incoming.summary.dueCount, actualDueCount),

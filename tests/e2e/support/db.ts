@@ -14,12 +14,14 @@ import {
   user,
   verification,
 } from "@/db/schema";
+import { getRemainingNewCardsForToday } from "@/features/flashcard-review/new-card-limit";
 import {
   getDefaultFsrsDesiredRetention,
   getDefaultFsrsWeights,
   parseFsrsWeights,
   serializeFsrsWeights,
 } from "@/features/flashcards/fsrs";
+import { LIMITS } from "@/lib/config/limits";
 import { documentText } from "@/lib/editor/document";
 import { documentUniquenessText } from "@/lib/editor/document-content";
 import { testDocument } from "@/test/document";
@@ -190,6 +192,9 @@ export async function ensureApprovedE2EWorkerUser(workerIndex: number) {
       name: credentials.name,
     })
     .where(eq(user.id, existingUser.id));
+  // Worker users keep their review logs across tests and runs, so the default
+  // daily new-card limit would eventually hide new cards from unrelated tests.
+  await setNewCardsPerDay(existingUser.id, LIMITS.newCardsPerDayMax);
 
   return {
     ...credentials,
@@ -321,6 +326,7 @@ export async function seedFsrsSchedulerSettings(
       lastOptimizedAt: options?.optimized ? now : null,
       automaticOptimizationEnabled:
         options?.automaticOptimizationEnabled ?? false,
+      newCardsPerDay: LIMITS.newCardsPerDayMax,
     })
     .onConflictDoUpdate({
       target: flashcardSchedulerSettings.userId,
@@ -332,6 +338,39 @@ export async function seedFsrsSchedulerSettings(
           options?.automaticOptimizationEnabled ?? false,
       },
     });
+}
+
+export async function setNewCardsPerDay(
+  userId: string,
+  newCardsPerDay: number,
+) {
+  await getDb()
+    .insert(flashcardSchedulerSettings)
+    .values({
+      userId,
+      desiredRetention: getDefaultFsrsDesiredRetention().toFixed(3),
+      weights: serializeFsrsWeights(getDefaultFsrsWeights()),
+      newCardsPerDay,
+    })
+    .onConflictDoUpdate({
+      target: flashcardSchedulerSettings.userId,
+      set: { newCardsPerDay },
+    });
+}
+
+/** New cards the user has started today, in their account time zone. */
+export async function countNewCardsStartedToday(userId: string) {
+  const [row] = await getDb()
+    .select({ timeZone: user.timeZone })
+    .from(user)
+    .where(eq(user.id, userId));
+  const remaining = await getRemainingNewCardsForToday(
+    userId,
+    new Date(),
+    row?.timeZone ?? "UTC",
+    LIMITS.newCardsPerDayMax,
+  );
+  return LIMITS.newCardsPerDayMax - remaining;
 }
 
 export async function readFsrsSchedulerSettings(

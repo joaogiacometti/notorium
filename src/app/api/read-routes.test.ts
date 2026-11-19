@@ -19,6 +19,7 @@ const sessionUser = {
   name: "Ada",
   email: "ada@example.com",
   createdAt: new Date("2024-01-01T00:00:00.000Z"),
+  timeZone: "America/Sao_Paulo",
 };
 
 vi.mock("@/lib/auth/auth", () => ({
@@ -139,6 +140,7 @@ describe("read route handlers", () => {
     expect(queries.getFlashcardReviewStateForUser).toHaveBeenCalledTimes(1);
     expect(queries.getFlashcardReviewStateForUser).toHaveBeenCalledWith(
       "user-1",
+      "America/Sao_Paulo",
       { folderId: "s1", limit: 20 },
     );
   });

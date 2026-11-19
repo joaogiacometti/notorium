@@ -13,10 +13,13 @@ import {
   optimizeFsrsParametersForUser,
   resetFsrsOptimizationForUser,
   updateFsrsOptimizationPreferences as updateFsrsOptimizationPreferencesForUser,
+  updateNewCardsPerDayForUser,
 } from "@/features/flashcards/fsrs/settings-mutations";
 import {
   type UpdateFsrsOptimizationPreferencesForm,
+  type UpdateNewCardsPerDayForm,
   updateFsrsOptimizationPreferencesSchema,
+  updateNewCardsPerDaySchema,
 } from "@/features/flashcards/fsrs/validation";
 import {
   updateUserAccessStatusForUser,
@@ -111,6 +114,27 @@ export async function updateFsrsOptimizationPreferences(
       } catch {
         return actionError("flashcards.fsrsOptimization.updateFailed");
       }
+    },
+  );
+}
+
+export async function updateNewCardsPerDay(
+  data: UpdateNewCardsPerDayForm,
+): Promise<MutationResult> {
+  return runValidatedUserAction(
+    "account.updateNewCardsPerDay",
+    updateNewCardsPerDaySchema,
+    data,
+    "flashcards.newCardsPerDay.invalidData",
+    async (userId, parsedData) => {
+      try {
+        await updateNewCardsPerDayForUser(userId, parsedData.newCardsPerDay);
+      } catch {
+        return actionError("flashcards.newCardsPerDay.updateFailed");
+      }
+      // Due counts in the sidebar badges and dashboards depend on the limit.
+      revalidateAppShell();
+      return { success: true };
     },
   );
 }

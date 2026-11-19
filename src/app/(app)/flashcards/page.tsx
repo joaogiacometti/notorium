@@ -51,6 +51,7 @@ export default async function FlashcardsPage({
   const reviewSummary = getFlashcardReviewSummaryForUser(
     session.user.id,
     new Date(),
+    session.user.timeZone,
     { folderId: scopedFolderId },
   );
 

@@ -1,7 +1,13 @@
 import type { Locator, Page } from "@playwright/test";
+import { LIMITS } from "@/lib/config/limits";
 import { expect, test } from "./support/authenticated-test";
 import { getPrefixedValue } from "./support/data";
-import { clearUserFoldersByNames, createFolder } from "./support/db";
+import {
+  clearUserFoldersByNames,
+  countNewCardsStartedToday,
+  createFolder,
+  setNewCardsPerDay,
+} from "./support/db";
 import { createFlashcardForFolder } from "./support/flashcards";
 import { breadcrumbCurrent } from "./support/page-chrome";
 
@@ -359,6 +365,54 @@ test("can complete a review session", async ({ page, e2eUser }) => {
       page.getByText("No due flashcards in this scope right now."),
     ).toBeVisible();
   } finally {
+    await clearUserFoldersByNames(e2eUser.userId, [folderName]);
+  }
+});
+
+test("new cards per day caps the new cards a review session starts", async ({
+  page,
+  e2eUser,
+}) => {
+  const folderName = getUniqueFolderName("new-card-limit");
+  const firstFront = getUniqueFlashcardFront("new-card-limit-first");
+  const secondFront = getUniqueFlashcardFront("new-card-limit-second");
+
+  await clearUserFoldersByNames(e2eUser.userId, [folderName]);
+
+  try {
+    const folder = await createFolder(e2eUser.userId, folderName);
+    await createFlashcardForFolder(
+      e2eUser.userId,
+      folder.id,
+      firstFront,
+      getUniqueFlashcardBack("new-card-limit-first"),
+    );
+    await createFlashcardForFolder(
+      e2eUser.userId,
+      folder.id,
+      secondFront,
+      getUniqueFlashcardBack("new-card-limit-second"),
+    );
+
+    // Other tests start new cards for this user too; allow exactly one more.
+    const allowOneMore = (await countNewCardsStartedToday(e2eUser.userId)) + 1;
+    await page.goto("/flashcards?settings=flashcards");
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Daily limit").fill(String(allowOneMore));
+    await dialog.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByText("New cards per day saved.")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+
+    await openFlashcardsReviewPage(page, folder.id);
+    await page.getByRole("link", { name: "Start review", exact: true }).click();
+    await expect(page.getByText("1 due of 2 total cards")).toBeVisible();
+    await page.getByRole("button", { name: "Show answer" }).click();
+    await page.getByRole("button", { name: /Easy/i }).click();
+
+    await expect(page.getByText("All caught up")).toBeVisible();
+  } finally {
+    await setNewCardsPerDay(e2eUser.userId, LIMITS.newCardsPerDayMax);
     await clearUserFoldersByNames(e2eUser.userId, [folderName]);
   }
 });

@@ -6,10 +6,12 @@ const ascMock = vi.fn((value) => value);
 const countMock = vi.fn(() => "count_column");
 const eqMock = vi.fn((column, value) => ({ column, value }));
 const gteMock = vi.fn((column, value) => ({ column, operator: "gte", value }));
+const gtMock = vi.fn((column, value) => ({ column, operator: "gt", value }));
 const inArrayMock = vi.fn((column, values) => ({ column, values }));
 const isNullMock = vi.fn((column) => ({ column, operator: "isNull" }));
 const lteMock = vi.fn((column, value) => ({ column, operator: "lte", value }));
 const orMock = vi.fn((...conditions) => conditions);
+const notMock = vi.fn((condition) => ({ operator: "not", condition }));
 const sqlMock = vi.fn((strings, ...values) => ({
   strings,
   values,
@@ -18,6 +20,8 @@ const sqlMock = vi.fn((strings, ...values) => ({
 const getDescendantFolderIdsMock = vi.fn();
 const getFolderPathRowsForUserMock = vi.fn();
 const readFsrsSettingsMock = vi.fn();
+const remainingNewCardsMock = vi.fn();
+const newCardAllowanceMock = vi.fn();
 
 vi.mock("@/db/index", () => ({
   getDb: () => ({
@@ -30,10 +34,12 @@ vi.mock("drizzle-orm", () => ({
   asc: ascMock,
   count: countMock,
   eq: eqMock,
+  gt: gtMock,
   gte: gteMock,
   inArray: inArrayMock,
   isNull: isNullMock,
   lte: lteMock,
+  not: notMock,
   or: orMock,
   sql: sqlMock,
 }));
@@ -77,6 +83,14 @@ vi.mock("@/db/schema", () => ({
 
 vi.mock("@/features/flashcards/fsrs/settings-queries", () => ({
   readFsrsSettings: readFsrsSettingsMock,
+}));
+
+vi.mock("@/features/flashcard-review/new-card-limit", async (importActual) => ({
+  ...(await importActual<
+    typeof import("@/features/flashcard-review/new-card-limit")
+  >()),
+  getRemainingNewCardsForToday: remainingNewCardsMock,
+  getNewCardAllowanceForToday: newCardAllowanceMock,
 }));
 
 function mockReviewTrendOnce(value: unknown) {
@@ -177,7 +191,10 @@ describe("getFlashcardReviewStateForUser", () => {
     readFsrsSettingsMock.mockResolvedValue({
       desiredRetention: "0.9",
       weights: [["w", 1]],
+      newCardsPerDay: 20,
     });
+    // Zero keeps the queue query free of the allowed-new-cards subquery.
+    remainingNewCardsMock.mockResolvedValue(0);
   });
 
   it("returns deck-scoped due cards and summary for a due new flashcard", async () => {
@@ -185,7 +202,9 @@ describe("getFlashcardReviewStateForUser", () => {
       if ("total" in selection) {
         return {
           from: () => ({
-            where: vi.fn().mockResolvedValue([{ total: 3, due: 1 }]),
+            where: vi
+              .fn()
+              .mockResolvedValue([{ total: 3, dueStarted: 1, dueNew: 0 }]),
           }),
         };
       }
@@ -227,7 +246,7 @@ describe("getFlashcardReviewStateForUser", () => {
     });
 
     const { getFlashcardReviewStateForUser } = await import("./queries");
-    const result = await getFlashcardReviewStateForUser("user-1", {
+    const result = await getFlashcardReviewStateForUser("user-1", "UTC", {
       folderId: "deck-1",
       limit: 50,
     });
@@ -263,7 +282,9 @@ describe("getFlashcardReviewStateForUser", () => {
     vi.setSystemTime(now);
     selectMock.mockImplementation(() => ({
       from: () => ({
-        where: vi.fn().mockResolvedValue([{ total: 0, due: 0 }]),
+        where: vi
+          .fn()
+          .mockResolvedValue([{ total: 0, dueStarted: 0, dueNew: 0 }]),
         innerJoin: () => ({
           where: () => ({
             orderBy: () => ({ limit: vi.fn().mockResolvedValue([]) }),
@@ -273,7 +294,7 @@ describe("getFlashcardReviewStateForUser", () => {
     }));
 
     const { getFlashcardReviewStateForUser } = await import("./queries");
-    await getFlashcardReviewStateForUser("user-1");
+    await getFlashcardReviewStateForUser("user-1", "UTC");
 
     expect(lteMock).toHaveBeenCalledWith(
       "flashcard_due_at_column",
@@ -287,23 +308,33 @@ describe("getFlashcardReviewStateForUser", () => {
     vi.useRealTimers();
   });
 
-  it("orders study-later cards after every other due card", async () => {
+  it("orders study-later cards last and new cards between due and learn-ahead cards", async () => {
     const orderByMock = vi.fn(() => ({
       limit: vi.fn().mockResolvedValue([]),
     }));
     selectMock.mockImplementation(() => ({
       from: () => ({
-        where: vi.fn().mockResolvedValue([{ total: 0, due: 0 }]),
+        where: vi
+          .fn()
+          .mockResolvedValue([{ total: 0, dueStarted: 0, dueNew: 0 }]),
         innerJoin: () => ({ where: () => ({ orderBy: orderByMock }) }),
       }),
     }));
 
     const { getFlashcardReviewStateForUser } = await import("./queries");
-    await getFlashcardReviewStateForUser("user-1");
+    await getFlashcardReviewStateForUser("user-1", "UTC");
 
-    const [studyLaterTerm, dueAtTerm] = orderByMock.mock.calls[0] as unknown[];
+    const [studyLaterTerm, groupTerm, dueAtTerm] = orderByMock.mock
+      .calls[0] as unknown[];
     expect(studyLaterTerm).toMatchObject({
       values: ["flashcard_study_later_at_column"],
+    });
+    // Started cards due now, then new cards, then learn-ahead cards.
+    expect(groupTerm).toMatchObject({
+      values: [
+        { column: "flashcard_state_column", value: "new" },
+        { column: "flashcard_due_at_column", operator: "gt" },
+      ],
     });
     expect(dueAtTerm).toBe("flashcard_due_at_column");
   });
@@ -321,7 +352,7 @@ describe("getFlashcardReviewStateForUser", () => {
       from: () => ({
         where: (condition: unknown) => {
           recordWhere(condition);
-          return Promise.resolve([{ total: 0, due: 0 }]);
+          return Promise.resolve([{ total: 0, dueStarted: 0, dueNew: 0 }]);
         },
         innerJoin: () => ({
           where: (condition: unknown) => {
@@ -339,7 +370,7 @@ describe("getFlashcardReviewStateForUser", () => {
 
     const { getAllFlashcardsForExam, getFlashcardReviewStateForUser } =
       await import("./queries");
-    await getFlashcardReviewStateForUser("user-1");
+    await getFlashcardReviewStateForUser("user-1", "UTC");
     await getAllFlashcardsForExam("user-1");
 
     // Due batch, due/total counts, exam cards.
@@ -347,5 +378,39 @@ describe("getFlashcardReviewStateForUser", () => {
     for (const condition of whereArgs) {
       expect(JSON.stringify(condition)).toContain(JSON.stringify(activeOnly));
     }
+  });
+});
+
+describe("getFlashcardReviewSummaryForUser", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    selectMock.mockReset();
+  });
+
+  it("counts every due started card but only today's remaining new cards", async () => {
+    selectMock.mockImplementation(() => ({
+      from: () => ({
+        where: vi
+          .fn()
+          .mockResolvedValue([{ total: 40, dueStarted: 2, dueNew: 30 }]),
+      }),
+    }));
+    newCardAllowanceMock.mockResolvedValue(5);
+    const now = new Date("2026-04-12T15:00:00.000Z");
+
+    const { getFlashcardReviewSummaryForUser } = await import("./queries");
+    const summary = await getFlashcardReviewSummaryForUser(
+      "user-1",
+      now,
+      "America/Sao_Paulo",
+    );
+
+    expect(summary).toEqual({ dueCount: 7, totalCount: 40 });
+    expect(newCardAllowanceMock).toHaveBeenCalledWith(
+      "user-1",
+      now,
+      "America/Sao_Paulo",
+    );
   });
 });

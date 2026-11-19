@@ -231,6 +231,29 @@ export async function updateFsrsOptimizationPreferences(
 }
 
 /**
+ * Set how many new cards the user may start per local day.
+ *
+ * @example
+ * await updateNewCardsPerDayForUser(userId, 20);
+ */
+export async function updateNewCardsPerDayForUser(
+  userId: string,
+  newCardsPerDay: number,
+): Promise<void> {
+  const settings = await ensureFsrsSettings(userId);
+
+  await getDb()
+    .update(flashcardSchedulerSettings)
+    .set({ newCardsPerDay })
+    .where(
+      and(
+        eq(flashcardSchedulerSettings.userId, userId),
+        eq(flashcardSchedulerSettings.id, settings.row.id),
+      ),
+    );
+}
+
+/**
  * Restores the user's FSRS optimizer output to the default scheduler weights.
  *
  * @example

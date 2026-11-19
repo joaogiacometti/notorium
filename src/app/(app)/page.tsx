@@ -28,7 +28,7 @@ export default async function HomePage() {
     session.user.timeZone,
   );
   const [summary, recentDocuments] = await Promise.all([
-    getFlashcardReviewSummaryForUser(userId, now),
+    getFlashcardReviewSummaryForUser(userId, now, session.user.timeZone),
     getRecentDocumentsForUser(userId, RECENT_DOCUMENTS_LIMIT),
   ]);
 

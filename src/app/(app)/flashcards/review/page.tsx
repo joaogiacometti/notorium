@@ -18,10 +18,11 @@ export default async function FlashcardReviewPage({
   const folders = await getAllFoldersWithPathsForUser(session.user.id);
   const scopedFolderId = resolveScopedFolderId(folders, folderId);
 
-  const initialState = await getFlashcardReviewStateForUser(session.user.id, {
-    folderId: scopedFolderId,
-    limit: 50,
-  });
+  const initialState = await getFlashcardReviewStateForUser(
+    session.user.id,
+    session.user.timeZone,
+    { folderId: scopedFolderId, limit: 50 },
+  );
 
   if (initialState.summary.dueCount === 0) {
     redirect(getFlashcardsHref("review", scopedFolderId));

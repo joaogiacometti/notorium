@@ -13,6 +13,7 @@ import {
   areFsrsWeightsWellFormed,
   isFsrsDesiredRetentionValid,
 } from "@/features/flashcards/fsrs/weights";
+import { LIMITS } from "@/lib/config/limits";
 
 export const updateFsrsOptimizationPreferencesSchema = z.object({
   automaticOptimizationEnabled: z.boolean(),
@@ -20,6 +21,14 @@ export const updateFsrsOptimizationPreferencesSchema = z.object({
 
 export type UpdateFsrsOptimizationPreferencesForm = z.infer<
   typeof updateFsrsOptimizationPreferencesSchema
+>;
+
+export const updateNewCardsPerDaySchema = z.object({
+  newCardsPerDay: z.number().int().min(0).max(LIMITS.newCardsPerDayMax),
+});
+
+export type UpdateNewCardsPerDayForm = z.infer<
+  typeof updateNewCardsPerDaySchema
 >;
 
 const schedulerSettingsValidationCache = new Map<string, boolean>();

@@ -8,6 +8,7 @@ export async function GET(request: Request): Promise<Response> {
     logScope: "flashcard-review.state",
     schema: flashcardReviewStateQuerySchema,
     input: readSearchParams(request.url, { numberKeys: ["limit"] }),
-    read: (user, scope) => getFlashcardReviewStateForUser(user.id, scope),
+    read: (user, scope) =>
+      getFlashcardReviewStateForUser(user.id, user.timeZone, scope),
   });
 }

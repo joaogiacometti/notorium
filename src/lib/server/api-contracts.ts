@@ -131,6 +131,7 @@ export interface AccountSettings {
   timeZone: string;
   timeZoneOptions: string[];
   memberSince: string;
+  newCardsPerDay: number;
   fsrsOptimization: FlashcardOptimizationSettings & {
     lastOptimizedOn: string | null;
   };

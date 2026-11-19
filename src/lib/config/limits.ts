@@ -55,6 +55,9 @@ export const LIMITS = {
 
   reviewDueLimitDefault: 50,
   reviewDueLimitMax: 200,
+  // New cards a user may start per local day; 0 pauses new cards.
+  newCardsPerDayDefault: 20,
+  newCardsPerDayMax: 9999,
 
   pageSizeMin: 1,
   pageSizeMax: 500,

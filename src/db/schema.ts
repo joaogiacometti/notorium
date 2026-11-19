@@ -324,6 +324,8 @@ export const flashcardSchedulerSettings = pgTable(
     automaticOptimizationEnabled: boolean("automatic_optimization_enabled")
       .notNull()
       .default(false),
+    // Mirrors LIMITS.newCardsPerDayDefault.
+    newCardsPerDay: integer("new_cards_per_day").notNull().default(20),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

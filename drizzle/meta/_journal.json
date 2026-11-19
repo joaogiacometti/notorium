@@ -589,6 +589,13 @@
       "when": 1795094326715,
       "tag": "0083_user_time_zone",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1795100074393,
+      "tag": "0084_new_cards_per_day",
+      "breakpoints": true
     }
   ]
 }

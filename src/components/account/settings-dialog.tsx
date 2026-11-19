@@ -7,6 +7,7 @@ import { AccountProfileCard } from "@/components/account/account-profile-card";
 import { AppearanceCard } from "@/components/account/appearance-card";
 import { DangerZoneCard } from "@/components/account/danger-zone-card";
 import { FlashcardOptimizationCard } from "@/components/account/flashcard-optimization-card";
+import { NewCardsPerDayCard } from "@/components/account/new-cards-per-day-card";
 import {
   SettingsPage,
   SettingsSearchProvider,
@@ -259,6 +260,7 @@ function SettingsSectionContent({
       )}
       {shows("flashcards") && (
         <SectionPage id="flashcards">
+          <NewCardsPerDayCard newCardsPerDay={settings.newCardsPerDay} />
           <FlashcardOptimizationCard settings={settings.fsrsOptimization} />
         </SectionPage>
       )}

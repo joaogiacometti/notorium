@@ -6,17 +6,21 @@ const {
   resetFsrsOptimizationForUserMock,
   updateUserFake,
   updateUserTimeZoneFake,
+  updateNewCardsPerDayFake,
+  revalidateAppShellMock,
   requestHeaders,
 } = vi.hoisted(() => ({
   getAuthenticatedUserIdMock: vi.fn(),
   resetFsrsOptimizationForUserMock: vi.fn(),
   updateUserFake: vi.fn(),
   updateUserTimeZoneFake: vi.fn(),
+  updateNewCardsPerDayFake: vi.fn(),
+  revalidateAppShellMock: vi.fn(),
   requestHeaders: new Headers({ cookie: "session-fixture" }),
 }));
 
 vi.mock("@/lib/server/revalidate-views", () => ({
-  revalidateAppShell: vi.fn(),
+  revalidateAppShell: revalidateAppShellMock,
 }));
 
 vi.mock("next/headers", () => ({
@@ -31,6 +35,7 @@ vi.mock("@/features/flashcards/fsrs/settings-mutations", () => ({
   optimizeFsrsParametersForUser: vi.fn(),
   resetFsrsOptimizationForUser: resetFsrsOptimizationForUserMock,
   updateFsrsOptimizationPreferences: vi.fn(),
+  updateNewCardsPerDayForUser: updateNewCardsPerDayFake,
 }));
 
 vi.mock("@/features/user/mutations", () => ({
@@ -103,6 +108,32 @@ describe("account actions", () => {
         errorCode: "account.invalidData",
       });
       expect(updateUserTimeZoneFake).not.toHaveBeenCalled();
+    },
+  );
+
+  it("saves new cards per day and refreshes the due counts in the app shell", async () => {
+    const { updateNewCardsPerDay } = await import("@/app/actions/account");
+
+    expect(await updateNewCardsPerDay({ newCardsPerDay: 0 })).toEqual({
+      success: true,
+    });
+    expect(updateNewCardsPerDayFake).toHaveBeenCalledExactlyOnceWith(
+      "user-1",
+      0,
+    );
+    expect(revalidateAppShellMock).toHaveBeenCalledOnce();
+  });
+
+  it.each([-1, 2.5, 10_000, Number.NaN])(
+    "rejects new cards per day of %s before writing",
+    async (newCardsPerDay) => {
+      const { updateNewCardsPerDay } = await import("@/app/actions/account");
+
+      expect(await updateNewCardsPerDay({ newCardsPerDay })).toMatchObject({
+        success: false,
+        errorCode: "flashcards.newCardsPerDay.invalidData",
+      });
+      expect(updateNewCardsPerDayFake).not.toHaveBeenCalled();
     },
   );
 

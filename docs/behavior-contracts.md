@@ -17,6 +17,7 @@ Update this file only when intent changes or a verification gap is resolved. Mov
 - Exam grading and study-later marks do not change regular spaced-repetition scheduling. Explicit card edits, resets, and deletes remain writes.
 - Archived cards leave every review queue, due count, review total, and exam, and cannot be graded; archiving and unarchiving keep content, history, and scheduling state. Archiving clears the study-later mark, and only active cards can take one.
 - Scheduler optimization changes tuning, not existing card progress or due dates.
+- New cards count against the account's daily limit once first graded on its local day; undoing that grade returns the slot. Review queues, due counts, and sidebar badges cap due new cards at the remaining allowance. Sessions show started cards due now, then new cards, then learning cards ahead of time.
 - Failed background grades return the card for retry. Leaving waits for pending saves; queue refill must not report completion prematurely or reintroduce an already graded card.
 
 **Coverage to strengthen:** real card/subtree deletion with retained logs, exam grading without scheduling writes, optimization without progress changes, and struggling-card recovery against actual review histories rather than SQL-parameter assertions alone.
