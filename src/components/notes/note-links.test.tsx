@@ -28,6 +28,26 @@ type ReactActEnvironmentGlobal = typeof globalThis & {
 const LINKED_CONTENT =
   '<p><a data-note-id="n1" data-note-link="" href="/notes/n1">Old title</a></p>';
 
+function LinkedFrom() {
+  return <NoteLinkedFrom connections={useNoteConnections("n1")} />;
+}
+
+function RetitledEditor({ title }: Readonly<{ title: string }>) {
+  const [editor, setEditor] = useState<Editor | null>(null);
+  useEffect(() => {
+    editor?.view.dispatch(
+      editor.state.tr.setDocAttribute("documentTitle", title),
+    );
+  }, [editor, title]);
+  return (
+    <TiptapEditor
+      value={testDocument(LINKED_CONTENT)}
+      onChange={() => {}}
+      onEditorReady={setEditor}
+    />
+  );
+}
+
 describe("note links", () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -60,10 +80,6 @@ describe("note links", () => {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, ms));
     });
-  }
-
-  function LinkedFrom() {
-    return <NoteLinkedFrom connections={useNoteConnections("n1")} />;
   }
 
   describe("linked from", () => {
@@ -115,22 +131,6 @@ describe("note links", () => {
   });
 
   describe("editor transactions", () => {
-    function RetitledEditor({ title }: Readonly<{ title: string }>) {
-      const [editor, setEditor] = useState<Editor | null>(null);
-      useEffect(() => {
-        editor?.view.dispatch(
-          editor.state.tr.setDocAttribute("documentTitle", title),
-        );
-      }, [editor, title]);
-      return (
-        <TiptapEditor
-          value={testDocument(LINKED_CONTENT)}
-          onChange={() => {}}
-          onEditorReady={setEditor}
-        />
-      );
-    }
-
     it("can run from a React effect without flushSync errors", async () => {
       const consoleError = vi
         .spyOn(console, "error")

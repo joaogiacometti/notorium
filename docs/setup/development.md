@@ -6,17 +6,17 @@ Use Node.js 24 and npm. Docker Compose runs the local database and Redis service
 
 See [package.json](../../package.json) for the complete command list.
 
-| Command | Purpose |
-| --- | --- |
-| `npm run test` | Vitest suite |
-| `npm run test:coverage` | Tests with coverage thresholds |
-| `npm run eval` | Assistant checks against the real model in `.env`, three trials per case (`EVAL_TRIALS`); paid, so run manually after prompt, tool, or model changes. The Assistant Evals workflow also runs them on pushes to `main` that change model-visible code, reporting scores on the run's summary page without blocking anything. Transcripts go to `evals/transcripts/` |
-| `npm run lint` | Biome and architecture boundaries |
-| `npm run typecheck` | TypeScript checks |
-| `npm run check:size` | Source and test size guard |
-| `npm run check:deadcode` | Unused files and dependencies |
-| `npm run db:generate` | Generate migrations after schema changes |
-| `npm run db:migrate` | Apply migrations |
+| Command                  | Purpose                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npm run test`           | Vitest suite                                                                                                                                                                                                                                                                                                                                                       |
+| `npm run test:coverage`  | Tests with coverage thresholds                                                                                                                                                                                                                                                                                                                                     |
+| `npm run eval`           | Assistant checks against the real model in `.env`, three trials per case (`EVAL_TRIALS`); paid, so run manually after prompt, tool, or model changes. The Assistant Evals workflow also runs them on pushes to `main` that change model-visible code, reporting scores on the run's summary page without blocking anything. Transcripts go to `evals/transcripts/` |
+| `npm run lint`           | Biome and architecture boundaries                                                                                                                                                                                                                                                                                                                                  |
+| `npm run typecheck`      | TypeScript checks                                                                                                                                                                                                                                                                                                                                                  |
+| `npm run check:size`     | Source and test size guard                                                                                                                                                                                                                                                                                                                                         |
+| `npm run check:deadcode` | Unused files and dependencies                                                                                                                                                                                                                                                                                                                                      |
+| `npm run db:generate`    | Generate migrations after schema changes                                                                                                                                                                                                                                                                                                                           |
+| `npm run db:migrate`     | Apply migrations                                                                                                                                                                                                                                                                                                                                                   |
 
 Never hand-edit generated migrations. Before committing a schema change, agree on migration generation and any production cleanup or backfill; pushing schema or migration changes to `main` triggers production migration.
 

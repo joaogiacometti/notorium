@@ -22,14 +22,14 @@ deployment uses configured backing services. Setup belongs in the [README](../RE
 
 ## Module Responsibilities
 
-| Location | Responsibility |
-| --- | --- |
-| `src/app/` | Routing, server-rendered composition, and thin HTTP/action boundaries |
-| `src/components/` | Feature UI and shared components; `ui/` contains shadcn primitives |
-| `src/features/` | Domain reads, writes, validation, and feature-local algorithms |
-| `src/db/` | Drizzle schema, relations, and database client |
-| `src/lib/` | Shared infrastructure and project-owned service adapters |
-| `src/env.ts` | Runtime configuration validation |
+| Location          | Responsibility                                                        |
+| ----------------- | --------------------------------------------------------------------- |
+| `src/app/`        | Routing, server-rendered composition, and thin HTTP/action boundaries |
+| `src/components/` | Feature UI and shared components; `ui/` contains shadcn primitives    |
+| `src/features/`   | Domain reads, writes, validation, and feature-local algorithms        |
+| `src/db/`         | Drizzle schema, relations, and database client                        |
+| `src/lib/`        | Shared infrastructure and project-owned service adapters              |
+| `src/env.ts`      | Runtime configuration validation                                      |
 
 ## Main Data Flows
 

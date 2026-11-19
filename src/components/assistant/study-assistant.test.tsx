@@ -184,6 +184,22 @@ function streamOfChunks(
   });
 }
 
+function PdfSurface() {
+  const [selected, setSelected] = useState(true);
+  useStudyContext(
+    {
+      kind: "pdf",
+      title: "Cell biology",
+      content: selected ? "Mitochondria make ATP." : "The whole page",
+      partial: false,
+      page: 3,
+      scope: selected ? "selection" : "page",
+    },
+    () => setSelected(false),
+  );
+  return null;
+}
+
 describe("study assistant", () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -464,21 +480,6 @@ describe("study assistant", () => {
   });
 
   it("shows the attached PDF selection and lets the user remove it", async () => {
-    function PdfSurface() {
-      const [selected, setSelected] = useState(true);
-      useStudyContext(
-        {
-          kind: "pdf",
-          title: "Cell biology",
-          content: selected ? "Mitochondria make ATP." : "The whole page",
-          partial: false,
-          page: 3,
-          scope: selected ? "selection" : "page",
-        },
-        () => setSelected(false),
-      );
-      return null;
-    }
     await act(async () => {
       root.render(
         <QueryClientProvider client={new QueryClient()}>

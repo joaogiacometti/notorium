@@ -14,16 +14,16 @@ belongs to its component and tests, even under a feature heading below.
 Reuse existing components rather than rebuilding their appearance or behavior.
 Do not hand-edit `src/components/ui/`; compose its primitives.
 
-| Need | Use |
-| --- | --- |
-| Dialog, sheet, tooltip, popover | Matching `src/components/ui/` primitive, not raw Radix |
-| Editable field | `Field` + `FieldLabel` + input, textarea, or select primitive |
-| Standard action | `Button`; `AsyncButtonContent` for pending content |
-| Status pill | `StatusToneBadge` |
-| Page title and actions | `PageHeader` |
-| Detail page | `DetailPageLayout` |
-| Feature index | `FeaturePageShell` |
-| Home card header | `DashboardCardHeader` |
+| Need                            | Use                                                           |
+| ------------------------------- | ------------------------------------------------------------- |
+| Dialog, sheet, tooltip, popover | Matching `src/components/ui/` primitive, not raw Radix        |
+| Editable field                  | `Field` + `FieldLabel` + input, textarea, or select primitive |
+| Standard action                 | `Button`; `AsyncButtonContent` for pending content            |
+| Status pill                     | `StatusToneBadge`                                             |
+| Page title and actions          | `PageHeader`                                                  |
+| Detail page                     | `DetailPageLayout`                                            |
+| Feature index                   | `FeaturePageShell`                                            |
+| Home card header                | `DashboardCardHeader`                                         |
 
 Page components live in [shared components](./src/components/shared/). Raw buttons
 are for custom controls such as segmented toggles and drop zones, not ordinary actions.
@@ -42,13 +42,13 @@ are for custom controls such as segmented toggles and drop zones, not ordinary a
   and dialog components own their frame padding; scrolling editor dialogs keep
   header/body/footer separate, with a border above footer actions.
 
-| Role | Convention |
-| --- | --- |
-| Header → body; between form fields | `gap-4`, `mb-4`, or `space-y-4` |
-| Label → control | `Field` defaults; label rows with inline actions use `min-h-6` |
-| Title → metadata | `gap-1` |
-| Inline icon + text | `gap-1` for `text-xs`; `gap-1.5`–`gap-2` for larger text |
-| Detail header actions | `size-10` icon buttons with `gap-2` |
+| Role                               | Convention                                                     |
+| ---------------------------------- | -------------------------------------------------------------- |
+| Header → body; between form fields | `gap-4`, `mb-4`, or `space-y-4`                                |
+| Label → control                    | `Field` defaults; label rows with inline actions use `min-h-6` |
+| Title → metadata                   | `gap-1`                                                        |
+| Inline icon + text                 | `gap-1` for `text-xs`; `gap-1.5`–`gap-2` for larger text       |
+| Detail header actions              | `size-10` icon buttons with `gap-2`                            |
 
 ## Copy
 
@@ -75,12 +75,12 @@ the main action, focus, and selection. Intent colors communicate status through
 [status tones](./src/lib/ui/status-tones.ts), not bespoke per-status maps; review
 grades map to tones once, in `gradeTones`.
 
-| Text role | Convention |
-| --- | --- |
-| Page/detail title | `text-xl font-semibold tracking-tight` |
-| Section heading | `text-base font-semibold tracking-tight` |
+| Text role               | Convention                                                          |
+| ----------------------- | ------------------------------------------------------------------- |
+| Page/detail title       | `text-xl font-semibold tracking-tight`                              |
+| Section heading         | `text-base font-semibold tracking-tight`                            |
 | Read-only section label | `text-xs font-medium uppercase tracking-wide text-muted-foreground` |
-| Record metadata | Muted `text-xs`, beside or beneath the title |
+| Record metadata         | Muted `text-xs`, beside or beneath the title                        |
 
 Metadata is text, not a badge or form control. Its links size to their text and
 open a new tab from dialogs/review sessions to preserve drafts and progress.
@@ -97,12 +97,12 @@ Dashed borders distinguish three roles:
 Use named layers from `globals.css`; [the layer test](./src/app/z-index-layers.test.ts)
 guards against numeric/arbitrary utilities outside shadcn primitives.
 
-| Utility | Role |
-| --- | --- |
-| `z-raised` | Content above siblings, such as sticky table headers |
-| `z-chrome` | Sticky page bars, mobile header, global sidebar |
-| `z-immersive` | Note/PDF zen mode |
-| `z-overlay` | Dialogs, sheets, menus, popovers, selects, tooltips |
+| Utility       | Role                                                 |
+| ------------- | ---------------------------------------------------- |
+| `z-raised`    | Content above siblings, such as sticky table headers |
+| `z-chrome`    | Sticky page bars, mobile header, global sidebar      |
+| `z-immersive` | Note/PDF zen mode                                    |
+| `z-overlay`   | Dialogs, sheets, menus, popovers, selects, tooltips  |
 
 Overlays share one layer and stack by portal DOM order. Fix the portal host or
 opening order when something is hidden; do not raise a component's z-index to win.

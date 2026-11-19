@@ -7,12 +7,12 @@ inventories, generic style advice, or copies of rules already enforced by checks
 
 Use npm with Node.js 24.
 
-| Task | Command |
-| --- | --- |
-| Develop | `npm run dev` |
-| One test file | `npm run test -- src/path/to/file.test.tsx` |
-| All unit tests | `npm run test` |
-| Lint / types | `npm run lint` / `npm run typecheck` |
+| Task             | Command                                         |
+| ---------------- | ----------------------------------------------- |
+| Develop          | `npm run dev`                                   |
+| One test file    | `npm run test -- src/path/to/file.test.tsx`     |
+| All unit tests   | `npm run test`                                  |
+| Lint / types     | `npm run lint` / `npm run typecheck`            |
 | Size / dead code | `npm run check:size` / `npm run check:deadcode` |
 
 For isolated E2E services and migrations, follow [Development](docs/setup/development.md).
