@@ -44,6 +44,8 @@ interface ReviewSessionScreenProps {
   onResetFlashcard: () => void;
   onDeleteFlashcard: () => void;
   onToggleStudyLater: () => void;
+  /** Due review only; exams leave archiving to the manage and detail pages. */
+  onArchiveFlashcard?: () => void;
   isExamMode?: boolean;
   /** The current card is open in the inline editor instead of being reviewed. */
   editing: boolean;
@@ -116,6 +118,7 @@ function ActiveSessionScreen(props: Readonly<SessionScreenProps>) {
           onCopyFlashcard={() => copyReviewCard(currentCard, folders)}
           studyLaterMarked={currentCard.studyLaterAt !== null}
           onToggleStudyLater={props.onToggleStudyLater}
+          onArchiveFlashcard={props.onArchiveFlashcard}
           onEditFlashcard={props.onEditFlashcard}
           onResetFlashcard={props.onResetFlashcard}
           onDeleteFlashcard={props.onDeleteFlashcard}
@@ -140,6 +143,7 @@ interface SessionCardActionsProps {
   studyLaterMarked?: boolean;
   onUndoReview: () => void;
   onToggleStudyLater?: () => void;
+  onArchiveFlashcard?: () => void;
   onCopyFlashcard?: () => void;
   onEditFlashcard?: () => void;
   onResetFlashcard?: () => void;
@@ -153,6 +157,7 @@ function SessionCardActions({
   studyLaterMarked = false,
   onUndoReview,
   onToggleStudyLater,
+  onArchiveFlashcard,
   onCopyFlashcard,
   onEditFlashcard,
   onResetFlashcard,
@@ -185,6 +190,7 @@ function SessionCardActions({
             onCopy={() => onCopyFlashcard?.()}
             studyLaterMarked={studyLaterMarked}
             onToggleStudyLater={() => onToggleStudyLater?.()}
+            onToggleArchived={onArchiveFlashcard}
             onReset={() => onResetFlashcard?.()}
             onDelete={() => onDeleteFlashcard?.()}
           />

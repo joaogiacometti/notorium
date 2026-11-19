@@ -6,6 +6,7 @@ import {
   studyLaterLastOrder,
 } from "@/features/flashcard-review/due-filter";
 import { computeReviewStreaks } from "@/features/flashcard-review/streaks";
+import { activeFlashcardFilter } from "@/features/flashcards/active-filter";
 import { readFsrsSettings } from "@/features/flashcards/fsrs/settings-queries";
 import { attachFlashcardSources } from "@/features/flashcards/source-queries";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/features/folders/queries";
 import { LIMITS } from "@/lib/config/limits";
 import type {
+  FlashcardEntity,
   FlashcardReviewActivity,
   FlashcardReviewEntity,
   FlashcardReviewState,
@@ -34,7 +36,8 @@ type ReviewableFlashcard = Pick<
   | "lastReviewedAt"
   | "reviewCount"
   | "lapseCount"
->;
+> &
+  Pick<FlashcardEntity, "archivedAt">;
 
 export interface GetDueFlashcardsOptions {
   folderId?: string;
@@ -64,7 +67,10 @@ async function getScopedFilters(
   userId: string,
   options: Pick<GetDueFlashcardsOptions, "folderId" | "folderIds"> = {},
 ): Promise<SQL<unknown>[]> {
-  const filters: SQL<unknown>[] = [eq(flashcard.userId, userId)];
+  const filters: SQL<unknown>[] = [
+    eq(flashcard.userId, userId),
+    activeFlashcardFilter(),
+  ];
 
   if (options.folderIds && options.folderIds.length > 0) {
     filters.push(inArray(flashcard.folderId, options.folderIds));
@@ -255,6 +261,7 @@ export async function getReviewableFlashcardForUser(
       lastReviewedAt: flashcard.lastReviewedAt,
       reviewCount: flashcard.reviewCount,
       lapseCount: flashcard.lapseCount,
+      archivedAt: flashcard.archivedAt,
     })
     .from(flashcard)
     .where(and(eq(flashcard.id, flashcardId), eq(flashcard.userId, userId)))

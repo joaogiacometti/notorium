@@ -11,6 +11,7 @@ import {
 } from "drizzle-orm";
 import { getDb } from "@/db/index";
 import { flashcard, folder } from "@/db/schema";
+import { activeFlashcardFilter } from "@/features/flashcards/active-filter";
 import { attachFlashcardSources } from "@/features/flashcards/source-queries";
 import { buildStrugglingFlashcardFilter } from "@/features/flashcards/struggling-filter";
 import type {
@@ -50,7 +51,8 @@ async function resolveScopedFolderIds(
 }
 
 interface ManageFilterRule {
-  condition: (userId: string) => SQL;
+  /** Omitted for `all`, which lists every card. */
+  condition?: (userId: string) => SQL;
   /** Sort keys ahead of recency when the list is not ranked by a search. */
   leadingOrderBy: SQL[];
 }
@@ -61,9 +63,19 @@ const manageFilterRules: Record<FlashcardManageFilter, ManageFilterRule> = {
     leadingOrderBy: [],
   },
   struggling: {
-    condition: buildStrugglingFlashcardFilter,
+    // Archiving is how a struggling card gets dealt with, so it drops off.
+    condition: (userId) =>
+      and(
+        activeFlashcardFilter(),
+        buildStrugglingFlashcardFilter(userId),
+      ) as SQL,
     leadingOrderBy: [desc(flashcard.lapseCount)],
   },
+  archived: {
+    condition: () => isNotNull(flashcard.archivedAt),
+    leadingOrderBy: [desc(flashcard.archivedAt)],
+  },
+  all: { leadingOrderBy: [] },
 };
 
 export function getFlashcardsManageOrderBy(
@@ -106,8 +118,12 @@ async function buildManageFilters(
     filters.push(inArray(flashcard.folderId, scopedFolderIds));
   }
 
-  if (filter) {
-    filters.push(manageFilterRules[filter].condition(userId));
+  // The default list is what review will show: every card not archived.
+  const condition = filter
+    ? manageFilterRules[filter].condition?.(userId)
+    : activeFlashcardFilter();
+  if (condition) {
+    filters.push(condition);
   }
 
   return filters;
@@ -153,6 +169,7 @@ export async function getFlashcardsManagePageForUser(
           folderId: flashcard.folderId,
           updatedAt: flashcard.updatedAt,
           studyLaterAt: flashcard.studyLaterAt,
+          archivedAt: flashcard.archivedAt,
           lapseCount: flashcard.lapseCount,
           front: flashcard.front,
           folderName: folder.name,
@@ -194,6 +211,7 @@ export async function getFlashcardsManagePageForUser(
       folderId: row.folderId,
       updatedAt: row.updatedAt,
       studyLaterAt: row.studyLaterAt,
+      archivedAt: row.archivedAt,
       lapseCount: row.lapseCount,
       front: row.front,
       frontExcerpt: documentExcerpt(row.front, 160),

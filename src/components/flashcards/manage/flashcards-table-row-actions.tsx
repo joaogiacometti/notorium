@@ -17,6 +17,8 @@ interface FlashcardsTableRowActionsProps {
   onDeleteRequested: () => void;
   onStudyLaterToggleRequested: () => void;
   studyLaterMarked: boolean;
+  onArchiveToggleRequested: () => void;
+  archived: boolean;
   hasSelection?: boolean;
 }
 
@@ -27,6 +29,8 @@ export function FlashcardsTableRowActions({
   onDeleteRequested,
   onStudyLaterToggleRequested,
   studyLaterMarked,
+  onArchiveToggleRequested,
+  archived,
   hasSelection = false,
 }: Readonly<FlashcardsTableRowActionsProps>) {
   return (
@@ -47,6 +51,8 @@ export function FlashcardsTableRowActions({
           onMove={onMoveRequested}
           studyLaterMarked={studyLaterMarked}
           onToggleStudyLater={onStudyLaterToggleRequested}
+          archived={archived}
+          onToggleArchived={onArchiveToggleRequested}
           onReset={onResetRequested}
           onDelete={onDeleteRequested}
         />

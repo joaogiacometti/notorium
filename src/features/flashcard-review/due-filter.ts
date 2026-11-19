@@ -4,11 +4,13 @@ import {
   LEARN_AHEAD_STATES,
   LEARN_AHEAD_WINDOW_MS,
 } from "@/features/flashcard-review/constants";
+import { activeFlashcardFilter } from "@/features/flashcards/active-filter";
 
 /**
  * SQL twin of `isCardDueWithLearnAhead`: the single "is this card due" rule
  * shared by the review queue and the sidebar due badge, so both always count
  * the same cards (including learning cards inside the learn-ahead window).
+ * Archived cards are never due.
  *
  * The outer `dueAt <= cutoff` bound is implied by both branches; stating it
  * lets Postgres range-scan the (userId, dueAt) index instead of the OR.
@@ -19,6 +21,7 @@ import {
 export function buildDueAtFilter(now: Date): SQL<unknown> {
   const aheadCutoff = new Date(now.getTime() + LEARN_AHEAD_WINDOW_MS);
   return and(
+    activeFlashcardFilter(),
     lte(flashcard.dueAt, aheadCutoff),
     or(lte(flashcard.dueAt, now), inArray(flashcard.state, LEARN_AHEAD_STATES)),
   ) as SQL<unknown>;

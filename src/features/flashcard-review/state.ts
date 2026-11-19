@@ -273,9 +273,10 @@ export function gradeFlashcardLocally(
 }
 
 /**
- * Put a card whose grade failed to save back at the front of the queue in its
- * pre-grade form, restoring the due count when the optimistic grade had
- * removed it from the queue.
+ * Put a card back at the front of the queue: a grade that failed to save (in
+ * its pre-grade form), or an archive that failed or was undone. Restores the
+ * due count when the card had left the queue, and with `restoreTotal` the
+ * total too, for cards that had left the session entirely.
  *
  * @example
  * commitReviewState(restoreFlashcardToFront(state, cardBeforeGrade));
@@ -283,14 +284,15 @@ export function gradeFlashcardLocally(
 export function restoreFlashcardToFront(
   state: FlashcardReviewState,
   card: FlashcardReviewEntity,
+  { restoreTotal = false }: { restoreTotal?: boolean } = {},
 ): FlashcardReviewState {
-  const wasQueued = state.cards.some((queued) => queued.id === card.id);
+  const returned = state.cards.some((queued) => queued.id === card.id) ? 0 : 1;
   return {
     ...state,
     cards: [card, ...state.cards.filter((queued) => queued.id !== card.id)],
     summary: {
-      ...state.summary,
-      dueCount: state.summary.dueCount + (wasQueued ? 0 : 1),
+      dueCount: state.summary.dueCount + returned,
+      totalCount: state.summary.totalCount + (restoreTotal ? returned : 0),
     },
   };
 }

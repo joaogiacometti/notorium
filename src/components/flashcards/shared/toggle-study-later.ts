@@ -1,12 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { setFlashcardStudyLater } from "@/app/actions/flashcards";
-import { invalidateFlashcardViews } from "@/lib/client-cache/invalidation";
+import { saveFlashcardMark } from "@/components/flashcards/shared/save-flashcard-mark";
 import type { FlashcardEntity } from "@/lib/server/api-contracts";
-import {
-  actionError,
-  resolveActionErrorMessage,
-} from "@/lib/server/server-action-errors";
 
 /**
  * Flip a card's study-later mark outside a review session and hand the saved
@@ -20,18 +15,11 @@ export async function toggleStudyLater(
   card: Pick<FlashcardEntity, "id" | "studyLaterAt">,
   onSaved: (studyLaterAt: Date | null) => void,
 ): Promise<void> {
-  try {
-    const result = await setFlashcardStudyLater({
+  const saved = await saveFlashcardMark(queryClient, () =>
+    setFlashcardStudyLater({
       id: card.id,
       studyLater: card.studyLaterAt === null,
-    });
-    if (!result.success) {
-      toast.error(resolveActionErrorMessage(result));
-      return;
-    }
-    await invalidateFlashcardViews(queryClient);
-    onSaved(result.studyLaterAt);
-  } catch {
-    toast.error(resolveActionErrorMessage(actionError("common.generic")));
-  }
+    }),
+  );
+  if (saved) onSaved(saved.studyLaterAt);
 }

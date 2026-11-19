@@ -1,4 +1,4 @@
-import { isNotNull, sql } from "drizzle-orm";
+import { isNotNull, isNull, sql } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { flashcard } from "@/db/schema";
 import { getFlashcardsManagePageForUser } from "@/features/flashcards/queries";
@@ -23,7 +23,11 @@ vi.mock("@/db/index", () => ({ getDb: () => new FakeEmptySelectDb() }));
 
 vi.mock("drizzle-orm", async (importOriginal) => {
   const actual = await importOriginal<typeof import("drizzle-orm")>();
-  return { ...actual, isNotNull: vi.fn(actual.isNotNull) };
+  return {
+    ...actual,
+    isNotNull: vi.fn(actual.isNotNull),
+    isNull: vi.fn(actual.isNull),
+  };
 });
 
 vi.mock("@/features/flashcards/struggling-filter", () => ({
@@ -39,6 +43,7 @@ vi.mock("@/features/folders/queries", () => ({
 describe("getFlashcardsManagePageForUser filter", () => {
   beforeEach(() => {
     vi.mocked(isNotNull).mockClear();
+    vi.mocked(isNull).mockClear();
     vi.mocked(buildStrugglingFlashcardFilter).mockClear();
   });
 
@@ -70,6 +75,46 @@ describe("getFlashcardsManagePageForUser filter", () => {
     });
 
     expect(buildStrugglingFlashcardFilter).toHaveBeenCalledWith("user-1");
+    expect(isNotNull).not.toHaveBeenCalled();
+  });
+
+  it("leaves archived cards out of the struggling filter", async () => {
+    await getFlashcardsManagePageForUser("user-1", {
+      pageIndex: 0,
+      pageSize: 25,
+      filter: "struggling",
+    });
+
+    expect(isNull).toHaveBeenCalledWith(flashcard.archivedAt);
+  });
+
+  it("limits the page to archived cards when that filter is set", async () => {
+    await getFlashcardsManagePageForUser("user-1", {
+      pageIndex: 0,
+      pageSize: 25,
+      filter: "archived",
+    });
+
+    expect(isNotNull).toHaveBeenCalledWith(flashcard.archivedAt);
+  });
+
+  it("lists only cards in review by default", async () => {
+    await getFlashcardsManagePageForUser("user-1", {
+      pageIndex: 0,
+      pageSize: 25,
+    });
+
+    expect(isNull).toHaveBeenCalledWith(flashcard.archivedAt);
+  });
+
+  it("lists archived cards too when showing all cards", async () => {
+    await getFlashcardsManagePageForUser("user-1", {
+      pageIndex: 0,
+      pageSize: 25,
+      filter: "all",
+    });
+
+    expect(isNull).not.toHaveBeenCalled();
     expect(isNotNull).not.toHaveBeenCalled();
   });
 });

@@ -130,6 +130,31 @@ describe("reviewFlashcardForUser", () => {
     expect(transactionMock).not.toHaveBeenCalled();
   });
 
+  it("rejects reviews for archived cards still shown in an open session", async () => {
+    getReviewableFlashcardForUserMock.mockResolvedValueOnce({
+      id: "flashcard-1",
+      state: "review",
+      dueAt: new Date(Date.now() - 60_000),
+      archivedAt: new Date(),
+    });
+
+    const { reviewFlashcardForUser } = await import(
+      "@/features/flashcard-review/mutations"
+    );
+    const result = await reviewFlashcardForUser("user-1", {
+      id: "flashcard-1",
+      grade: "good",
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        success: false,
+        errorCode: "flashcards.review.archived",
+      }),
+    );
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
   it("rejects reviews for cards that are not due yet", async () => {
     getReviewableFlashcardForUserMock.mockResolvedValueOnce({
       id: "flashcard-1",

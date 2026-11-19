@@ -506,6 +506,36 @@ describe("removeFlashcardsFromReviewState", () => {
   });
 });
 
+describe("restoreFlashcardToFront with restoreTotal", () => {
+  const now = new Date("2026-03-07T12:00:00.000Z");
+
+  it("puts an archived-then-restored card back in front with its counts", () => {
+    const archived = makeCard("a", now);
+    const state = removeFlashcardsFromReviewState(
+      makeState([archived, makeCard("b", now)], 2),
+      ["a"],
+    );
+
+    const next = restoreFlashcardToFront(state, archived, {
+      restoreTotal: true,
+    });
+
+    expect(next.cards.map((card) => card.id)).toEqual(["a", "b"]);
+    expect(next.summary).toEqual({ dueCount: 2, totalCount: 2 });
+  });
+
+  it("only moves a card that is still queued", () => {
+    const state = makeState([makeCard("b", now), makeCard("a", now)], 2);
+
+    const next = restoreFlashcardToFront(state, makeCard("a", now), {
+      restoreTotal: true,
+    });
+
+    expect(next.cards.map((card) => card.id)).toEqual(["a", "b"]);
+    expect(next.summary).toEqual({ dueCount: 2, totalCount: 2 });
+  });
+});
+
 describe("scheduleGradeAt", () => {
   it("schedules a learn-ahead review from the card's due time", () => {
     const dueAt = new Date("2026-03-07T12:10:00.000Z");

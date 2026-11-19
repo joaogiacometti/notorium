@@ -1,6 +1,14 @@
 "use client";
 
-import { ArrowRightLeft, Copy, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  ArrowRightLeft,
+  Copy,
+  Pencil,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
 import { StudyLaterMenuItem } from "@/components/flashcards/shared/study-later-menu-item";
 import {
   DropdownMenuItem,
@@ -15,6 +23,10 @@ interface FlashcardActionMenuItemsProps {
   onMove?: () => void;
   studyLaterMarked: boolean;
   onToggleStudyLater: () => void;
+  /** Archived cards are out of review, so they offer no Study later mark. */
+  archived?: boolean;
+  /** Omit where archiving does not apply (exam sessions). */
+  onToggleArchived?: () => void;
   onReset: () => void;
   onDelete: () => void;
 }
@@ -35,6 +47,8 @@ export function FlashcardActionMenuItems({
   onMove,
   studyLaterMarked,
   onToggleStudyLater,
+  archived = false,
+  onToggleArchived,
   onReset,
   onDelete,
 }: Readonly<FlashcardActionMenuItemsProps>) {
@@ -57,10 +71,22 @@ export function FlashcardActionMenuItems({
         </DropdownMenuItem>
       ) : null}
       <DropdownMenuSeparator />
-      <StudyLaterMenuItem
-        marked={studyLaterMarked}
-        onSelect={onToggleStudyLater}
-      />
+      {archived ? null : (
+        <StudyLaterMenuItem
+          marked={studyLaterMarked}
+          onSelect={onToggleStudyLater}
+        />
+      )}
+      {onToggleArchived ? (
+        <DropdownMenuItem onClick={onToggleArchived}>
+          {archived ? (
+            <ArchiveRestore className="size-4" />
+          ) : (
+            <Archive className="size-4" />
+          )}
+          {archived ? "Unarchive" : "Archive"}
+        </DropdownMenuItem>
+      ) : null}
       <DropdownMenuItem onClick={onReset}>
         <RotateCcw className="size-4" />
         Reset

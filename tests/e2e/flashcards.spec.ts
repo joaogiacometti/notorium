@@ -466,7 +466,8 @@ test("study later defers a card in review and lists it in manage", async ({
     await expect(breadcrumbCurrent(page, "Flashcards")).toBeVisible();
 
     await openFlashcardsManagePage(page, folder.id);
-    await page.getByRole("button", { name: "Show study later cards" }).click();
+    await page.getByRole("combobox", { name: "Show cards" }).click();
+    await page.getByRole("option", { name: "Study later" }).click();
     await expect(page).toHaveURL(/filter=studyLater/);
     const deferredRow = page
       .getByRole("link")

@@ -1,5 +1,6 @@
 "use server";
 
+import { setFlashcardsArchivedForUser } from "@/features/flashcards/archive-mutations";
 import {
   bulkDeleteFlashcardsForUser,
   bulkMoveFlashcardsForUser,
@@ -9,14 +10,19 @@ import {
   editFlashcardForUser,
   resetFlashcardForUser,
 } from "@/features/flashcards/mutations";
-import { setFlashcardStudyLaterForUser } from "@/features/flashcards/study-later-mutations";
+import {
+  bulkSetFlashcardsStudyLaterForUser,
+  setFlashcardStudyLaterForUser,
+} from "@/features/flashcards/study-later-mutations";
 import {
   type BulkDeleteFlashcardsForm,
   type BulkMoveFlashcardsForm,
   type BulkResetFlashcardsForm,
+  type BulkSetFlashcardsStudyLaterForm,
   bulkDeleteFlashcardsSchema,
   bulkMoveFlashcardsSchema,
   bulkResetFlashcardsSchema,
+  bulkSetFlashcardsStudyLaterSchema,
   type CreateFlashcardForm as CreateFlashcardInput,
   createFlashcardSchema as createFlashcardInputSchema,
   type DeleteFlashcardForm,
@@ -26,18 +32,22 @@ import {
   type ResetFlashcardForm,
   resetFlashcardSchema,
   type SetFlashcardStudyLaterForm,
+  type SetFlashcardsArchivedForm,
   setFlashcardStudyLaterSchema,
+  setFlashcardsArchivedSchema,
 } from "@/features/flashcards/validation";
 import { runValidatedUserAction } from "@/lib/server/action-runner";
 import type {
   BulkDeleteFlashcardsResult,
   BulkMoveFlashcardsResult,
   BulkResetFlashcardsResult,
+  BulkSetFlashcardsStudyLaterResult,
   CreateFlashcardResult,
   DeleteFlashcardResult,
   EditFlashcardResult,
   ResetFlashcardResult,
   SetFlashcardStudyLaterResult,
+  SetFlashcardsArchivedResult,
 } from "@/lib/server/api-contracts";
 import { revalidateAppShell } from "@/lib/server/revalidate-views";
 
@@ -194,5 +204,46 @@ export async function setFlashcardStudyLater(
     "ServerErrors.common.invalidRequest",
     async (userId, parsedData) =>
       setFlashcardStudyLaterForUser(userId, parsedData),
+  );
+}
+
+// Skips `revalidateAppShell` for the same reason as `setFlashcardStudyLater`.
+export async function bulkSetFlashcardsStudyLater(
+  data: BulkSetFlashcardsStudyLaterForm,
+): Promise<BulkSetFlashcardsStudyLaterResult> {
+  return runValidatedUserAction(
+    "flashcards.bulkSetFlashcardsStudyLater",
+    bulkSetFlashcardsStudyLaterSchema,
+    data,
+    "ServerErrors.common.invalidRequest",
+    async (userId, parsedData) =>
+      bulkSetFlashcardsStudyLaterForUser(userId, parsedData),
+  );
+}
+
+export async function setFlashcardsArchived(
+  data: SetFlashcardsArchivedForm,
+): Promise<SetFlashcardsArchivedResult> {
+  const result = await setFlashcardsArchivedInReview(data);
+
+  if (result.success) {
+    revalidateAppShell();
+  }
+
+  return result;
+}
+
+// The review-session variant skips `revalidateAppShell`, like grades: the
+// session refreshes the shell once on exit (`use-app-shell-refresh-after-review.ts`).
+export async function setFlashcardsArchivedInReview(
+  data: SetFlashcardsArchivedForm,
+): Promise<SetFlashcardsArchivedResult> {
+  return runValidatedUserAction(
+    "flashcards.setFlashcardsArchived",
+    setFlashcardsArchivedSchema,
+    data,
+    "ServerErrors.common.invalidRequest",
+    async (userId, parsedData) =>
+      setFlashcardsArchivedForUser(userId, parsedData),
   );
 }

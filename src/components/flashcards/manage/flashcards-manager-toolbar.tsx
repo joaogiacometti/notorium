@@ -1,13 +1,30 @@
 "use client";
 
-import { Clock, CopyPlus, Flame, type LucideIcon, Search } from "lucide-react";
+import {
+  Archive,
+  Clock,
+  CopyPlus,
+  Flame,
+  Layers,
+  type LucideIcon,
+  Repeat,
+  Search,
+} from "lucide-react";
 import type { JSX } from "react";
 import { ToolbarActionBar } from "@/components/flashcards/manage/flashcards-manager-toolbar-actions";
+import type { BulkCardMarks } from "@/components/flashcards/manage/use-bulk-card-marks";
 import { StatusToneBadge } from "@/components/shared/status-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
@@ -24,7 +41,7 @@ interface FlashcardsManagerToolbarProps {
   selectedFlashcardIds: string[];
   total: number;
   filter?: FlashcardManageFilter;
-  onToggleFilter: (filter: FlashcardManageFilter) => void;
+  onFilterChange: (filter: FlashcardManageFilter | undefined) => void;
   isCopyingSelection: boolean;
   onCopySelection: () => void;
   onOpenCreateDialog: () => void;
@@ -32,6 +49,7 @@ interface FlashcardsManagerToolbarProps {
   onOpenBulkDeleteDialog: () => void;
   onOpenBulkResetDialog: () => void;
   onClearSelection: () => void;
+  bulkMarks: BulkCardMarks;
 }
 
 interface ToolbarStatusBadgesProps {
@@ -80,47 +98,48 @@ function ToolbarStatusBadges({
   );
 }
 
-interface ManageFilterChipProps {
+const inReviewValue = "inReview";
+
+const manageFilterOptions: Array<{
+  value: FlashcardManageFilter | typeof inReviewValue;
   label: string;
   icon: LucideIcon;
-  active: boolean;
-  onToggle: () => void;
-}
+}> = [
+  { value: inReviewValue, label: "In review", icon: Repeat },
+  { value: "studyLater", label: "Study later", icon: Clock },
+  { value: "struggling", label: "Struggling", icon: Flame },
+  { value: "archived", label: "Archived", icon: Archive },
+  { value: "all", label: "All cards", icon: Layers },
+];
 
-const manageFilterChips: Record<
-  FlashcardManageFilter,
-  { label: string; icon: LucideIcon }
-> = {
-  studyLater: { label: "Study later", icon: Clock },
-  struggling: { label: "Struggling", icon: Flame },
-};
-
-// A filter, not an action: it sits with the result count, sized like it, and
-// takes the primary tint while the table shows only the matching cards.
-function ManageFilterChip({
-  label,
-  icon: Icon,
-  active,
-  onToggle,
-}: Readonly<ManageFilterChipProps>): JSX.Element {
+// One pick-one list choice; the default is what review will show.
+function ManageFilterSelect({
+  filter,
+  onFilterChange,
+}: Readonly<{
+  filter?: FlashcardManageFilter;
+  onFilterChange: (filter: FlashcardManageFilter | undefined) => void;
+}>): JSX.Element {
   return (
-    <Button
-      type="button"
-      variant="outline"
-      size="xs"
-      onClick={onToggle}
-      aria-pressed={active}
-      aria-label={`Show ${label.toLowerCase()} cards`}
-      className={cn(
-        "border-border font-normal",
-        active
-          ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
-          : "text-muted-foreground",
-      )}
+    <Select
+      value={filter ?? inReviewValue}
+      onValueChange={(value) => {
+        const parsed = flashcardManageFilterSchema.safeParse(value);
+        onFilterChange(parsed.success ? parsed.data : undefined);
+      }}
     >
-      <Icon className="size-3.5" />
-      {label}
-    </Button>
+      <SelectTrigger size="sm" aria-label="Show cards" className="h-7 text-xs">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {manageFilterOptions.map(({ value, label, icon: Icon }) => (
+          <SelectItem key={value} value={value}>
+            <Icon className="size-3.5" />
+            {label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -132,7 +151,7 @@ export function FlashcardsManagerToolbar({
   selectedFlashcardIds,
   total,
   filter,
-  onToggleFilter,
+  onFilterChange,
   isCopyingSelection,
   onCopySelection,
   onOpenCreateDialog,
@@ -140,6 +159,7 @@ export function FlashcardsManagerToolbar({
   onOpenBulkDeleteDialog,
   onOpenBulkResetDialog,
   onClearSelection,
+  bulkMarks,
 }: Readonly<FlashcardsManagerToolbarProps>): JSX.Element {
   return (
     <TooltipProvider>
@@ -179,15 +199,10 @@ export function FlashcardsManagerToolbar({
                   selectedCount={selectedFlashcardIds.length}
                   total={total}
                 />
-                {flashcardManageFilterSchema.options.map((chipFilter) => (
-                  <ManageFilterChip
-                    key={chipFilter}
-                    label={manageFilterChips[chipFilter].label}
-                    icon={manageFilterChips[chipFilter].icon}
-                    active={filter === chipFilter}
-                    onToggle={() => onToggleFilter(chipFilter)}
-                  />
-                ))}
+                <ManageFilterSelect
+                  filter={filter}
+                  onFilterChange={onFilterChange}
+                />
               </div>
 
               <ToolbarActionBar
@@ -198,6 +213,7 @@ export function FlashcardsManagerToolbar({
                 onOpenBulkDeleteDialog={onOpenBulkDeleteDialog}
                 onOpenBulkResetDialog={onOpenBulkResetDialog}
                 onClearSelection={onClearSelection}
+                bulkMarks={bulkMarks}
               />
             </div>
           </div>

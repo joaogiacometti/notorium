@@ -27,6 +27,9 @@ export type FlashcardReviewShortcutAction =
       type: "studyLater";
     }
   | {
+      type: "archive";
+    }
+  | {
       type: "grade";
       grade: ReviewGrade;
     };
@@ -56,6 +59,8 @@ interface UseFlashcardReviewShortcutsOptions {
   onReset: () => void;
   onUndo: () => void;
   onToggleStudyLater: () => void;
+  /** Omit where archiving does not apply (exam sessions). */
+  onArchive?: () => void;
   onGrade: (grade: ReviewGrade) => void;
   onExit: () => void;
 }
@@ -131,6 +136,10 @@ export function getFlashcardReviewShortcutAction({
     return { type: "studyLater" };
   }
 
+  if (key.toLowerCase() === "a") {
+    return { type: "archive" };
+  }
+
   if (!revealed) {
     return null;
   }
@@ -183,5 +192,6 @@ function runFlashcardReviewShortcutAction(
   else if (action.type === "reset") options.onReset();
   else if (action.type === "undo") options.onUndo();
   else if (action.type === "studyLater") options.onToggleStudyLater();
+  else if (action.type === "archive") options.onArchive?.();
   else options.onGrade(action.grade);
 }

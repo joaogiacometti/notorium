@@ -140,6 +140,19 @@ describe("getFlashcardReviewShortcutAction", () => {
     ).toEqual({ type: "studyLater" });
   });
 
+  it("archives on a, before or after reveal", () => {
+    expect(
+      getFlashcardReviewShortcutAction({ ...defaultInput, key: "a" }),
+    ).toEqual({ type: "archive" });
+    expect(
+      getFlashcardReviewShortcutAction({
+        ...defaultInput,
+        key: "A",
+        revealed: true,
+      }),
+    ).toEqual({ type: "archive" });
+  });
+
   it("maps 1 through 4 to the expected grades when revealed", () => {
     expect(
       getFlashcardReviewShortcutAction({
@@ -271,7 +284,7 @@ describe("getFlashcardReviewShortcutAction", () => {
       getFlashcardReviewShortcutAction({
         ...defaultInput,
         revealed: true,
-        key: "a",
+        key: "z",
       }),
     ).toBeNull();
   });

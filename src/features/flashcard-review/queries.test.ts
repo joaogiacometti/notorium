@@ -58,6 +58,7 @@ vi.mock("@/db/schema", () => ({
     state: "flashcard_state_column",
     createdAt: "flashcard_created_at_column",
     studyLaterAt: "flashcard_study_later_at_column",
+    archivedAt: "flashcard_archived_at_column",
   },
   flashcardReviewLog: {
     userId: "flashcard_review_log_user_id_column",
@@ -301,5 +302,46 @@ describe("getFlashcardReviewStateForUser", () => {
       values: ["flashcard_study_later_at_column"],
     });
     expect(dueAtTerm).toBe("flashcard_due_at_column");
+  });
+
+  it("keeps archived cards out of the review queue, counts, and exams", async () => {
+    const activeOnly = {
+      column: "flashcard_archived_at_column",
+      operator: "isNull",
+    };
+    const whereArgs: unknown[] = [];
+    const recordWhere = (condition: unknown) => {
+      whereArgs.push(condition);
+    };
+    selectMock.mockImplementation(() => ({
+      from: () => ({
+        where: (condition: unknown) => {
+          recordWhere(condition);
+          return Promise.resolve([{ total: 0, due: 0 }]);
+        },
+        innerJoin: () => ({
+          where: (condition: unknown) => {
+            recordWhere(condition);
+            return {
+              orderBy: () =>
+                Object.assign(Promise.resolve([]), {
+                  limit: vi.fn().mockResolvedValue([]),
+                }),
+            };
+          },
+        }),
+      }),
+    }));
+
+    const { getAllFlashcardsForExam, getFlashcardReviewStateForUser } =
+      await import("./queries");
+    await getFlashcardReviewStateForUser("user-1");
+    await getAllFlashcardsForExam("user-1");
+
+    // Due batch, due/total counts, exam cards.
+    expect(whereArgs).toHaveLength(3);
+    for (const condition of whereArgs) {
+      expect(JSON.stringify(condition)).toContain(JSON.stringify(activeOnly));
+    }
   });
 });

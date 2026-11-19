@@ -14,8 +14,10 @@ import { FlashcardsManagerToolbar } from "@/components/flashcards/manage/flashca
 import { LazyBulkDeleteFlashcardsDialog as BulkDeleteFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-delete-flashcards-dialog";
 import { LazyBulkMoveFlashcardsDialog as BulkMoveFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-move-flashcards-dialog";
 import { LazyBulkResetFlashcardsDialog as BulkResetFlashcardsDialog } from "@/components/flashcards/manage/lazy-bulk-reset-flashcards-dialog";
+import { useBulkCardMarks } from "@/components/flashcards/manage/use-bulk-card-marks";
 import { useFlashcardCopy } from "@/components/flashcards/manage/use-flashcard-copy";
 import { useFlashcardsManagerController } from "@/components/flashcards/manage/use-flashcards-manager-controller";
+import { saveFlashcardsArchived } from "@/components/flashcards/shared/save-flashcard-mark";
 import { toggleStudyLater } from "@/components/flashcards/shared/toggle-study-later";
 import { Card } from "@/components/ui/card";
 import type { FlashcardManageFilter } from "@/features/flashcards/validation";
@@ -71,6 +73,11 @@ export function FlashcardsManager({
     initialFilter,
     initialPageSize,
   });
+  const bulkMarks = useBulkCardMarks({
+    flashcards,
+    selectedIds: selectedFlashcardIds,
+    onSaved: clearSelection,
+  });
   const isManageScopeLoading =
     managePageQuery.isFetching && managePageQuery.isPlaceholderData;
   const moveTarget = dialog?.kind === "move" ? dialog.target : null;
@@ -123,6 +130,15 @@ export function FlashcardsManager({
           onStudyLaterToggleRequested={(item) =>
             void toggleStudyLater(queryClient, item, () => clearSelection())
           }
+          onArchiveToggleRequested={(item) =>
+            void saveFlashcardsArchived(
+              queryClient,
+              [item.id],
+              item.archivedAt === null,
+            ).then((saved) => {
+              if (saved) clearSelection();
+            })
+          }
           onSelectedFlashcardIdsChange={setSelectedFlashcardIds}
           onRowClick={(row) => openFlashcardDetail(row.id)}
         />
@@ -142,9 +158,7 @@ export function FlashcardsManager({
         }
         total={total}
         filter={filter}
-        onToggleFilter={(nextFilter) =>
-          setFilter(filter === nextFilter ? undefined : nextFilter)
-        }
+        onFilterChange={setFilter}
         isCopyingSelection={isCopying}
         onCopySelection={() =>
           void copySelectedFlashcards(flashcards, selectedFlashcardIds)
@@ -154,6 +168,7 @@ export function FlashcardsManager({
         onOpenBulkDeleteDialog={() => setDialog({ kind: "bulk-delete" })}
         onOpenBulkResetDialog={() => setDialog({ kind: "bulk-reset" })}
         onClearSelection={() => setSelectedFlashcardIds([])}
+        bulkMarks={bulkMarks}
       />
       {selectedFolderId && isAtFolderLimit && (
         <div

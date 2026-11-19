@@ -6,6 +6,7 @@ import {
   reviewFlashcard,
   undoFlashcardReview,
 } from "@/app/actions/flashcard-review";
+import { setFlashcardsArchivedInReview } from "@/app/actions/flashcards";
 import { useAppShellRefreshAfterReview } from "@/components/flashcards/review/use-app-shell-refresh-after-review";
 import { useReviewStudyLater } from "@/components/flashcards/review/use-review-study-later";
 import {
@@ -42,8 +43,8 @@ interface UndoableReview {
 
 /**
  * Owns the due-review session state machine: the working card batch,
- * optimistic apply on edit/delete/reset/study later, optimistic grading with
- * background saves, background refill, and undo.
+ * optimistic apply on edit/delete/reset/study later/archive, optimistic
+ * grading with background saves, background refill, and undo.
  *
  * @example
  * const controller = useFlashcardReviewController({
@@ -61,12 +62,12 @@ export function useFlashcardReviewController({
   const reviewStateRef = useRef(initialState);
   const [isUndoPending, setIsUndoPending] = useState(false);
   const isPending = isUndoPending;
-  // Grades save in the background. In-flight saves are keyed by
-  // clientReviewId; every graded card id is logged in order so a fetch can
-  // tell which grades it may not reflect yet.
+  // Grades and archives save in the background. In-flight saves are keyed by
+  // a client write id; every written card id is logged in order so a fetch
+  // can tell which writes it may not reflect yet.
   const pendingSaveCardIdsRef = useRef(new Map<string, string>());
   const [pendingSaveCount, setPendingSaveCount] = useState(0);
-  const gradedCardIdsRef = useRef<string[]>([]);
+  const writtenCardIdsRef = useRef<string[]>([]);
   const latestReviewIdByCardRef = useRef(new Map<string, string>());
   const refillRequestIdRef = useRef(0);
   const isRefillingRef = useRef(false);
@@ -116,10 +117,11 @@ export function useFlashcardReviewController({
     }
   }
 
-  // Single entry point for review-state reads. Cards graded after the read
-  // started, or still saving when it started, may come back as due; drop them.
+  // Single entry point for review-state reads. Cards graded or archived after
+  // the read started, or still saving when it started, may come back as due;
+  // drop them.
   async function fetchReviewStateWithoutUnsavedGrades(): Promise<FlashcardReviewState> {
-    const gradedCountAtStart = gradedCardIdsRef.current.length;
+    const writtenCountAtStart = writtenCardIdsRef.current.length;
     const savingIdsAtStart = [...pendingSaveCardIdsRef.current.values()];
     const fetchedState = await fetchFlashcardReviewState({
       folderId,
@@ -127,7 +129,7 @@ export function useFlashcardReviewController({
     });
     const unsavedIds = new Set([
       ...savingIdsAtStart,
-      ...gradedCardIdsRef.current.slice(gradedCountAtStart),
+      ...writtenCardIdsRef.current.slice(writtenCountAtStart),
     ]);
 
     return excludeFlashcardsFromFetchedState(fetchedState, unsavedIds);
@@ -226,6 +228,79 @@ export function useFlashcardReviewController({
     toggleReviewCardStudyLater(currentCard);
   }
 
+  // Archiving leaves the session at once; a failed save brings the card back.
+  // The toast offers Undo, which unarchives the card and shows it again.
+  function handleArchive() {
+    if (!currentCard || isPending) {
+      return;
+    }
+
+    const archivedCard = currentCard;
+    commitReturnedReviewState(
+      removeFlashcardsFromReviewState(reviewStateRef.current, [
+        archivedCard.id,
+      ]),
+    );
+    void saveArchive(archivedCard);
+
+    if (shouldRefillFlashcardReviewState(reviewStateRef.current)) {
+      void refillReviewState();
+    }
+  }
+
+  async function saveArchive(archivedCard: FlashcardReviewEntity) {
+    if (!(await persistArchived(archivedCard, true))) {
+      commitReturnedReviewState(
+        restoreFlashcardToFront(reviewStateRef.current, archivedCard, {
+          restoreTotal: true,
+        }),
+      );
+      return;
+    }
+    toast("Card archived", {
+      action: {
+        label: "Undo",
+        onClick: () => void unarchive(archivedCard),
+      },
+    });
+  }
+
+  async function unarchive(archivedCard: FlashcardReviewEntity) {
+    if (await persistArchived(archivedCard, false)) {
+      commitReturnedReviewState(
+        restoreFlashcardToFront(
+          reviewStateRef.current,
+          { ...archivedCard, studyLaterAt: null },
+          { restoreTotal: true },
+        ),
+      );
+    }
+  }
+
+  // Tracked like a grade, so refills skip the card while it saves and the
+  // app shell and flashcard caches refresh once on exit.
+  async function persistArchived(
+    card: FlashcardReviewEntity,
+    archived: boolean,
+  ): Promise<boolean> {
+    const writeId = crypto.randomUUID();
+    trackUnsavedWrite(card.id, writeId);
+    try {
+      const result = await setFlashcardsArchivedInReview({
+        ids: [card.id],
+        archived,
+      });
+      if (result.success) return true;
+      toast.error(t(result.errorCode, result.errorParams));
+      return false;
+    } catch {
+      toast.error("Could not save the archive. Please try again.");
+      return false;
+    } finally {
+      releaseUnsavedWrite(writeId);
+    }
+  }
+
   function handleGrade(grade: ReviewGrade) {
     if (!currentCard || isPending) {
       return;
@@ -274,9 +349,7 @@ export function useFlashcardReviewController({
     } catch {
       applySavedGrade(gradedCard, clientReviewId, null);
     } finally {
-      pendingSaveCardIdsRef.current.delete(clientReviewId);
-      setPendingSaveCount((count) => count - 1);
-      refillAfterSavesLand();
+      releaseUnsavedWrite(clientReviewId);
     }
   }
 
@@ -293,10 +366,20 @@ export function useFlashcardReviewController({
   }
 
   function trackPendingSave(cardId: string, clientReviewId: string) {
-    pendingSaveCardIdsRef.current.set(clientReviewId, cardId);
-    gradedCardIdsRef.current.push(cardId);
+    trackUnsavedWrite(cardId, clientReviewId);
     latestReviewIdByCardRef.current.set(cardId, clientReviewId);
+  }
+
+  function trackUnsavedWrite(cardId: string, writeId: string) {
+    pendingSaveCardIdsRef.current.set(writeId, cardId);
+    writtenCardIdsRef.current.push(cardId);
     setPendingSaveCount((count) => count + 1);
+  }
+
+  function releaseUnsavedWrite(writeId: string) {
+    pendingSaveCardIdsRef.current.delete(writeId);
+    setPendingSaveCount((count) => count - 1);
+    refillAfterSavesLand();
   }
 
   function applySavedGrade(
@@ -387,6 +470,7 @@ export function useFlashcardReviewController({
       (isRefilling || pendingSaveCount > 0),
     handleGrade,
     handleToggleStudyLater,
+    handleArchive,
     handleUndoReview,
     handleFlashcardUpdated,
     handleFlashcardDeleted,

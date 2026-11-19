@@ -15,4 +15,10 @@ describe("buildDueAtFilter", () => {
       "relearning",
     ]);
   });
+
+  it("never counts archived cards as due", () => {
+    const query = new PgDialect().sqlToQuery(buildDueAtFilter(new Date()));
+
+    expect(query.sql).toContain('"archived_at" is null');
+  });
 });

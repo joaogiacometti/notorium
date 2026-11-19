@@ -252,6 +252,10 @@ export const flashcard = pgTable(
     // Set when the user defers the card to the end of review sessions; null
     // means unmarked. Cleared only by the user.
     studyLaterAt: timestamp("study_later_at"),
+    // Set when the user archives the card: it leaves every review queue, due
+    // count, and exam but keeps its content, history, and scheduling state.
+    // Null means active.
+    archivedAt: timestamp("archived_at"),
     folderId: text("folder_id")
       .notNull()
       .references((): AnyPgColumn => folder.id, { onDelete: "cascade" }),
@@ -272,7 +276,12 @@ export const flashcard = pgTable(
     index("flashcard_folderId_idx").on(table.folderId),
     index("flashcard_userId_idx").on(table.userId),
     index("flashcard_dueAt_idx").on(table.dueAt),
-    index("flashcard_userId_dueAt_idx").on(table.userId, table.dueAt),
+    // Partial: archived cards keep a past dueAt forever, so leaving them out
+    // keeps due-range scans (review queue, due counts, sidebar badge) from
+    // reading them. Every due query applies `activeFlashcardFilter`.
+    index("flashcard_userId_dueAt_idx")
+      .on(table.userId, table.dueAt)
+      .where(sql`${table.archivedAt} is null`),
     // ON DELETE SET NULL looks up cards by source; unindexed it scans flashcard.
     index("flashcard_sourceNoteId_idx").on(table.sourceNoteId),
     index("flashcard_userId_updatedAt_idx").on(table.userId, table.updatedAt),

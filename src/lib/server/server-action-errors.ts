@@ -75,6 +75,7 @@ const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   "flashcards.review.invalidData": "Invalid review input.",
   "flashcards.review.notFound": "Flashcard not found for review.",
   "flashcards.review.notDue": "This flashcard is not due yet.",
+  "flashcards.review.archived": "This flashcard is archived.",
   "flashcards.review.unavailable":
     "Review submission is temporarily unavailable. Try again in a moment.",
   "flashcards.review.undoUnavailable": "This review can no longer be undone.",

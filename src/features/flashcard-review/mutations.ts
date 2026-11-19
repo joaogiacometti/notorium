@@ -136,6 +136,11 @@ async function applyFlashcardReviewForUser(
     return actionError("flashcards.review.notFound");
   }
 
+  // A session opened before the card was archived may still show it.
+  if (existingCard.archivedAt) {
+    return actionError("flashcards.review.archived");
+  }
+
   if (!isCardDueWithLearnAhead(existingCard, reviewedAt)) {
     return actionError("flashcards.review.notDue");
   }

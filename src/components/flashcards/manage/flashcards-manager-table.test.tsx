@@ -26,6 +26,7 @@ function createFlashcard(
     folderPath: "Biology / Cells",
     updatedAt: new Date("2026-04-20T10:00:00.000Z"),
     studyLaterAt: null,
+    archivedAt: null,
     lapseCount: 0,
     ...overrides,
   };
@@ -59,10 +60,26 @@ describe("FlashcardsManagerTable", () => {
     );
   });
 
-  it("does not mark study-later rows in the table", async () => {
-    await renderTable([createFlashcard({ studyLaterAt: new Date() })]);
+  it("marks study-later rows like archived ones", async () => {
+    await renderTable([
+      createFlashcard({ id: "plain" }),
+      createFlashcard({ id: "marked", studyLaterAt: new Date() }),
+    ]);
 
-    expect(container.querySelector('[aria-label="Study later"]')).toBe(null);
+    expect(
+      container.querySelectorAll('[aria-label="Study later"]'),
+    ).toHaveLength(1);
+  });
+
+  it("marks archived rows so they read as out of review", async () => {
+    await renderTable([
+      createFlashcard({ id: "active" }),
+      createFlashcard({ id: "archived", archivedAt: new Date() }),
+    ]);
+
+    expect(container.querySelectorAll('[aria-label="Archived"]')).toHaveLength(
+      1,
+    );
   });
 
   it("shows lapse counts only when asked", async () => {
@@ -100,6 +117,7 @@ describe("FlashcardsManagerTable", () => {
           onDeleteRequested={() => {}}
           onResetRequested={() => {}}
           onStudyLaterToggleRequested={() => {}}
+          onArchiveToggleRequested={() => {}}
           onSelectedFlashcardIdsChange={() => {}}
         />,
       );

@@ -243,6 +243,13 @@ export const shortcutRegistry: Shortcut[] = [
     category: ShortcutCategory.FlashcardReview,
   },
   {
+    id: "flashcard-archive",
+    kind: "keys",
+    keys: ["a"],
+    description: "Archive flashcard (review only)",
+    category: ShortcutCategory.FlashcardReview,
+  },
+  {
     id: "flashcard-exit-session",
     kind: "keys",
     keys: ["escape"],

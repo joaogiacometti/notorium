@@ -77,6 +77,7 @@ export function FlashcardReviewSession({
     onReset: () => setResetOpen(true),
     onUndo: controller.handleUndoReview,
     onToggleStudyLater: controller.handleToggleStudyLater,
+    onArchive: controller.handleArchive,
     onGrade: controller.handleGrade,
     onExit: () => setExitRequested(true),
   });
@@ -103,6 +104,7 @@ export function FlashcardReviewSession({
         onResetFlashcard={() => setResetOpen(true)}
         onDeleteFlashcard={() => setDeleteOpen(true)}
         onToggleStudyLater={controller.handleToggleStudyLater}
+        onArchiveFlashcard={controller.handleArchive}
       />
       <ReviewSessionDialogs
         currentCard={currentCard}

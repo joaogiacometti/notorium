@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { MoreVertical } from "lucide-react";
+import { Archive, Clock, type LucideIcon, MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -18,6 +18,7 @@ import { getEditFlashcardFormValues } from "@/components/flashcards/shared/edit-
 import { FlashcardActionMenuItems } from "@/components/flashcards/shared/flashcard-action-menu-items";
 import { FlashcardCardEditor } from "@/components/flashcards/shared/flashcard-card-editor";
 import { FlashcardSourceReference } from "@/components/flashcards/shared/flashcard-source-reference";
+import { saveFlashcardsArchived } from "@/components/flashcards/shared/save-flashcard-mark";
 import { toggleStudyLater } from "@/components/flashcards/shared/toggle-study-later";
 import { DetailPageLayout } from "@/components/shared/detail-page-layout";
 import type { Breadcrumb } from "@/components/shared/page-top-bar";
@@ -57,6 +58,7 @@ export function FlashcardDetail({
   // The page is server-rendered and the mark write skips revalidation, so the
   // saved mark is kept locally.
   const [studyLaterAt, setStudyLaterAt] = useState(flashcard.studyLaterAt);
+  const [archivedAt, setArchivedAt] = useState(flashcard.archivedAt);
   // Stable reference required — BulkMoveFlashcardsDialog has `ids` in its effect deps
   const moveIds = useMemo(() => [flashcard.id], [flashcard.id]);
   const [isFrontImageUploading, setIsFrontImageUploading] = useState(false);
@@ -115,6 +117,10 @@ export function FlashcardDetail({
             {flashcard.folderPath}
           </h1>
           <FlashcardSourceReference source={flashcard.source} />
+          {archivedAt ? <CardMarkNote icon={Archive} label="Archived" /> : null}
+          {studyLaterAt && !archivedAt ? (
+            <CardMarkNote icon={Clock} label="Study later" />
+          ) : null}
         </div>
 
         <div className="flex shrink-0 gap-2">
@@ -150,6 +156,18 @@ export function FlashcardDetail({
                     { id: flashcard.id, studyLaterAt },
                     setStudyLaterAt,
                   )
+                }
+                archived={archivedAt !== null}
+                onToggleArchived={() =>
+                  void saveFlashcardsArchived(
+                    queryClient,
+                    [flashcard.id],
+                    archivedAt === null,
+                  ).then((saved) => {
+                    if (!saved) return;
+                    setArchivedAt(saved.archivedAt);
+                    if (saved.archivedAt) setStudyLaterAt(null);
+                  })
                 }
                 onReset={() => setResetOpen(true)}
                 onDelete={() => setDeleteOpen(true)}
@@ -199,5 +217,18 @@ export function FlashcardDetail({
         }}
       />
     </DetailPageLayout>
+  );
+}
+
+// A card's mark (archived or study later) as header metadata.
+function CardMarkNote({
+  icon: Icon,
+  label,
+}: Readonly<{ icon: LucideIcon; label: string }>) {
+  return (
+    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+      <Icon className="size-3.5" />
+      {label}
+    </p>
   );
 }

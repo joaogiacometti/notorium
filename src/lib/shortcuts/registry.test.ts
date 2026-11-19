@@ -185,6 +185,13 @@ describe("shortcutRegistry", () => {
     expect(shortcut).toMatchObject({ kind: "keys", keys: ["l"] });
   });
 
+  it("lists the archive shortcut under flashcard review", () => {
+    const shortcut = getShortcutsByCategory(
+      ShortcutCategory.FlashcardReview,
+    ).find((item) => item.id === "flashcard-archive");
+    expect(shortcut).toMatchObject({ kind: "keys", keys: ["a"] });
+  });
+
   it("lists the toggle-assistant shortcut under Global", () => {
     const shortcut = getShortcutsByCategory(ShortcutCategory.Global).find(
       (item) => item.id === "global-toggle-assistant",

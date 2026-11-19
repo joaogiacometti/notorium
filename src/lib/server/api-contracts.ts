@@ -47,7 +47,7 @@ export type FlashcardDetailEntity = FlashcardWithSourceEntity & {
 };
 export type FlashcardManageItem = Pick<
   FlashcardEntity,
-  "id" | "folderId" | "updatedAt" | "studyLaterAt" | "lapseCount"
+  "id" | "folderId" | "updatedAt" | "studyLaterAt" | "archivedAt" | "lapseCount"
 > & {
   front: RichTextDocument;
   frontExcerpt: string;
@@ -262,6 +262,18 @@ export type SetFlashcardStudyLaterResult =
   | {
       success: true;
       studyLaterAt: Date | null;
+    }
+  | ActionErrorResult;
+export type BulkSetFlashcardsStudyLaterResult =
+  | {
+      success: true;
+      studyLaterAt: Date | null;
+    }
+  | ActionErrorResult;
+export type SetFlashcardsArchivedResult =
+  | {
+      success: true;
+      archivedAt: Date | null;
     }
   | ActionErrorResult;
 export type ResetFlashcardResult =

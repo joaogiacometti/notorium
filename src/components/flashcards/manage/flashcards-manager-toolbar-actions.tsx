@@ -1,7 +1,10 @@
 "use client";
 
 import {
+  Archive,
+  ArchiveRestore,
   ArrowRightLeft,
+  Clock,
   Copy,
   Loader2,
   RotateCcw,
@@ -9,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import type { JSX } from "react";
+import type { BulkCardMarks } from "@/components/flashcards/manage/use-bulk-card-marks";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -25,6 +29,7 @@ interface ToolbarActionBarProps {
   onOpenBulkDeleteDialog: () => void;
   onOpenBulkResetDialog: () => void;
   onClearSelection: () => void;
+  bulkMarks: BulkCardMarks;
 }
 
 interface ToolbarIconActionButtonProps {
@@ -62,6 +67,9 @@ function ToolbarIconActionButton({
   );
 }
 
+const actionClassName =
+  "rounded-md text-muted-foreground hover:text-foreground";
+
 /**
  * Bulk selection actions for the manage toolbar, shown while cards are selected.
  *
@@ -75,7 +83,10 @@ export function ToolbarActionBar({
   onOpenBulkDeleteDialog,
   onOpenBulkResetDialog,
   onClearSelection,
+  bulkMarks,
 }: Readonly<ToolbarActionBarProps>): JSX.Element {
+  const { studyLater, archive } = bulkMarks.intents;
+
   return (
     <div
       className={cn(
@@ -91,7 +102,7 @@ export function ToolbarActionBar({
         ariaLabel={isCopyingSelection ? "Copying…" : "Copy"}
         onClick={onCopySelection}
         disabled={isCopyingSelection}
-        className="rounded-md text-muted-foreground hover:text-foreground"
+        className={actionClassName}
         icon={
           isCopyingSelection ? (
             <Loader2 className="size-4 animate-spin" />
@@ -103,13 +114,33 @@ export function ToolbarActionBar({
       <ToolbarIconActionButton
         ariaLabel="Move"
         onClick={onOpenBulkMoveDialog}
-        className="rounded-md text-muted-foreground hover:text-foreground"
+        className={actionClassName}
         icon={<ArrowRightLeft className="size-4" />}
+      />
+      <ToolbarIconActionButton
+        ariaLabel={studyLater === "clear" ? "Clear study later" : "Study later"}
+        onClick={bulkMarks.applyStudyLater}
+        disabled={bulkMarks.isSaving || studyLater === null}
+        className={actionClassName}
+        icon={<Clock className="size-4" />}
+      />
+      <ToolbarIconActionButton
+        ariaLabel={archive === "unarchive" ? "Unarchive" : "Archive"}
+        onClick={bulkMarks.applyArchive}
+        disabled={bulkMarks.isSaving}
+        className={actionClassName}
+        icon={
+          archive === "unarchive" ? (
+            <ArchiveRestore className="size-4" />
+          ) : (
+            <Archive className="size-4" />
+          )
+        }
       />
       <ToolbarIconActionButton
         ariaLabel="Reset"
         onClick={onOpenBulkResetDialog}
-        className="rounded-md text-muted-foreground hover:text-foreground"
+        className={actionClassName}
         icon={<RotateCcw className="size-4" />}
       />
       <ToolbarIconActionButton
@@ -122,7 +153,7 @@ export function ToolbarActionBar({
       <ToolbarIconActionButton
         ariaLabel="Clear selection"
         onClick={onClearSelection}
-        className="rounded-md text-muted-foreground hover:text-foreground"
+        className={actionClassName}
         icon={<X className="size-4" />}
       />
     </div>

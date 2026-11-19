@@ -124,14 +124,41 @@ export type SetFlashcardStudyLaterForm = z.infer<
   typeof setFlashcardStudyLaterSchema
 >;
 
+export const bulkSetFlashcardsStudyLaterSchema = z.object({
+  ids: bulkIdsSchema,
+  studyLater: z.boolean(),
+});
+
+export type BulkSetFlashcardsStudyLaterForm = z.infer<
+  typeof bulkSetFlashcardsStudyLaterSchema
+>;
+
+export const setFlashcardsArchivedSchema = z.object({
+  ids: bulkIdsSchema,
+  archived: z.boolean(),
+});
+
+export type SetFlashcardsArchivedForm = z.infer<
+  typeof setFlashcardsArchivedSchema
+>;
+
 export const resetFlashcardSchema = z.object({
   id: idSchema,
 });
 
 export type ResetFlashcardForm = z.infer<typeof resetFlashcardSchema>;
 
-export const flashcardManageFilterSchema = z.enum(["studyLater", "struggling"]);
+export const flashcardManageFilterSchema = z.enum([
+  "studyLater",
+  "struggling",
+  "archived",
+  "all",
+]);
 
+/**
+ * Which cards the manage table lists. No filter means the default: cards in
+ * review (not archived). `all` adds archived cards back.
+ */
 export type FlashcardManageFilter = z.infer<typeof flashcardManageFilterSchema>;
 
 export const flashcardsManageQuerySchema = z.object({

@@ -1,6 +1,6 @@
 "use client";
 
-import { Flame } from "lucide-react";
+import { Archive, Clock, Flame } from "lucide-react";
 import { useMemo } from "react";
 import { FlashcardsTableRowActions } from "@/components/flashcards/manage/flashcards-table-row-actions";
 import type { FlashcardTarget } from "@/components/flashcards/manage/use-flashcards-manager-controller";
@@ -28,6 +28,7 @@ interface FlashcardsManagerTableProps {
   onDeleteRequested: (flashcard: FlashcardTarget) => void;
   onResetRequested: (flashcard: FlashcardTarget) => void;
   onStudyLaterToggleRequested: (flashcard: FlashcardManageItem) => void;
+  onArchiveToggleRequested: (flashcard: FlashcardManageItem) => void;
   onSelectedFlashcardIdsChange: (ids: string[]) => void;
   onRowClick?: (flashcard: FlashcardManageItem) => void;
 }
@@ -38,6 +39,7 @@ interface FlashcardRowActionHandlers {
   onDeleteRequested: (flashcard: FlashcardTarget) => void;
   onResetRequested: (flashcard: FlashcardTarget) => void;
   onStudyLaterToggleRequested: (flashcard: FlashcardManageItem) => void;
+  onArchiveToggleRequested: (flashcard: FlashcardManageItem) => void;
 }
 
 function getColumnClassName(columnId: string) {
@@ -76,6 +78,46 @@ function LapseCountMarker({ lapseCount }: Readonly<{ lapseCount: number }>) {
   );
 }
 
+const markerClassName = "size-3.5 shrink-0 text-muted-foreground";
+
+// Marked cards lead with their mark's icon. A card is at most one of the two:
+// archiving clears study later. Archived cards also read as set aside (muted).
+function FrontCell({
+  excerpt,
+  title,
+  archived,
+  studyLater,
+}: Readonly<{
+  excerpt: string;
+  title: string | null;
+  archived: boolean;
+  studyLater: boolean;
+}>) {
+  return (
+    <div className="flex min-w-0 items-center gap-1.5 py-1">
+      {archived ? (
+        <Archive className={markerClassName} role="img" aria-label="Archived" />
+      ) : null}
+      {studyLater && !archived ? (
+        <Clock
+          className={markerClassName}
+          role="img"
+          aria-label="Study later"
+        />
+      ) : null}
+      <span
+        className={cn(
+          "min-w-0 truncate text-sm font-semibold leading-6",
+          archived ? "text-muted-foreground" : "text-foreground/95",
+        )}
+        title={title ?? undefined}
+      >
+        {excerpt}
+      </span>
+    </div>
+  );
+}
+
 const lapseCountColumn: ManagerColumnDef<FlashcardManageItem> = {
   id: "lapseCount",
   size: 48,
@@ -90,6 +132,7 @@ function getColumns(
     onDeleteRequested,
     onResetRequested,
     onStudyLaterToggleRequested,
+    onArchiveToggleRequested,
   }: FlashcardRowActionHandlers,
   hasSelection: boolean,
   showLapseCount: boolean,
@@ -100,12 +143,12 @@ function getColumns(
       size: 220,
       header: () => <TableHeaderLabel>Front</TableHeaderLabel>,
       cell: ({ row }) => (
-        <div
-          className="min-w-0 truncate py-1 text-sm font-semibold leading-6 text-foreground/95"
-          title={row.original.frontTitle ?? undefined}
-        >
-          {row.original.frontExcerpt}
-        </div>
+        <FrontCell
+          excerpt={row.original.frontExcerpt}
+          title={row.original.frontTitle}
+          archived={row.original.archivedAt !== null}
+          studyLater={row.original.studyLaterAt !== null}
+        />
       ),
     },
     {
@@ -152,6 +195,10 @@ function getColumns(
               onStudyLaterToggleRequested(row.original)
             }
             studyLaterMarked={row.original.studyLaterAt !== null}
+            onArchiveToggleRequested={() =>
+              onArchiveToggleRequested(row.original)
+            }
+            archived={row.original.archivedAt !== null}
             hasSelection={hasSelection}
           />
         </div>
@@ -175,6 +222,7 @@ export function FlashcardsManagerTable({
   onDeleteRequested,
   onResetRequested,
   onStudyLaterToggleRequested,
+  onArchiveToggleRequested,
   onSelectedFlashcardIdsChange,
   onRowClick,
 }: Readonly<FlashcardsManagerTableProps>) {
@@ -188,6 +236,7 @@ export function FlashcardsManagerTable({
           onDeleteRequested,
           onResetRequested,
           onStudyLaterToggleRequested,
+          onArchiveToggleRequested,
         },
         hasSelection,
         showLapseCount,
@@ -200,6 +249,7 @@ export function FlashcardsManagerTable({
       onMoveRequested,
       onResetRequested,
       onStudyLaterToggleRequested,
+      onArchiveToggleRequested,
     ],
   );
 
