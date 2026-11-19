@@ -325,7 +325,7 @@ describe("reviewFlashcardForUser", () => {
     });
   });
 
-  it("logs the actual time when reviewing a learning card ahead of schedule", async () => {
+  it("schedules and logs the actual time when reviewing a learning card ahead of schedule", async () => {
     const now = new Date("2026-03-13T23:55:00.000Z");
     const dueAt = new Date("2026-03-14T00:05:00.000Z");
     vi.useFakeTimers();
@@ -361,7 +361,7 @@ describe("reviewFlashcardForUser", () => {
 
     expect(result.success).toBe(true);
     expect(scheduleFlashcardReviewMock).toHaveBeenCalledWith(
-      expect.objectContaining({ now: dueAt }),
+      expect.objectContaining({ now }),
     );
     expect(setMock).toHaveBeenCalledWith(
       expect.objectContaining({

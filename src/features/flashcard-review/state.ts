@@ -217,9 +217,11 @@ export function removeFlashcardsFromReviewState(
 
 /**
  * Schedule a grade the way the server persists it. A learning card graded
- * inside its learn-ahead window is scheduled from its due time, so reviewing
- * early never shortens the next interval. Shared by the server mutation and
- * the client's optimistic grade so both compute the same next state.
+ * inside its learn-ahead window is scheduled from the actual review time:
+ * FSRS-7 models sub-day intervals, so an early recall earns a smaller
+ * stability gain instead of being credited with the full planned delay.
+ * Shared by the server mutation and the client's optimistic grade so both
+ * compute the same next state.
  *
  * @example
  * const next = scheduleGradeAt({ card, grade: "good", scheduler, reviewedAt: new Date() });
@@ -238,7 +240,7 @@ export function scheduleGradeAt({
   return scheduleFlashcardReview({
     card,
     grade,
-    now: new Date(Math.max(reviewedAt.getTime(), card.dueAt.getTime())),
+    now: reviewedAt,
     desiredRetention: scheduler.desiredRetention,
     weights: scheduler.weights,
   });

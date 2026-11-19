@@ -538,7 +538,7 @@ describe("restoreFlashcardToFront with restoreTotal", () => {
 });
 
 describe("scheduleGradeAt", () => {
-  it("schedules a learn-ahead review from the card's due time", () => {
+  it("schedules a learn-ahead review from the actual review time", () => {
     const dueAt = new Date("2026-03-07T12:10:00.000Z");
     const card = makeCard("a", dueAt, {
       state: "learning",
@@ -563,7 +563,10 @@ describe("scheduleGradeAt", () => {
       reviewedAt: dueAt,
     });
 
-    expect(early.dueAt).toEqual(onTime.dueAt);
+    // Recalling after 2 minutes is weaker evidence than after the planned 10.
+    expect(early.lastReviewedAt).toEqual(new Date("2026-03-07T12:02:00.000Z"));
+    expect(Number(early.stability)).toBeLessThan(Number(onTime.stability));
+    expect(early.dueAt.getTime()).toBeLessThan(onTime.dueAt.getTime());
   });
 });
 
