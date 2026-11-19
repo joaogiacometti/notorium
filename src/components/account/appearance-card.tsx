@@ -32,7 +32,7 @@ export function AppearanceCard() {
       description={`Saved to your account and applied on every device. System currently resolves to ${resolvedThemeLabel}.`}
       keywords="appearance dark light mode color"
     >
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {themeOptions.map((option) => {
           const isSelected = mounted && option.id === currentTheme;
 
@@ -42,7 +42,7 @@ export function AppearanceCard() {
               type="button"
               onClick={() => handleThemeChange(option.id)}
               aria-pressed={isSelected}
-              className="group rounded-lg text-left outline-none"
+              className="group flex flex-col rounded-lg text-left outline-none"
             >
               <ThemeScenePreview
                 themeId={option.id}

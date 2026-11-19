@@ -90,7 +90,7 @@ export function TimeZoneCard({
               variant="outline"
               aria-label={`Time zone: ${timeZone}`}
               disabled={saving}
-              className="w-full justify-between sm:w-60"
+              className="w-60 justify-between"
             >
               <span className="truncate">
                 {saving ? "Saving…" : zoneLabel(timeZone)}
@@ -127,23 +127,20 @@ export function TimeZoneCard({
         </Popover>
       }
     >
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-        <span>Your time now: {localTime(timeZone, now)}</span>
+      <div className="flex flex-col items-start gap-1 text-sm text-muted-foreground">
+        <p>Your time now: {localTime(timeZone, now)}</p>
         {suggestDevice ? (
-          <>
-            <span aria-hidden>·</span>
-            <Button
-              type="button"
-              variant="link"
-              disabled={saving}
-              onClick={() => selectTimeZone(deviceZone)}
-              className="h-auto p-0"
-            >
-              Use device time zone ({zoneLabel(deviceZone)})
-            </Button>
-          </>
+          <Button
+            type="button"
+            variant="link"
+            disabled={saving}
+            onClick={() => selectTimeZone(deviceZone)}
+            className="h-auto p-0"
+          >
+            Use device time zone ({zoneLabel(deviceZone)})
+          </Button>
         ) : null}
-      </p>
+      </div>
     </SettingsCard>
   );
 }

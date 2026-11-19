@@ -74,7 +74,7 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex h-[85vh] max-h-[42rem] w-full max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl sm:flex-row">
+      <DialogContent className="flex h-dvh w-full max-w-full flex-col gap-0 overflow-hidden rounded-none border-0 p-0 sm:h-[85vh] sm:max-h-[42rem] sm:max-w-4xl sm:flex-row sm:rounded-lg sm:border">
         <SettingsSidebar
           sections={settingsSections}
           activeSection={activeSection}
