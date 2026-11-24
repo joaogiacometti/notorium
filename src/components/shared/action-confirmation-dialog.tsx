@@ -19,6 +19,8 @@ interface ActionConfirmationDialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description: ReactNode;
+  /** Block content between the description and the footer. */
+  details?: ReactNode;
   confirmLabel: string;
   pendingLabel: string;
   confirmVariant: ConfirmVariant;
@@ -77,6 +79,7 @@ function ActionConfirmationContent({
   onOpenChange,
   title,
   description,
+  details,
   preventEscapeClose = false,
   showCloseButton = true,
   ...footerProps
@@ -96,6 +99,7 @@ function ActionConfirmationContent({
         <DialogTitle>{title}</DialogTitle>
         <DialogDescription>{description}</DialogDescription>
       </DialogHeader>
+      {details}
       <ActionConfirmationFooter onOpenChange={onOpenChange} {...footerProps} />
     </DialogContent>
   );

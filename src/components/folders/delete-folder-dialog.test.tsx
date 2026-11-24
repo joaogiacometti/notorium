@@ -8,6 +8,12 @@ vi.mock("@/app/actions/folders", () => ({
   deleteFolder: vi.fn(),
 }));
 
+const readApi = vi.hoisted(() => ({
+  fetchFolderDeletionSummary: vi.fn(),
+}));
+
+vi.mock("@/lib/read-api/folders", () => readApi);
+
 vi.mock("sonner", () => ({
   toast: {
     error: vi.fn(),
@@ -75,6 +81,7 @@ describe("DeleteFolderDialog", () => {
     document.body.appendChild(container);
     root = createRoot(container);
     queryClient = new QueryClient();
+    readApi.fetchFolderDeletionSummary.mockResolvedValue(emptySummary);
   });
 
   afterEach(async () => {
@@ -87,18 +94,7 @@ describe("DeleteFolderDialog", () => {
   });
 
   it("renders short folder names in a natural sentence", async () => {
-    await act(async () => {
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <DeleteFolderDialog
-            folderId="folder-1"
-            folderName="test"
-            open
-            onOpenChange={vi.fn()}
-          />
-        </QueryClientProvider>,
-      );
-    });
+    await renderFolderDialog(root, queryClient);
 
     const description = container.querySelector(
       "[data-testid='dialog-description']",
@@ -108,7 +104,7 @@ describe("DeleteFolderDialog", () => {
     );
 
     expect(description?.textContent).toBe(
-      "Are you sure you want to delete test? This action cannot be undone. Nested folders and all associated notes, flashcards, and attachments will also be deleted.",
+      "Are you sure you want to delete test and everything in it? This action cannot be undone.",
     );
     expect(description?.className).not.toContain("space-y-1");
     expect(folderName?.className).toContain("inline");
@@ -122,21 +118,122 @@ describe("DeleteFolderDialog", () => {
 
     expect(deleteButton?.dataset.variant).toBe("destructive");
   });
+
+  it("lists what the deletion removes and hides zero counts", async () => {
+    readApi.fetchFolderDeletionSummary.mockResolvedValue({
+      nestedFolderCount: 1,
+      noteCount: 12,
+      pdfCount: 0,
+      flashcardCount: 1248,
+    });
+
+    await renderFolderDialog(root, queryClient);
+
+    expect(countRows(container)).toEqual([
+      ["Nested folders", "1"],
+      ["Notes", "12"],
+      ["Flashcards", "1,248"],
+    ]);
+    expect(readApi.fetchFolderDeletionSummary).toHaveBeenCalledWith("folder-1");
+  });
+
+  it("shows no counts for an empty folder", async () => {
+    await renderFolderDialog(root, queryClient);
+
+    expect(container.querySelector("ul")).toBeNull();
+    expect(
+      container.querySelector("[aria-label='Counting folder contents']"),
+    ).toBeNull();
+  });
+
+  it("enables delete once counts load", async () => {
+    await renderFolderDialog(root, queryClient);
+
+    expect(findButton("Delete", container)?.disabled).toBe(false);
+  });
+
+  it("keeps cancel available but blocks delete while counts load", async () => {
+    readApi.fetchFolderDeletionSummary.mockReturnValue(new Promise(() => {}));
+    const onOpenChange = vi.fn();
+
+    await renderFolderDialog(root, queryClient, { onOpenChange });
+
+    expect(
+      container.querySelector("[aria-label='Counting folder contents']"),
+    ).not.toBeNull();
+    expect(findButton("Delete", container)?.disabled).toBe(true);
+    await act(async () => {
+      findButton("Cancel", container)?.click();
+    });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("falls back to the generic warning and retries when counts fail", async () => {
+    readApi.fetchFolderDeletionSummary
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce({ ...emptySummary, noteCount: 2 });
+
+    await renderFolderDialog(root, queryClient);
+
+    expect(container.textContent).toContain(
+      "Nested folders and all associated notes, flashcards, and attachments will also be deleted.",
+    );
+    expect(container.textContent).toContain(
+      "Couldn't load what will be deleted.",
+    );
+
+    await act(async () => {
+      findButton("Retry", container)?.click();
+    });
+    await flushQueries();
+
+    expect(countRows(container)).toEqual([["Notes", "2"]]);
+  });
+
+  it("does not load counts while closed", async () => {
+    await renderFolderDialog(root, queryClient, { open: false });
+
+    expect(readApi.fetchFolderDeletionSummary).not.toHaveBeenCalled();
+  });
 });
 
-async function renderFolderDialog(root: Root, queryClient: QueryClient) {
+const emptySummary = {
+  nestedFolderCount: 0,
+  noteCount: 0,
+  pdfCount: 0,
+  flashcardCount: 0,
+};
+
+async function renderFolderDialog(
+  root: Root,
+  queryClient: QueryClient,
+  { open = true, onOpenChange = vi.fn() } = {},
+) {
   await act(async () => {
     root.render(
       <QueryClientProvider client={queryClient}>
         <DeleteFolderDialog
           folderId="folder-1"
           folderName="test"
-          open
-          onOpenChange={vi.fn()}
+          open={open}
+          onOpenChange={onOpenChange}
         />
       </QueryClientProvider>,
     );
   });
+  await flushQueries();
+}
+
+async function flushQueries() {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+}
+
+function countRows(container: HTMLDivElement) {
+  return Array.from(container.querySelectorAll("li")).map((row) =>
+    Array.from(row.querySelectorAll("span"), (cell) => cell.textContent),
+  );
 }
 
 function findButton(text: string, container: HTMLDivElement) {

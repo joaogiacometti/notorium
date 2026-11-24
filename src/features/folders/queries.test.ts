@@ -93,3 +93,51 @@ describe("getAllFoldersWithPathsForUser", () => {
     ]);
   });
 });
+
+describe("getFolderDeletionSummaryForUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns the subtree counts", async () => {
+    executeMock.mockResolvedValueOnce({
+      rows: [
+        {
+          nestedFolderCount: 3,
+          noteCount: 12,
+          pdfCount: 2,
+          flashcardCount: 248,
+        },
+      ],
+    });
+
+    const { getFolderDeletionSummaryForUser } = await import(
+      "@/features/folders/queries"
+    );
+
+    await expect(
+      getFolderDeletionSummaryForUser("user-1", "folder-1"),
+    ).resolves.toEqual({
+      nestedFolderCount: 3,
+      noteCount: 12,
+      pdfCount: 2,
+      flashcardCount: 248,
+    });
+  });
+
+  it("returns null when the user does not own the folder", async () => {
+    executeMock.mockResolvedValueOnce({
+      rows: [
+        { nestedFolderCount: -1, noteCount: 0, pdfCount: 0, flashcardCount: 0 },
+      ],
+    });
+
+    const { getFolderDeletionSummaryForUser } = await import(
+      "@/features/folders/queries"
+    );
+
+    await expect(
+      getFolderDeletionSummaryForUser("user-1", "someone-elses"),
+    ).resolves.toBeNull();
+  });
+});

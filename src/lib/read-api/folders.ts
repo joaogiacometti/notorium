@@ -1,5 +1,8 @@
 import { fetchReadApi } from "@/lib/read-api/read-api-client";
-import type { FolderOption } from "@/lib/server/api-contracts";
+import type {
+  FolderDeletionSummary,
+  FolderOption,
+} from "@/lib/server/api-contracts";
 
 /**
  * Folders with full `path` labels, for the flashcard folder pickers.
@@ -9,4 +12,18 @@ import type { FolderOption } from "@/lib/server/api-contracts";
  */
 export function fetchFolderOptions(): Promise<FolderOption[]> {
   return fetchReadApi<FolderOption[]>("/api/folders/options");
+}
+
+/**
+ * Counts of what deleting a folder removes, across its whole subtree.
+ *
+ * @example
+ * const summary = await fetchFolderDeletionSummary(folderId);
+ */
+export function fetchFolderDeletionSummary(
+  folderId: string,
+): Promise<FolderDeletionSummary> {
+  return fetchReadApi<FolderDeletionSummary>(
+    `/api/folders/${encodeURIComponent(folderId)}/deletion-summary`,
+  );
 }

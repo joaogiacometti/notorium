@@ -12,6 +12,7 @@ const queries = vi.hoisted(() => ({
   getSearchDataForUser: vi.fn(),
   getAllFoldersWithPathsForUser: vi.fn(),
   getFolderDocumentsForUser: vi.fn(),
+  getFolderDeletionSummaryForUser: vi.fn(),
 }));
 
 const sessionUser = {
@@ -225,5 +226,39 @@ describe("read route handlers", () => {
       "user-1",
       "s1",
     );
+  });
+
+  it("folder deletion summary reads one owned folder", async () => {
+    const summary = {
+      nestedFolderCount: 1,
+      noteCount: 2,
+      pdfCount: 0,
+      flashcardCount: 3,
+    };
+    queries.getFolderDeletionSummaryForUser.mockResolvedValue(summary);
+
+    const result = await callRoute(
+      import("@/app/api/folders/[folderId]/deletion-summary/route"),
+      "/api/folders/s1/deletion-summary",
+      { folderId: "s1" },
+    );
+
+    expect(result).toEqual({ status: 200, body: summary });
+    expect(queries.getFolderDeletionSummaryForUser).toHaveBeenCalledWith(
+      "user-1",
+      "s1",
+    );
+  });
+
+  it("folder deletion summary is not found for a folder the user does not own", async () => {
+    queries.getFolderDeletionSummaryForUser.mockResolvedValue(null);
+
+    const result = await callRoute(
+      import("@/app/api/folders/[folderId]/deletion-summary/route"),
+      "/api/folders/s1/deletion-summary",
+      { folderId: "s1" },
+    );
+
+    expect(result.status).toBe(404);
   });
 });

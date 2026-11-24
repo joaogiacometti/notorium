@@ -13,6 +13,13 @@ import type { ActionErrorResult } from "@/lib/server/server-action-errors";
 
 export type FolderEntity = InferSelectModel<typeof folder>;
 export type FolderAncestor = Pick<FolderEntity, "id" | "name">;
+/** What deleting a folder removes; descendant counts exclude the folder itself. */
+export interface FolderDeletionSummary {
+  nestedFolderCount: number;
+  noteCount: number;
+  pdfCount: number;
+  flashcardCount: number;
+}
 export interface FolderOption extends FolderEntity {
   path: string;
 }

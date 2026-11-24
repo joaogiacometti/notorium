@@ -6,13 +6,20 @@ import {
   fetchNoteConnections,
 } from "@/lib/read-api/documents";
 import { fetchFlashcardsManagePage } from "@/lib/read-api/flashcards";
-import { fetchFolderOptions } from "@/lib/read-api/folders";
+import {
+  fetchFolderDeletionSummary,
+  fetchFolderOptions,
+} from "@/lib/read-api/folders";
 
 // The authenticated layout owns a QueryClient per user. Keys describe resources,
 // not the component displaying them, so every consumer sees the same updates.
 export const libraryKeys = {
   folders: ["folders"] as const,
   folderOptions: ["folders", "options"] as const,
+  // Outside the `folders` prefix: folder invalidation after a delete must not
+  // refetch the deleted folder's summary while its dialog is closing.
+  folderDeletionSummary: (folderId: string) =>
+    ["folder-deletion-summary", folderId] as const,
   documents: ["folder-documents"] as const,
   folderDocuments: (folderId: string) =>
     ["folder-documents", folderId] as const,
@@ -39,6 +46,17 @@ export function folderOptionsQuery() {
     queryFn: () => fetchFolderOptions(),
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
+    retry: false,
+  });
+}
+
+/** Always refetched: contents may have changed since the dialog last opened. */
+export function folderDeletionSummaryQuery(folderId: string) {
+  return queryOptions({
+    queryKey: libraryKeys.folderDeletionSummary(folderId),
+    queryFn: () => fetchFolderDeletionSummary(folderId),
+    staleTime: 0,
+    refetchOnWindowFocus: false,
     retry: false,
   });
 }

@@ -1,8 +1,9 @@
 import { and, count, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db/index";
-import { folder } from "@/db/schema";
+import { flashcard, folder, note, pdfDocument } from "@/db/schema";
 import type {
   FolderAncestor,
+  FolderDeletionSummary,
   FolderEntity,
   FolderOption,
 } from "@/lib/server/api-contracts";
@@ -83,24 +84,28 @@ export async function getFolderTreeRecordForUser(
   return results[0] ?? null;
 }
 
+/** `WITH RECURSIVE subtree(id)`: the owned folder and all its descendants. */
+function ownedSubtreeCte(userId: string, folderId: string) {
+  return sql`
+    WITH RECURSIVE subtree AS (
+      SELECT id
+      FROM ${folder}
+      WHERE id = ${folderId} AND ${folder.userId} = ${userId}
+      UNION ALL
+      SELECT ${folder.id}
+      FROM ${folder}
+      INNER JOIN subtree s ON ${folder.parentFolderId} = s.id
+      WHERE ${folder.userId} = ${userId}
+    )
+  `;
+}
+
 export async function getDescendantFolderIds(
   userId: string,
   folderId: string,
 ): Promise<string[]> {
   const rows = await getDb().execute(
-    sql`
-      WITH RECURSIVE folder_tree AS (
-        SELECT id
-        FROM ${folder}
-        WHERE id = ${folderId} AND ${folder.userId} = ${userId}
-        UNION ALL
-        SELECT ${folder.id}
-        FROM ${folder}
-        INNER JOIN folder_tree st ON ${folder.parentFolderId} = st.id
-        WHERE ${folder.userId} = ${userId}
-      )
-      SELECT id FROM folder_tree
-    `,
+    sql`${ownedSubtreeCte(userId, folderId)} SELECT id FROM subtree`,
   );
 
   return (rows as unknown as { rows: Array<{ id: string }> }).rows.map(
@@ -232,6 +237,39 @@ export async function getFolderSubtreeHeightForUser(
   const result = (rows as unknown as { rows: Array<{ height: number | null }> })
     .rows[0];
   return result?.height ?? 1;
+}
+
+/**
+ * Counts everything a folder deletion cascades to across its whole subtree,
+ * or `null` when the folder is not owned by the user.
+ *
+ * @example await getFolderDeletionSummaryForUser(userId, folderId);
+ */
+export async function getFolderDeletionSummaryForUser(
+  userId: string,
+  folderId: string,
+): Promise<FolderDeletionSummary | null> {
+  const countInSubtree = (
+    table: typeof note | typeof pdfDocument | typeof flashcard,
+  ) => sql`(
+    SELECT COUNT(*)::int FROM ${table}
+    WHERE ${table.userId} = ${userId}
+      AND ${table.folderId} IN (SELECT id FROM subtree)
+  )`;
+  const rows = await getDb().execute(
+    sql`
+      ${ownedSubtreeCte(userId, folderId)}
+      SELECT
+        (SELECT COUNT(*)::int - 1 FROM subtree) AS "nestedFolderCount",
+        ${countInSubtree(note)} AS "noteCount",
+        ${countInSubtree(pdfDocument)} AS "pdfCount",
+        ${countInSubtree(flashcard)} AS "flashcardCount"
+    `,
+  );
+
+  // An unowned or missing root leaves the subtree empty, so the count is -1.
+  const result = (rows as unknown as { rows: FolderDeletionSummary[] }).rows[0];
+  return result && result.nestedFolderCount >= 0 ? result : null;
 }
 
 /**

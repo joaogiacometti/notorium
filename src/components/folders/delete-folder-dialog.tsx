@@ -1,12 +1,14 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteFolder } from "@/app/actions/folders";
+import { FolderDeletionCounts } from "@/components/folders/folder-deletion-counts";
 import { ActionConfirmationDialog } from "@/components/shared/action-confirmation-dialog";
 import { FolderText } from "@/components/shared/folder-text";
 import { invalidateFolderViews } from "@/lib/client-cache/invalidation";
+import { folderDeletionSummaryQuery } from "@/lib/client-cache/queries";
 import { t } from "@/lib/server/server-action-errors";
 
 interface DeleteFolderDialogProps {
@@ -26,6 +28,10 @@ export function DeleteFolderDialog({
 }: Readonly<DeleteFolderDialogProps>) {
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
+  const summary = useQuery({
+    ...folderDeletionSummaryQuery(folderId),
+    enabled: open,
+  });
 
   function handleConfirm() {
     startTransition(async () => {
@@ -55,11 +61,13 @@ export function DeleteFolderDialog({
             value={folderName}
             mode="wrap"
             className="inline font-semibold text-foreground"
-          />
-          ? This action cannot be undone. Nested folders and all associated
-          notes, flashcards, and attachments will also be deleted.
+          />{" "}
+          and everything in it? This action cannot be undone.
         </>
       }
+      details={<FolderDeletionCounts summary={summary} />}
+      // Confirm only once the user can see what the deletion removes.
+      confirmDisabled={summary.isLoading}
       confirmLabel="Delete"
       pendingLabel="Deleting…"
       confirmVariant="destructive"
